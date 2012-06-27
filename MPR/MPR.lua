@@ -1,5 +1,5 @@
 local MPR = CreateFrame("frame")
-local MPR_Version = "v1.35"
+local MPR_Version = "v1.37"
 local MPR_Prefix = "|cFF1e90ffMP Reporter|r|cFFbebebe - "
 local MPR_Postfix = "|r"
 local MPR_ChannelPrefix = "<MPR> "
@@ -38,7 +38,7 @@ local spellsPeriodicDamage = {"Necrotic Plague"}
 local spellsHeal = {"Rune of Blood"}
 local spellsPeriodicHeal = {}
 --| Output: [Spell] hits: Target1 (Amount3), Target2 (Amount3), Target3 (Amount3), ... |--
-local spellsAOEDamage = {"Malleable Goo", "Backlash", "Frost Bomb", "Blistering Cold", "Meteor Strike"}
+local spellsAOEDamage = {"Malleable Goo", "Backlash", "Frost Bomb", "Blistering Cold", "Meteor Strike", "Whiteout"}
 --| Output: Player damages Target with [Spell]. |--
 local reportDamageOnTarget = {}
 
@@ -50,7 +50,7 @@ local npcsBossSpellSumon = {"Growing Ooze Puddle", "Vengeful Shade"} -- Boss sum
 
 -- Casts (SPELL_CAST_SUCCESS) --
 --| Output: Unit casts [Spell]. |--
-local spellsCast = {"Blessing of Forgotten Kings", "Dark Vortex", "Light Vortex"}
+local spellsCast = {"Blessing of Forgotten Kings", "Runescroll of Fortitude", "Drums of the Wild", "Dark Vortex", "Light Vortex"}
 --| Output: Unit casts [Spell] on Target. |--
 local spellsCastOnTarget = {"Hand of Protection"}
 --| Output: [Spell] on Target. |--
@@ -62,6 +62,13 @@ local aurasAppliedOnTarget = {"Frenzied Bloodthirst", "Essence of the Blood Quee
 --| Output: [Spell] applied on Target1, Target2, Target3 ... |--
 local aurasAppliedOnTargets = {"Impaled", "Dominate Mind", "Gas Spore", "Vile Gas", "Gut Spray", "Unchained Magic", "Frost Beacon"}
 -- MPR.DB.SayMessages = true
+local sayAuraOnMe = {
+	["Impaled"] = "Bone Spike on me! Kill it fast!!",
+	["Dominate Mind"] = "Dominate Mind on me! Don't kill me!!",
+	["Gut Spray"] = "Gut Spray on me! Dispel me!!",
+	["Unchained Magic"] = "Unchained Magic on me!",
+	["Frost Beacon"] = "Frost Beacon on me!",
+}
 --| Output: Target has Amount stacks of [Spell]. |--
 local stackAppliedOnTarget = {"Unstable Ooze"}
 --| Output: Player steals [Spell] from Target. |--
@@ -90,6 +97,7 @@ local targetsMassDispel = {}
 --------------------------------------------
 
 local Events = {
+	"ZONE_CHANGED_NEW_AREA",
 	"COMBAT_LOG_EVENT_UNFILTERED",
 	"CHAT_MSG_MONSTER_YELL",
 	"CHAT_MSG_ADDON",
@@ -186,7 +194,7 @@ function ListCommands()
 		colorWhite("/mpr status").." (show setting status)\n"..
 		colorWhite("/mpr icon")..", "..colorWhite("/mpr icons").." (disable or enable spell icons)\n"..
 		colorWhite("/mpr ccl")..", "..colorWhite("/mpr clear").." (clear combat log)\n"..
-		colorWhite("/mpr buffs")..", "..colorWhite("/mpr buff <keyword>").." (list players without buff/buffs)\n"..
+		colorWhite("/mpr buff <keyword>")..", "..colorWhite("/mpr buffs").." (list players without buff/buffs)\n"..
 		colorWhite("/mpr raid-reporting")..", "..colorWhite("/mpr rr").." (toggle reporting to raid)\n"..
 		colorWhite("/mpr say").." (toggle sending SAY messages, ex. Aura on me!)\n"..
 		colorWhite("/mpr report dispels").." (toggle reporting dispels)"..
@@ -264,15 +272,21 @@ local function TimerHandler(name, ...)
 		if #targetsHeroism > 0 then
 			MPR:Report(string.format("%s casts %s (%i/%i players affected).",unit(Player),spell(Spell),#targetsHeroism,GetNumRaidMembers()))
 			if MPR.DB.RaidReporting then
-				MPR:RaidReport(string.format("%s casts %s (%i/%i players affected).",Player,GetSpellInfo(Spell),#targetsHeroism,GetNumRaidMembers()))
+				MPR:RaidReport(string.format("%s casts [%s] (%i/%i players affected).",Player,GetSpellInfo(Spell),#targetsHeroism,GetNumRaidMembers()))
 			end
 		else
 			MPR:Report(string.format("%s casts %s.",unit(Player),spell(Spell)))
 			if MPR.DB.RaidReporting then
-				MPR:RaidReport(string.format("%s casts %s.",Player,GetSpellInfo(Spell)))
+				MPR:RaidReport(string.format("%s casts [%s].",Player,GetSpellInfo(Spell)))
 			end
 		end
 		table.wipe(targetsHeroism)
+	elseif contains(spellsCreate,name,true) then
+		local Spell = ...
+		MPR:Report(string.format("%s expires in 30 seconds.",spell(Spell)))
+		if MPR.DB.RaidReporting then
+			MPR:RaidReport(string.format("[%s] expires in 30 seconds.",GetSpellInfo(Spell)))
+		end	
 	end
 end
 
@@ -318,8 +332,7 @@ function SlashCmdList.MPR(msg, editbox)
 		MPR:Report("Startup combat log clear "..getStateColor(MPR.DB.ClearEntriesOnLoad)..".")
 	elseif msg == "rr" or msg == "raidreporting" or msg == "raid reporting" or msg == "raid-reporting" then
 		MPR.DB.RaidReporting = not MPR.DB.RaidReporting
-		MPR:Report("Raid reporting "..getStateColor(MPR.DB.RaidReporting)..".")
-		MPR:PARTY_CONVERTED_TO_RAID
+		MPR:PARTY_CONVERTED_TO_RAID()
 	elseif msg == "ccl" or msg == "clear" then
 		MPR:ClearCombatLog()
 	elseif msg == "say" then
@@ -342,8 +355,8 @@ function SlashCmdList.MPR(msg, editbox)
 		else
 			MPR:Report("Unknown command.")
 		end
-	elseif msg:sub(1,5) == "buff" then
-		local sBuff = strlower(msg:sub(7))
+	elseif msg:sub(1,4) == "buff" then
+		local sBuff = strlower(msg:sub(6))
 		MPR:ReportWithoutBuff(sBuff)
 	elseif msg == "buffs" then
 		MPR:ReportWithoutBuffs()
@@ -383,7 +396,7 @@ end
 
 function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if not self.DB.Reporting then return end 
-	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = ...
+	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
 	
 	-- taken from Blizzard_CombatLog.lua
 	if event == "SWING_DAMAGE" then
@@ -412,7 +425,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	elseif event:sub(1, 5) == "SPELL" then
 		local spellId, spellName, spellSchool = select(9, ...)
 		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
-			if spellName == "Heroism" then
+			if spellName == "Heroism" and UnitInRaid(sourceName) then
 				if not self:IsTimerScheduled("Heroism") then
 					table.wipe(targetsHeroism)
 					self:ScheduleTimer("Heroism", TimerHandler, 0.3, sourceName, spellId)
@@ -428,7 +441,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			if contains(spellsCreate,destName,true) then
 				self:ReportSpellCreate(sourceName,spellId)
 				self:CancelTimer(destName)
-				self:ScheduleTimer(destName, report, spellsCreate[destName]-30, spell(spellId).." expires in 30 seconds.")
+				self:ScheduleTimer(destName, TimerHandler, spellsCreate[destName]-30, spell(spellId))
 			end
 		elseif event == "SPELL_SUMMON" then
 			if contains(npcsBossSpellSumon,destName) then
@@ -448,8 +461,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 					return
 				end
 				
-				if not self.IsTimerScheduled("Spell AOE Damage") then
-					self.ScheduleTimer("Spell AOE Damage", TimerHandler, 0.3, spellId)
+				if not self:IsTimerScheduled("Spell AOE Damage") then
+					self:ScheduleTimer("Spell AOE Damage", TimerHandler, 0.3, spellId)
 				end
 				
 				table.insert(targetsSpellAOEDamage,destName,amount)
@@ -495,7 +508,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		elseif event == "SPELL_DISPEL" then
 			local extraSpellId, extraSpellName, extraSpellSchool, auraType = select(12, ...)
 			
-			if self.DB.ReportDispels and not spellName == "Mass Dispel" then
+			if self.DB.ReportDispels and spellName ~= "Mass Dispel" then
 				self:ReportDispel(sourceName,destName,extraSpellId)
 			elseif self.DB.ReportMassDispels and spellName == "Mass Dispel" then
 				if not casterMassDispel then
@@ -504,21 +517,21 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 					return
 				end
 				
-				if not self.IsTimerScheduled("Mass Dispel") then
-					self.ScheduleTimer("Mass Dispel", TimerHandler, 0.2)
+				if not self:IsTimerScheduled("Mass Dispel") then
+					self:ScheduleTimer("Mass Dispel", TimerHandler, 0.2)
 				end
 				table.insert(targetsMassDispel,destName,extraSpellName)
 			end
 		elseif event == "SPELL_AURA_APPLIED" then
 			local auraType = select(12, ...)
 			
-			if spellName == "Heroism" then
+			if spellName == "Heroism" and UnitInRaid(destName) then
 				targetsHeroism[#targetsHeroism + 1] = destName
 			elseif contains(aurasAppliedOnTarget,spellName) then
 				self:ReportAppliedOnTarget(spellId,destName)
 			elseif contains(aurasAppliedOnTargets,spellName) then
-				if destName == UnitName("player") and self.DB.SayMessages then
-					self:Say(spellName.." on me!")
+				if destName == UnitName("player") and self.DB.SayMessages and contains(sayAuraOnMe,spellName) then
+					self:Say(sayAuraOnMe[spellName])
 				end
 				table.insert(targetsAura,destName)
 				MPR:CancelTimer("Aura Targets")
@@ -552,10 +565,12 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 end
 
 function MPR:CHAT_MSG_MONSTER_YELL(msg)
-	if not contains(BossYells,msg,true) then return end
+	if not self.DB.Reporting or not contains(BossYells,msg,true) then return end
 	local event = BossYells[msg]
 	if event == "Meteor Strike" then
-		SendChatMessage("Meteor impact in 7 sec. Run to other side!!", "SAY")
+		if self.DB.RaidReporting then
+			SendChatMessage("Meteor impact in 7 sec. Run to other side!!", "SAY")
+		end
 	end
 end
 
@@ -690,6 +705,7 @@ function MPR:ReportWithoutBuff(sBuff)
 	local eligibleBuffs = {}
 	local buff1 = "empty"
 	local buff2 = "empty"
+	local buff3 = "empty"
 	local idBuff
 	if sBuff == "bok" or sBuff == "gbok" then
 		buff1 = "Blessing of Kings"
@@ -725,7 +741,8 @@ function MPR:ReportWithoutBuff(sBuff)
 		idBuff = 48469
 	elseif sBuff == "mage" or sBuff == "arcane" or sBuff == "ai" or sBuff == "db" then
 		buff1 = "Arcane Intellect"
-		buff2 = "Dalaran Brilliance"
+		buff2 = "Arcane Brilliance"
+		buff3 = "Dalaran Brilliance"
 		idBuff = 42995
 	elseif sBuff == "warrior1" or sBuff == "cs" then
 		buff1 = "Commanding Shout"
@@ -744,7 +761,7 @@ function MPR:ReportWithoutBuff(sBuff)
 	if UnitInRaid(UnitName("player")) then
 		for i=1,GetNumRaidMembers() do
 			if UnitPowerType("raid"..i) == 0 or (idBuff ~= 48936 and idBuff ~= 42995) then -- BoW and mage buff only for mana classes
-				if not UnitBuff(UnitName("raid"..i),buff1) and not UnitBuff(UnitName("raid"..i),buff2) then
+				if not UnitBuff(UnitName("raid"..i),buff1) and not UnitBuff(UnitName("raid"..i),buff2) and not UnitBuff(UnitName("raid"..i),buff3) then
 					array[#array + 1] = unit(UnitName("raid"..i))
 					arrayRaid[#arrayRaid + 1] = UnitName("raid"..i)
 				end
@@ -898,6 +915,11 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 		reportedNewerVersion = true
 		self:Report(string.format("|cFF00FF00A newer version is available!|r"))
  	end
+end
+
+function MPR:ZONE_CHANGED_NEW_AREA()
+	--local zoneName = GetRealZoneText()
+	--local zoneId = GetCurrentMapAreaID()
 end
 
 function MPR:ADDON_LOADED(addon)
