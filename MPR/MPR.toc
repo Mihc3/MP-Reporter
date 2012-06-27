@@ -1,0 +1,8 @@
+## Interface: 30300
+## Title : MP Reporter
+## Notes: Reports special events to your chat frame and raid channel
+## Author: Miha Penger
+## SavedVariables: MPR_DB
+
+Dongle.lua
+MPR.lua
