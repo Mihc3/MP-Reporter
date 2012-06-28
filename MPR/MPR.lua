@@ -195,14 +195,14 @@ end
 function ListCommands()
 	MPR:Report("Available commands:\n"..
 		colorWhite("/mpr").." (disable or enable MP Reporter)\n"..
-		colorWhite("/mpr status").." (show setting status)\n"..
+		colorWhite("/mpr status").." (show settings)\n"..
 		colorWhite("/mpr icon")..", "..colorWhite("/mpr icons").." (disable or enable spell icons)\n"..
 		colorWhite("/mpr ccl")..", "..colorWhite("/mpr clear").." (clear combat log)\n"..
 		colorWhite("/mpr buff <keyword>")..", "..colorWhite("/mpr buffs").." (list players without buff/buffs)\n"..
 		colorWhite("/mpr raid-reporting")..", "..colorWhite("/mpr rr").." (toggle reporting to raid)\n"..
 		colorWhite("/mpr say").." (toggle sending SAY messages, ex. Aura on me!)\n"..
-		colorWhite("/mpr report dispels").." (toggle reporting dispels)"..
-		colorWhite("/mpr report mass-dispels").." (toggle reporting mass dispels)"..
+		colorWhite("/mpr report dispels").." (toggle reporting dispels)\n"..
+		colorWhite("/mpr report mass-dispels").." (toggle reporting mass dispels)\n"..
 		colorWhite("/mpr report deaths").." (toggle reporting deaths)"
 	)
 end
@@ -765,8 +765,8 @@ end
 
 function MPR:BuffHelp()
 	self:Report("Use "..colorWhite("/mpr check <buff keyword>").." to list players not having provided buff. Buff keywords:\n"..
-	spell(20217)..": bok, gbok; "..spell(48932).." - bom, gbom; "..spell(48936).." - bow, gbow; "..spell(67480).." - bos, gbos; "..
-	spell(48469).." - motw, gotw; "..	spell(42995).." - ai, db; "..	spell(57399).." - food, fish")
+		spell(25898).." - bok, gbok; "..spell(48934).." - bom, gbom; "..spell(48938).." - bow, gbow; "..spell(25899).." - bos, gbos; "..
+		spell(48469).." - motw, gotw; "..spell(42995).." - ai, db; "..spell(57399).." - food, fish")
 end
 
 function MPR:ReportWithoutBuff(sBuff)
