@@ -1,2 +1,62 @@
 < MP Reporter (https://github.com/Mihapro/MP-Reporter) >
 An addon for World of Warcraft: Wrath of the Lich King (3.3.5a 12340) that reports special events to your chat frame and raid channel.
+
+
+
+What will MP Reporter report?
+ - Rare and Epic items in loot + members not eligible to get BoPs (Master Looter required)
+ - Fish Feast, Refreshment Table, Soulwell, ... (also announces expiration)
+ 
+ - Auras Stolen (player, aura stolen, target)
+ - Dispels (player, target, spell dispeled)
+ - Deaths
+
+ - ICC/Lord Marrowgar:
+		Impaled targets
+ - ICC/Lady Deathwhisper:
+		Mind Dominate targets, Vengeful Shade summon
+ - ICC/Gunship Battle:
+		<not available>
+ - ICC/Deathbringer Saurfang:	
+		Rune of Blood application, Rune of Blood heals
+ - ICC/Festergut:
+		Gas Spore targets, Vile Gas application + targets
+	HC:	players hit by Malleable Goo
+ - ICC/Rotface:
+		Unstable Ooze stacks, players hit by Unstable Ooze Explosion
+	HC: Vile Gas application + targets
+ - ICC/Professor Putricide:
+		Volatile Ooze target, Gas Cloud target, players hit by Malleable Goo
+	HC: Unbound Plague application
+ - ICC/Blood Prince Council:
+		<nothing>
+ - ICC/Blood Queen-Lana'thel:
+		Swarming Shadows target, Frenzied Bloodthirst application, Essence of the Blood Queen application
+ - ICC/Valithria Dreamwalker:
+		Gut Spray application
+ - ICC/Sindragosa:
+		Frost Beacon targets, players hit by Frost Bomb, Unchained Magic targets, players hit by Blistering Cold
+ - ICC/The Lich King:			
+		Necrotic Plague application, target hit by Necrotic Plague, Quake cast, Remorseless Winter cast, Soul Reaper cast, players damaged by Defile
+	HC:	Shadow Trap application
+
+ - RS/Baltharus the Warborn:
+		<nothing>
+ - RS/Saviana Ragefire:
+		Enrage application
+ - RS/General Zarithrian:
+		Cleave Armor stacks
+ - RS/Halion:
+		Soul Consumption application, Fiery Combustion application, Meteor Strike announce
+
+ - ToC/Northrend Beasts:
+		Slime Pool summon
+		players hit by Trample, Frothing Rage on boss
+ - ToC/Lord Jaraxxus:
+		Incinerate Flesh application
+ - ToC/Faction Champions:
+		<nothing>
+ - ToC/Val'kyr Twins:
+		Dark Vortex cast, Light Vortex cast
+ - ToC/Anub'arak:
+		<nothing>
