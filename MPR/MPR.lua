@@ -94,7 +94,7 @@ local ClassBIS = {
 	["Shaman"] = {
 		["Restoration"] = {"Blood Queen's Crimson Choker", "Frostbinder's Shredded Cape", "Bloodsunder's Bracers", "Crushing Coldwraith Belt", "Plague Scientist's Boots", "Ring of Rapid Ascent","Althor's Abacus", "Glowing Twilight Scale", "Trauma", "Bulwark of Smouldering Steel"},
 		["Enhancement"] = {"Precious' Putrid Collar", "Shadowvault Slayer's Cloak", "Umbrage Armbands", "Anub'ar Stalker's Gloves", "Nerub'ar Stalker's Cord", "Returning Footfalls", "Band of the Bone Colossus", "Sharpened Twilight Scale", "Havoc's Call, Blade of Lordaeron Kings"},
-		["Elemental"] = {"Blood Queen’s Crimson Choker", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Gunship Captain’s Mittens", "Split Shape Belt", "Plaguebringer’s Stained Pants", "Plague Scientists Boots", "Ring of Rapid Ascent", "Dislodged Foreign Object", "Charred Twilight Scale", "Phylactery of the Nameless Lich", "Royal Scepter of Terenas II", "Bulwark of Smouldering Steel"},
+		["Elemental"] = {"Blood Queenï¿½s Crimson Choker", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Gunship Captainï¿½s Mittens", "Split Shape Belt", "Plaguebringerï¿½s Stained Pants", "Plague Scientists Boots", "Ring of Rapid Ascent", "Dislodged Foreign Object", "Charred Twilight Scale", "Phylactery of the Nameless Lich", "Royal Scepter of Terenas II", "Bulwark of Smouldering Steel"},
 	},
 	["Druid"] = {
 		["Restoration"] = {"Bone Sentinel's Amulet", "Greatcloak of the Turned Champion", "Sanguine Silk Robes", "Bracers of Eternal Dreaming", "Professor's Bloodied Smock", "Memory of Malygos", "Solace of the Defeated", "Althor's Abacus", "Trauma", "Sundial of Eternal Dusk"},
@@ -103,9 +103,9 @@ local ClassBIS = {
 		["Balance"] = {"Blood Queen's Crimson Choker", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Crushing Coldwraith Belt", "Plaguebringer's Stained Pants", "Plague Scientist's Boots", "Valanar's Other Signet Ring", "Royal Scepter of Terenas II", "Shadow Silk Spindle"},
 	},
 	["Death Knight"] = {
-		["Blood"] = {"Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Bryntroll, the Bone Arbiter"},
-		["Unholy"] = {"Scourge Reaver's Legplates", "Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Oathbinder, Charge of the Ranger-General"},
-		["Frost"] = {"Fleshrending Gauntlets", "Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Havoc's Call, Blade of Lordaeron Kings"},
+		["Blood-D."] = {"Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Bryntroll, the Bone Arbiter"},
+		["Unholy-D."] = {"Scourge Reaver's Legplates", "Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Oathbinder, Charge of the Ranger-General"},
+		["Frost-D."] = {"Fleshrending Gauntlets", "Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Havoc's Call, Blade of Lordaeron Kings"},
 	},
 	["Hunter"] = {
 		["Marksmanship"] = {"Sindragosa's Cruel Claw", "Toskk's Maximized Wristguards", "Nerub'ar Stalker's Cord", "Leggings of Northern Lights", "Frostbrood Sapphire Ring", "Sharpened Twilight Scale", "Deathbringer's Will", "Oathbinder, Charge of the Ranger-General", "Fal'inrush, Defender of Quel'thalas"},
