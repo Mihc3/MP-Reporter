@@ -1,14 +1,14 @@
-local MPR = CreateFrame("frame")
-local MPR_Version = "v1.50"
-local MPR_Prefix = "|cFF1e90ffMP Reporter|r|cFFbebebe - "
+MPR = CreateFrame("frame","MPRFrame")
+local MPR_Version = "v2.40"
+local Colors = {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
+local MPR_Prefix = "|cFF"..Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..Colors["TEXT"]
 local MPR_Postfix = "|r"
 local MPR_ChannelPrefix = "<MPR> "
-
-local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
+local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC",["Vault of Archavon"] = "VOA",["Trial of the Crusader"] = "TOC",["Naxxramas"] = "NAXX",["Ruby Sanctum"] = "RS"}
 local BossNames = {
-	-- Icecrown Citadel
+	-- Icecrown CitaFdel
 	"Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang", "Rotface", "Festergut", "Professor Putricide", 
 	"Prince Keleseth", "Prince Valanar", "Prince Taldaram", "Queen Lana'thel", "Valithria Dreamwalker", "Sindragosa", "The Lich King",
 	-- Trial of the Crusader
@@ -16,13 +16,115 @@ local BossNames = {
 	"Ruj'kah", "Ginselle Blightslinger", "Liandra Suncaller", "Malithas Brightblade", "Caiphus the Stern", "Vivienne Blackwhisper", 
 	"Maz'dinah", "Thrakgar", "Broln Stouthorn", "Harkzog", "Narrhok Steelbreaker", "Fjola Lightbane", "Eydis Darkbane", "Anub'arak",
 	-- Ruby Sanctum
-	"Halion",
+	"Baltharus the Warborn", "Saviana Ragefire", "General Zarithrian", "Halion",
+}
+local EncounterStartYells = {
+	-- ICC
+	["The Scourge will wash over this world as a swarm of death and destruction!"] = 1,
+	["What is this disturbance? You dare trespass upon this hallowed ground? This shall be your final resting place!"] = 2,
+	["GB"] = 3,
+	["BY THE MIGHT OF THE LICH KING!"] = 4,
+	["Fun time!"] = 5,
+	["WEEEEEE!"] = 6,
+	["Good news, everyone! I think I've perfected a plague that will destroy all life on Azeroth!"] = 7,
+	["Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!"] = 8,
+	["You have made an... unwise... decision."] = 9,
+	["Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!"] = 10,
+	["You are fools to have come to this place. The icy winds of Northrend will consume your souls!"] = 11,
+	["So the Light's vaunted justice has finally arrived? Shall I lay down Frostmourne and throw myself at your mercy, Fordring?"] = 12,
+	-- TOC
+	["You face Jaraxxus, eredar lord of the Burning Legion!"] = 16,
+	["In the name of our dark master. For the Lich King. You. Will. Die."] = 18,
+	-- RS
+	["You will sssuffer for this intrusion!"] = 20,
+	["Ah, the entertainment has arrived."] = 21,
+	["Alexstrasza has chosen capable allies... A pity that I must END YOU!"] = 22,
+	["Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!"] = 23,
+}
+local EncounterDoneYells = {
+	-- ICC
+	["I see... Only darkness."] = 1,
+	["All part of the Master's plan.... Your end is inevitable...."] = 2,
+	["I... Am... Released..."] = 4,
+	["Da ... Ddy..."] = 5,
+	["Bad news, daddy..."] = 6,
+	["Bad news, everyone... I don't think I'm going to make it..."] = 7,
+	["My queen, they... come."] = 8,
+	["But... we were getting along... so... well..."] = 9,
+	["I AM RENEWED! Ysera grant me the favor to lay these foul creatures to rest!"] = 10,
+	["Free... at last...."] = 11,
+	["Is it truly righteousness that drives you? I wonder..."] = 12,
+}
+local EncounterNames = {
+	-- ICC
+	[1] = "Lord Marrowgar",	[2] = "Lady Deathwhisper", [4] = "Deathbringer Saurfang", [5] = "Rotface", [6] = "Festergut", [7] = "Professor Putricide",
+	[8] = "Blood Prince Council", [9] = "Queen Lana'thel", [10] = "Valithria Dreamwalker", [11] = "Sindragosa", [12] = "The Lich King",
+	-- TOC
+	[13] = "Gormok", [14] = "Acidmaw & Dreadscale", [15] = "Icehowl", [16] = "Jaraxxus", [17] = "Faction Champions", [18] = "Twin Val'kyr", [19] = "Anub'arak",
+	-- RS
+	[20] = "Baltharus the Warborn", [21] = "Saviana Ragefire", [22] = "General Zarithrian", [23] = "Halion",
 }
 local BossYells = {
-	["The heavens burn!"] = "Meteor Strike"
+	["Watch as the world around you collapses!"]				= "Quake! Run inside!!",
+	["The heavens burn!"]										= "Meteor impact in 7 sec. Run to other side!!",
+	["I think I made an angry poo-poo. It gonna blow!"]			= "Ooze Explosion in 4 sec. Run away!!",
 }
 local RaidDifficulty = {[1] = "10n",[2] = "25n",[3] = "10h",[4] = "25h"}
-					
+
+local ClassBIS = {
+--	["Class"] = {
+--		["Spec1"] = {ItemName1, ItemName2, ItemName3},
+--		["Spec2"] = {...},
+--		["Spec3"] = {...},
+--	}
+	["Paladin"] = {
+		["Retribution"] = {"Penumbra Pendant", "Shadowvault Slayer's Cloak", "Polar Bear Claw Bracers", "Umbrage Armbands", "Fleshrending Gauntlets", "Astrylian's Sutured Cinch", "Apocalypse's Advance", "Signet of Twilight", "Sharpened Twilight Scale", "Tiny Abomination in a Jar", "Oathbinder, Charge of the Ranger-General"},
+		["Holy"] = {"Blood Queen's Crimson Choker", "Cloak of Burning Dusk", "Mail of Crimson Coins", "Bracers of Fiery Night", "Unclean Surgical Gloves", "Split Shape Belt", "Plaguebringer's Stained Pants", "Foreshadow Steps", "Marrowgar's Frigid Eye", "Solace of the Defeated", "Bulwark of Smouldering Steel", "Bloodsurge, Kel'Thuzad's Blade of Agony"},
+		["Protection"] = {"Bile-Encrusted Medallion", "Sentinel's Winter Cloak", "Gargoyle Spit Bracers", "Verdigris Chain Belt", "Pillars of Might", "Grinning Skull Greatboots", "Devium's Eternally Cold Ring", "Band of the Twin Val'kyr", "Satrina's Impeding Scarab", "Sindragosa's Flawless Fang", "Mithrios, Bronzebeard's Legacy", "Icecrown Glacial Wall"},
+	},
+	["Priest"] = {
+		["Shadow"] = {"Amulet of the Silent Eulogy", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Crushing Coldwraith Belt", "Plaguebringer's Stained Pants", "Plague Scientist's Boots", "Ring of Rapid Ascent", "Ring of Rapid Ascent", "Dislodged Foreign Object", "Phylactery of the Nameless Lich", "Royal Scepter of Terenas II", "Shadow Silk Spindle", "Corpse-Impaling Spike"},
+		["Holy"] = {"Sentinel's Amulet", "Greatcloak of the Turned Champion", "Sanguine Silk Robes", "Death Surgeon's Sleeves", "Circle of Ossus", "Boots of the Mourning Widow", "Memory of Malygos", "Solace of the Defeated", "Althor's Abacus", "Frozen Bonespike", "Sundial of Eternal Dusk", "Nightmare Ender"},
+		["Discipline"] = {},
+	},
+	["Rogue"] = {
+		["Assassination"] = {"Sindragosa's Cruel Claw", "Cultist's Bloodsoaked Spaulders", "Shadowvault Slayer's Cloak", "Ikfirus' Sack of Wonder", "Umbrage Armbands", "Belt of the Merciless Killer", "Frostbitten Fur Boots", "Band of the Bone Colossus", "Tiny Abomination in a Jar", "Herkuml War Token", "Heaven's Fall, Kryss of a Thousand Lies", "Lungbreaker", "Gluth's Fetching Knife"},
+		["Combat"] = {"Sindragosa's Cruel Claw", "Shadowvault Slayer's Cloak", "Ikfirus' Sack of Wonder", "Toskk's Maximized Wristguards", "Aldriana's Gloves of Secrecy", "Astrylian's Sutured Cinch", "Gangrenous Leggings", "Frostbrood Sapphire Ring", "Deathbringer's Will", "Whispering Fanged Skull", "Bloodvenom Blade", "Scourgeborne Waraxe", "Stakethrower"},
+	},	
+	["Shaman"] = {
+		["Restoration"] = {"Blood Queen's Crimson Choker", "Frostbinder's Shredded Cape", "Bloodsunder's Bracers", "Crushing Coldwraith Belt", "Plague Scientist's Boots", "Ring of Rapid Ascent","Althor's Abacus", "Glowing Twilight Scale", "Trauma", "Bulwark of Smouldering Steel"},
+		["Enhancement"] = {"Precious' Putrid Collar", "Shadowvault Slayer's Cloak", "Umbrage Armbands", "Anub'ar Stalker's Gloves", "Nerub'ar Stalker's Cord", "Returning Footfalls", "Band of the Bone Colossus", "Sharpened Twilight Scale", "Havoc's Call, Blade of Lordaeron Kings"},
+		["Elemental"] = {"Blood Queen’s Crimson Choker", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Gunship Captain’s Mittens", "Split Shape Belt", "Plaguebringer’s Stained Pants", "Plague Scientists Boots", "Ring of Rapid Ascent", "Dislodged Foreign Object", "Charred Twilight Scale", "Phylactery of the Nameless Lich", "Royal Scepter of Terenas II", "Bulwark of Smouldering Steel"},
+	},
+	["Druid"] = {
+		["Restoration"] = {"Bone Sentinel's Amulet", "Greatcloak of the Turned Champion", "Sanguine Silk Robes", "Bracers of Eternal Dreaming", "Professor's Bloodied Smock", "Memory of Malygos", "Solace of the Defeated", "Althor's Abacus", "Trauma", "Sundial of Eternal Dusk"},
+		["Feral-D."] = {"Sindragosa's Cruel Claw", "Toskk's Maximized Wristguards", "Aldriana's Gloves of Secrecy", "Astrylian's Sutured Cinch", "Frostbrood Sapphire Ring", "Deathbringer's Will", "Sharpened Twilight Scale", "Oathbinder, Charge of the Ranger-General"},
+		["Feral-T."] = {"Royal Crimson Cloak", "Ikfirus's Sack of Wonder", "Footpads of Impending Death", "Devium's Eternally Cold Ring", "Bloodfall", "Frostbitten Fur Boots", "Bile-Encrusted Medallion", "Sindragosa's Flawless Fang", "Umbrage Armbands", "Astrylian's Sutured Cinch"},	
+		["Balance"] = {"Blood Queen's Crimson Choker", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Crushing Coldwraith Belt", "Plaguebringer's Stained Pants", "Plague Scientist's Boots", "Valanar's Other Signet Ring", "Royal Scepter of Terenas II", "Shadow Silk Spindle"},
+	},
+	["Death Knight"] = {
+		["Blood"] = {"Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Bryntroll, the Bone Arbiter"},
+		["Unholy"] = {"Scourge Reaver's Legplates", "Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Oathbinder, Charge of the Ranger-General"},
+		["Frost"] = {"Fleshrending Gauntlets", "Lana'thel's Chain of Flagellation", "Winding Sheet", "Polar Bear Claw Bracers", "Coldwraith Links", "Blood-Soaked Saronite Stompers", "Might of Blight", "Deathbringer's Will", "Death's Choice", "Havoc's Call, Blade of Lordaeron Kings"},
+	},
+	["Hunter"] = {
+		["Marksmanship"] = {"Sindragosa's Cruel Claw", "Toskk's Maximized Wristguards", "Nerub'ar Stalker's Cord", "Leggings of Northern Lights", "Frostbrood Sapphire Ring", "Sharpened Twilight Scale", "Deathbringer's Will", "Oathbinder, Charge of the Ranger-General", "Fal'inrush, Defender of Quel'thalas"},
+	},
+	["Mage"] = {
+		["Fire"] = {"Blood Queen's Crimson Choker", "Cloak of Burning Dusk", "Robe of the Waking Nightmare", "Bracers of Fiery Night", "Crushing Coldwraith Belt", "Plague Scientist's Boots", "Ring of Rapid Ascent", "Phylactery of the Nameless Lich", "Charred Twilight Scale", "Bloodsurge, Kel'Thuzad's Blade of Agony", "Shadow Silk Spindle", "Corpse-Impaling Spike"},
+		["Arcane"] = {"Amulet of the Silent Eulogy", "Cloak of Burning Dusk", "Bracers of Fiery Night", "San'layn Ritualist Gloves", "Crushing Coldwraith Belt", "Plague Scientist's Boots", "Ring of Rapid Ascent", "Charred Twilight Scale", "Dislodged Foreign Object", "Bloodsurge, Kel'Thuzad's Blade of Agony", "Shadow Silk Spindle", "Corpse-Impaling Spike"},
+	},
+	["Warlock"] = {
+		["Affliction"] = {"Blood Queen's Crimson Choker", "Frostbinder's Shredded Cape", "The Lady's Brittle Bracers", "Crushing Coldwraith Belt", "Plaguebringer's Stained Pants", "Plague Scientist's Boots", "Memory of Malygos", "Dislodged Foreign Object", "Phylactery of the Nameless Lich", "Bloodsurge, Kel'Thuzad's Blade of Agony", "Shadow Silk Spindle", "Corpse-Impaling Spike"},
+		["Demonology"] = {},
+		["Destruction"] = {"Sanctified Dark Coven Hood", "Amulet of the Silent Eulogy", "Cloak of Burning Dusk", "Bracers of Fiery Night", "Crushing Coldwraith Belt", "Plaguebringer's Stained Pants", "Plague Scientist's Boots", "Valanar's Other Signet Ring", "Dislodged Foreign Object", "Charred Twilight Scale", "Bloodsurge, Kel'Thuzad's Blade of Agony", "Shadow Silk Spindle", "Corpse-Impaling Spike"},
+	},
+	["Warrior"] = {
+		["Fury"] = {"Lana'thel's Chain of Flagellation", "Shawl of Nerubian Silk", "Toskk's Maximized Wristguards", "Aldriana's Gloves of Secrecy", "Astrylian Suttered Cinch", "Frostbitten Fur Boots", "Frostbrood Saphire Ring", "Sharpened Twilight Scale", "Deathbringer's Will", "Cryptmaker", "Stakethrower"},
+		["Protection"] = {"Troggbane, Axe of the Frostborne King", "Icecrown Glacial Wall", "Bile-Encrusted Medallion", "Royal Crimson Cloak", "Bracers of Dark Reckoning", "Taldaram's Plated Fists", "Grinning Skull Greatboots", "Juggernaut Band", "Sindragosa's Flawless Fang", "Dreamhunter's Carbine"},
+	},
+}
+
 ------ You can change these settings! ------
 -- Created objects --
 --| Output: Player prepares [Spell]. |--
@@ -30,45 +132,45 @@ local spellsCreate = {["Great Feast"] = 180, ["Fish Feast"] = 180, ["Ritual of S
 
 -- Damage & Healing --
 --| Output: [Spell] hits Target for Amount [(Critical)]. |--
-local spellsDamage = {"Trample"}
+local spellsDamage = {}
 local spellsPeriodicDamage = {"Necrotic Plague"}
 --| Output: [Spell] heals Target for Amount [(Critical)]. |--
 local spellsHeal = {"Rune of Blood"}
 local spellsPeriodicHeal = {}
 --| Output: [Spell] hits: Target1 (Amount3), Target2 (Amount3), Target3 (Amount3), ... |--
-local spellsAOEDamage = {"Unstable Ooze Explosion", "Malleable Goo", "Frost Bomb", "Blistering Cold", "Meteor Strike", "Defile"}
+--| Filter: UnitIsPlayer(Target)
+local spellsAOEDamage = {"Dark Martyrdom", "Shadow Cleave", "Deathchill Blast", "Vengeful Blast","Unstable Ooze Explosion", "Malleable Goo", "Choking Gas Explosion", "Frost Bomb", "Blistering Cold", "Defile", "Shadow Trap", "Trample"}
 --| Output: Player damages Target with [Spell]. |--
 local reportDamageOnTarget = {}
 
--- Summons --
+-- Summons (SPELL_SUMMON) --
 --| Output: Unit summons Target. [Spell] |--
-local npcsSpellSumon = {"Slime Pool"} 
+local npcsSpellSumon = {"Slime Pool"}
 --| Output: Target summoned. [Spell] |--
 local npcsBossSpellSumon = {"Vengeful Shade"} -- Boss summons, destination is unknown. ("Dark Nucleus" summoned every second - spam)
 
 -- Casts (SPELL_CAST_START and SPELL_CAST_SUCCESS) --
---| Output: Unit casts [Spell]. |-- drums of the wild??
+--| Output: Unit casts [Spell]. |--
 local spellsCast = {"Remorseless Winter", "Quake", "Dark Vortex", "Light Vortex", "Blessing of Forgotten Kings", "Runescroll of Fortitude", "Drums of the Wild"}
 --| Output: Unit casts [Spell] on Target. |--
 local spellsCastOnTarget = {"Hand of Protection"}
 --| Output: [Spell] on Target. |--
-local spellsBossCastOnTarget = {"Rune of Blood", "Vile Gas", "Swarming Shadows", "Necrotic Plague", "Soul Reaper", "Shadow Trap"} -- If sourceName isn't important (ex. Boss casting).
+local spellsBossCastOnTarget = {"Rune of Blood", "Vile Gas", "Swarming Shadows", "Necrotic Plague", "Soul Reaper"} -- If sourceName isn't important (ex. Boss casting).
 
 -- Auras (SPELL_AURA_APPLIED, SPELL_AURA_APPLIED_DOSE, SPELL_AURA_STOLEN) --
 --| Output: [Spell] applied on Target. |--
-local aurasAppliedOnTarget = {"Volatile Ooze Adhesive", "Gaseous Bloat", "Unbound Plague", "Frenzied Bloodthirst", "Essence of the Blood Queen", "Frothing Rage", "Incinerate Flesh", "Soul Consumption", "Fiery Combustion"}
+--| Filter: UnitIsPlayer(Target)
+local aurasAppliedOnTarget = {"Volatile Ooze Adhesive", "Gaseous Bloat", "Unbound Plague", "Soul Consumption", "Fiery Combustion"}
 --| Output: [Spell] applied on Target1, Target2, Target3 ... |--
-local aurasAppliedOnTargets = {"Impaled", "Dominate Mind", "Gas Spore", "Vile Gas", "Gut Spray", "Unchained Magic", "Frost Beacon"}
--- MPR.DB.SayMessages = true
+local aurasAppliedOnTargets = {"Impaled", "Gas Spore", "Vile Gas", "Frost Beacon"} 
+-- MPR.DB.SayYells = true
 local sayAuraOnMe = {
 	["Impaled"] = "Bone Spike on me! Kill it fast!!",
 	["Dominate Mind"] = "Dominate Mind on me! Don't kill me!!",
 	["Volatile Ooze Adhesive"] = "Green on me!",
 	["Gaseous Bloat"] = "Orange on me!",
-	["Frenzied Bloodthirst"] = "I was biten!",
-	["Essence of the Blood Queen"] = "I have to bite!!",
-	["Gut Spray"] = "Gut Spray on me! Dispel me!!",
-	["Unchained Magic"] = "Unchained Magic on me!",
+	["Essence of the Blood Queen"] = "I was biten!",
+	["Frenzied Bloodthirst"] = "I have to bite!!",
 	["Frost Beacon"] = "Frost Beacon on me!",
 }
 --| Output: Target has Amount stacks of [Spell]. |--
@@ -81,25 +183,27 @@ local stackAppliedOnTarget = {"Unstable Ooze", "Cleave Armor"}
 -- MPR.DB.ReportDispels = true
 --| Output: Player mass-dispels Target1 ([extraSpell1]), Target2 ([extraSpell2]), Target3 ([extraSpell3]) ... |--
 -- MPR.DB.ReportMassDispels = true
-
--- Deaths --
---| Output: Unit died. |--
---| Status: Tested & Working
--- MPR.DB.ReportDeaths = true
-local reportDeathsPlayersOnly = true
 --------------------------------------------
--- Other Variables --
+
+-- Addon Variables --
 local usersAddon = {}
 local reportedNewerVersion = false
+-- Combat Varriables --
+local casterHeroism = {}
 local targetsHeroism = {}
 local nameSpellAOEDamage
 local targetsAOEDamage = {}
 local targetsSpellAOEDamage = {}
-local raidTargetsSpellAOEDamage = {}
 local targetsAura = {}
 local casterMassDispel
 local targetsMassDispel = {}
+-- Boss Variables --
+--Blood-Queen Lana'thel
+local BS_TargetsName = {}
+local BS_TargetsAmount = {}
 --------------------------------------------
+
+local DBM_Users = {}
 
 local Events = {
 	"ZONE_CHANGED_NEW_AREA",
@@ -107,29 +211,65 @@ local Events = {
 	"CHAT_MSG_MONSTER_YELL",
 	"CHAT_MSG_ADDON",
 	"CHAT_MSG_WHISPER",
-	"CHAT_MSG_IGNORED",
 	"RAID_ROSTER_UPDATE",
-	"LOOT_OPENED"
+	"LOOT_OPENED",
 }
 
 MPR:SetScript("OnEvent", function(self, event, ...)
 	self[event](self, ...)
 end)
 
---[[-------------------------------------------------------------------------
-	Local Methods (accessible by Class Methods)
----------------------------------------------------------------------------]]
+------------------
+--  Hyperlinks  --
+------------------
+do
+	DEFAULT_CHAT_FRAME:HookScript("OnHyperlinkClick", function(self, link, string, button, ...)
+		local linkType, arg1, arg2, arg3, arg4 = strsplit(":", link)
+		if linkType ~= "MPR" then return end
+		if arg1 == "Options" then
+			if arg2 == "Show" then
+				MPR_Options:Show()
+			end
+		elseif arg1 == "AuraInfo" then
+			if arg2 == "Update" then
+				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
+			elseif arg2 == "ICC" then
+				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
+			elseif arg2 == "TOC" then
+				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
+			end
+		elseif arg1 == "DeductDKP" then
+			arg2 = {strsplit("-",arg2)}
+			arg4 = arg4:gsub("{(.-)}", function(a) return GetSpellLink(tonumber(a)) end)
+			MPR:DKPDeductionHandler(arg2,tonumber(arg3),arg4)
+		elseif arg1 == "DeathReport" then
+			MPR:DeathReport(arg2, arg3)
+		end
+	end)
+end
 
-local function num(num)
-	-- Number formating
-	if strlen(num) > 4 then
-		return string.sub(num, 1, -4).."k"
-	else
-		return num
+do
+	local old = ItemRefTooltip.SetHyperlink -- we have to hook this function since the default ChatFrame code assumes that all links except for player and channel links are valid arguments for this function
+	function ItemRefTooltip:SetHyperlink(link, ...)
+		if link:match("^MPR") then return end
+		return old(self, link, ...)
 	end
 end
 
-local function contains(array, element, ...)
+--[[-------------------------------------------------------------------------
+	Local Methods
+---------------------------------------------------------------------------]]
+
+function numformat(Number)
+	-- Number formating
+	if strlen(Number) > 3 then
+		return string.sub(Number, 1, -4).."k"
+	else
+		return Number
+	end
+end
+
+function contains(array, element, ...)
 	boolKey = ...
 	if boolKey then
 		for key, _ in pairs(array) do
@@ -147,76 +287,77 @@ local function contains(array, element, ...)
 	return false
 end
 
-local function colorWhite(str)
-	return string.format("|r|cFFffffff%s|r|cFFbebebe",str)
+function RemoveByKey(tbl,key)
+	table.remove(tbl,key)
 end
 
-local function report(TimerName, ...)
-	if TimerName == "Report Users" then
-		MPR:Report("Online guild members using MP Reporter: "..table.concat(usersAddon, ", "))
-		table.wipe(usersAddon)
-	else
-		MPR:Report(...)
+function RemoveByValue(tbl,key)
+	for i,v in pairs(tbl) do
+		if v == key then
+			table.remove(tbl,i)
+			return
+		end
 	end
 end
 
-local function unit(name)
+function colorWhite(str)
+	return string.format("|r|cFFffffff%s|r|cFF%s",str,Colors["TEXT"])
+end
+
+function report(TimerName, ...)
+	if TimerName == "Report Users" then
+		MPR:SelfReport(string.format("Online guild members using addon: %s",table.concat(usersAddon, ", ")))
+		table.wipe(usersAddon)
+	else
+		MPR:SelfReport(...)
+	end
+end
+
+function unit(name)
 	if name then
-		if UnitInRaid(name) and UnitClass(name) then
-			return string.format("|r|cFF%s%s|r|cFFbebebe",ClassColors[select(2, UnitClass(name))],name)
+		local class = select(2, UnitClass(name)) or select(6, MPR:GetGuildMemberInfo(name))
+		if class then
+			return string.format("|r|cFF%s|Hplayer:%s|h[%s]|h|r|cFF%s",ClassColors[strupper(class)],name,name,Colors["TEXT"])
+			--return string.format("|Hplayer:%s|h[|r|cFF%s%s|r|cFF%s]|h",name,ClassColors[select(2, UnitClass(name))],name,Colors["TEXT"])
 		elseif contains(BossNames,name) then
-			return "|r|cFFff8c00"..name.."|r|cFFbebebe"
+			return "|r|cFFff8c00"..name.."|r|cFF"..Colors["TEXT"]
 		else
 			return colorWhite(name)
 		end
 	else
 		return "unknown"
 	end
-	
 end
 
-local function spell(id)
+function WarnLink(Target,String)
+	return "|Hplayer:"..name.."|h[Warn Him]|h"
+end
+
+function spell(id, ...)
+	local bRaid = ...
+	if bRaid then return GetSpellLink(id) end
 	if type(id) ~= "number" then return id end
-	if MPR.DB.IconsEnabled and select(3, GetSpellInfo(id)) then
-		return string.format("|r\124T%s:12:12:0:0:64:64:5:59:5:59\124t %s",select(3, GetSpellInfo(id)),GetSpellLink(id))
+	if MPR.Settings["ICONS"] and select(3, GetSpellInfo(id)) then
+		return string.format("\124T%s:12:12:0:0:64:64:5:59:5:59\124t |r%s|cFF%s",select(3, GetSpellInfo(id)),GetSpellLink(id),Colors["TEXT"])
 	else
-		return GetSpellLink(id)
+		return string.format("|r%s|cFF%s",GetSpellLink(id),Colors["TEXT"])
 	end
 end
 
 function getStateColor(state) 
 	if state then
-		return "|r|cFF00FF00enabled|r|cFFbebebe"
+		return "|r|cFF00FF00enabled|r|cFF"..Colors["TEXT"]
 	else
-		return "|r|cFFFF0000disabled|r|cFFbebebe"
+		return "|r|cFFFF0000disabled|r|cFF"..Colors["TEXT"]
 	end
-end
-
-function ListCommands()
-	MPR:Report("Available commands:\n"..
-		colorWhite("/mpr").." (disable or enable MP Reporter)\n"..
-		colorWhite("/mpr status").." (show settings)\n"..
-		colorWhite("/mpr icon")..", "..colorWhite("/mpr icons").." (disable or enable spell icons)\n"..
-		colorWhite("/mpr ccl")..", "..colorWhite("/mpr clear").." (clear combat log)\n"..
-		colorWhite("/mpr buff <keyword>")..", "..colorWhite("/mpr buffs").." (list players without buff/buffs)\n"..
-		colorWhite("/mpr raid-reporting")..", "..colorWhite("/mpr rr").." (toggle reporting to raid)\n"..
-		colorWhite("/mpr say").." (toggle sending SAY messages, ex. Aura on me!)\n"..
-		colorWhite("/mpr report dispels").." (toggle reporting dispels)\n"..
-		colorWhite("/mpr report mass-dispels").." (toggle reporting mass dispels)\n"..
-		colorWhite("/mpr report deaths").." (toggle reporting deaths)"
-	)
 end
 
 function GetGold(str)
 	for l=1,5 do
-		if str:sub(l+2,l+5) == "Gold" then return str:sub(1,l) end
+		if str:sub(l+2,l+5) == "Gold" then return tonumber(str:sub(1,l)) end
 	end
 	return 0
 end
-
---[[-------------------------------------------------------------------------
-	Boss Methods
----------------------------------------------------------------------------]]
 
 --[[-------------------------------------------------------------------------
 	Timer System
@@ -229,7 +370,7 @@ function MPR:ScheduleTimer(name, func, delay, ...)
 end
 
 function MPR:IsTimerScheduled(name)
-	lib:IsTimerScheduled(name)
+	return lib:IsTimerScheduled(name)
 end
 
 function MPR:CancelTimer(name)
@@ -237,17 +378,64 @@ function MPR:CancelTimer(name)
 end
 
 local function TimerHandler(name, ...)
-	if name == "Spell AOE Damage" then
-		local Spell = ...
-		MPR:Report(spell(Spell).." on: "..table.concat(targetsSpellAOEDamage,", "))
-		if MPR.DB.RaidReporting then
-			MPR:RaidReport(spell(Spell).." on: "..table.concat(raidTargetsSpellAOEDamage,", "))
+	if name == "Report DBM Users" then
+		local array_yes = {}
+		local array_no = {}
+		local arrayRaid_yes = {}
+		local arrayRaid_no = {}
+		for i=1,GetNumRaidMembers() do
+			local Unit = UnitName("raid"..i)
+			if contains(DBM_Users,Unit) then
+				table.insert(array_yes,unit(Unit))
+				table.insert(arrayRaid_yes,Unit)
+			else
+				table.insert(array_no,unit(Unit))
+				table.insert(arrayRaid_no,Unit)
+			end
+		end
+		if #array_no > 0 then
+			--MPR:SelfReport("Using DBM: "..table.concat(array_yes,", "))
+			MPR:SelfReport("Not using DBM: "..table.concat(array_no,", "))
+			--MPR:RaidReport("Using DBM: "..table.concat(arrayRaid_yes,", "))
+			--MPR:RaidReport("Not using DBM: "..table.concat(arrayRaid_no,", "))
+		else
+			MPR:SelfReport("Everyone is using DBM.")
+		end
+		table.wipe(DBM_Users)
+	elseif name == "Spell AOE Damage" then
+		local SPELL = ...
+		local SpellName = GetSpellInfo(SPELL)
+				
+		local Targets = {}
+		local arraySelf = {}
+		local arrayRaid = {}
+		
+		for Target,Amount in pairs(targetsSpellAOEDamage) do
+			table.insert(Targets,Target)
+			table.insert(arraySelf,unit(Target).." ("..numformat(Amount)..")")
+			table.insert(arrayRaid,Target.." ("..numformat(Amount)..")")
 		end
 		nameSpellAOEDamage = nil
 		table.wipe(targetsSpellAOEDamage)
-		table.wipe(raidTargetsSpellAOEDamage)
+		
+		--[[
+		local DKPPenaltyData = MPR.DKPPenalties[SpellName] or nil
+		local DKPPenaltyLink = ""
+		
+		
+		if CanEditOfficerNote() and DKPPenaltyData and DKPPenaltyData[1] and DKPPenaltyData[2] > 0 then 
+			if MPR.Settings["DKPPENALTIES_AUTO"] then
+				MPR:DKPDeductionHandler(Targets,DKPPenaltyData[2],"Hit by "..GetSpellLink(SPELL))
+			else
+				DKPPenaltyLink = MPR:DeductDKPLink(Targets, DKPPenaltyData[2], "Hit by {"..SPELL.."}")
+			end
+		end
+		]]
+		
+		MPR:SelfReport(string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
+		MPR:RaidReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")))
 	elseif name == "Aura Targets" then
-		local Spell = ...
+		local SPELL = ...
 		local array = {}
 		local arrayRaid = {}
 		for _,Target in pairs(targetsAura) do
@@ -255,45 +443,46 @@ local function TimerHandler(name, ...)
 			table.insert(arrayRaid,Target)
 		end
 		table.wipe(targetsAura)
-		MPR:Report(spell(Spell).." on: "..table.concat(array,", "))
-		if MPR.DB.RaidReporting then
-			MPR:RaidReport(spell(Spell).." on: "..table.concat(arrayRaid,", "))
-		end
-	elseif name == "Mass Dispel" then
-		local Player = casterMassDispel
-		local array = {}
-		local arrayRaid = {}
-		for Target,extraSpell in pairs(targetsMassDispel) do
-			table.insert(array,string.format("%s (%s)",unit(Target),spell(extraSpell)))
-			table.insert(arrayRaid,string.format("%s (%s)",Target,spell(extraSpell)))
-		end
-		table.wipe(targetsMassDispel)
-		casterMassDispel = nil
-		MPR:Report(unit(Player).." mass-dispels: "..table.concat(array,", "))
-		if MPR.DB.RaidReporting then
-			MPR:RaidReport(Player.." mass-dispels: "..table.concat(arrayRaid,", "))
-		end
+		MPR:SelfReport(string.format("%s on: %s",spell(SPELL),table.concat(array,", ")))
+		MPR:RaidReport(string.format("%s on: %s",spell(SPELL,true),table.concat(arrayRaid,", ")))
 	elseif name == "Heroism" then
-		local Player, Spell = ...
+		local SPELL = ...
 		if #targetsHeroism > 0 then
-			MPR:Report(string.format("%s casts %s (%i/%i players affected).",unit(Player),spell(Spell),#targetsHeroism,GetNumRaidMembers()))
-			if MPR.DB.RaidReporting then
-				MPR:RaidReport(string.format("%s casts %s (%i/%i players affected).",Player,spell(Spell),#targetsHeroism,GetNumRaidMembers()))
-			end
+			MPR:SelfReport(string.format("%s casts %s (%i/%i players affected)",unit(casterHeroism),spell(SPELL),#targetsHeroism,GetNumRaidMembers()))
+			--MPR:RaidReport(string.format("%s casts %s (%i/%i players affected)",casterHeroism,spell(SPELL,true),#targetsHeroism,GetNumRaidMembers()))
 		else
-			MPR:Report(string.format("%s casts %s.",unit(Player),spell(Spell)))
-			if MPR.DB.RaidReporting then
-				MPR:RaidReport(string.format("%s casts %s.",Player,spell(Spell)))
-			end
+			MPR:ReportCast(casterHeroism,SPELL)
 		end
+		casterHeroism = nil
 		table.wipe(targetsHeroism)
 	elseif contains(spellsCreate,name,true) then
-		local Spell = ...
-		MPR:Report(string.format("%s expires in 30 seconds.",spell(Spell)))
-		if MPR.DB.RaidReporting then
-			MPR:RaidReport(string.format("%s expires in 30 seconds.",spell(Spell)))
-		end	
+		local SPELL = ...
+		MPR:SelfReport(string.format("%s expires in 30 seconds.",spell(SPELL)))
+		MPR:RaidReport(string.format("%s expires in 30 seconds.",spell(SPELL,true)))
+	elseif name == "Bloodbolt Splash" then
+		local SPELL = ...
+		local self = {}
+		local raid = {}
+		for i, TARGET in pairs(BS_TargetsName) do
+			local AMOUNT = BS_TargetsAmount[i]
+			table.insert(self,string.format("%s (%s)",unit(TARGET),numformat(AMOUNT)))
+			table.insert(raid,string.format("%s (%s)",TARGET,numformat(AMOUNT)))
+		end
+		table.wipe(BS_TargetsName)
+		table.wipe(BS_TargetsAmount)
+		MPR:SelfReport(string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL),table.concat(self,", ")))
+		--MPR:RaidReport(string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL,true),table.concat(raid,", ")))
 	end
+end
+
+--[[-------------------------------------------------------------------------
+	Boss Methods
+---------------------------------------------------------------------------]]
+
+local function BPC_ChangeTarget(Prince)
+	MPR:SelfReport(string.format("Switch target to: %s", unit(Prince)))
+	MPR:RaidReport(string.format("Switch target to: %s", Prince))
+	MPR:RaidWarning(string.format("Switch target to: %s", Prince))
 end
 
 --[[-------------------------------------------------------------------------
@@ -310,120 +499,109 @@ function MPR:ClearCombatLog(bAuto)
 	local f = CreateFrame("frame",nil,UIParent)
 	f:SetScript("OnUpdate",CombatLogClearEntries)
 	CombatLogClearEntries()
-	self:Report(not bAuto and "Combat log entries cleared." or "Combat log entries cleared. |cFFbebebeUse "..colorWhite("/mpr auto-ccl").." to toggle combat log clear on startup.|r")
+	self:SelfReport("Combat log entries cleared.")
 end
+
+function round(num, idp, ...)
+	local up = ...
+	local mult = 10^(idp or 0)
+	return math.floor(num * mult + (up and 0.99 or 0.5)) / mult
+end
+
+
+local PingTarget, PingTime
 
 function SlashCmdList.MPR(msg, editbox)
 	msg = strlower(msg)
-	if msg == "help" then
-		ListCommands()
-		MPR:BuffHelp()
-	elseif msg == "status" then
-		MPR:Report("Status:\n"..
-			"Reporting "..getStateColor(MPR.DB.Reporting).."\n"..
-			"Startup combat log clear "..getStateColor(MPR.DB.ClearEntriesOnLoad).."\n"..
-			"Icons "..getStateColor(MPR.DB.IconsEnabled).."\n"..
-			"Raid reporting "..getStateColor(MPR.DB.RaidReporting).."\n"..
-			"Sending SAY messages "..getStateColor(MPR.DB.SayMessages).."\n"..
-			"Reporting aura stolen "..getStateColor(MPR.DB.ReportAuraStolen).."\n"..
-			"Reporting dispels "..getStateColor(MPR.DB.ReportDispels).."\n"..
-			"Reporting mass-dispels "..getStateColor(MPR.DB.ReportMassDispels).."\n"..
-			"Reporting deaths "..getStateColor(MPR.DB.ReportDeaths)
-		)
-	elseif msg == "icon" or msg == "icons" then
-		MPR.DB.IconsEnabled = not MPR.DB.IconsEnabled
-		MPR:Report("Icons "..getStateColor(MPR.DB.IconsEnabled)..".")
-	elseif msg == "auto-ccl" then
-		MPR.DB.ClearEntriesOnLoad = not MPR.DB.ClearEntriesOnLoad
-		MPR:Report("Startup combat log clear "..getStateColor(MPR.DB.ClearEntriesOnLoad)..".")
-	elseif msg == "rr" or msg == "raidreporting" or msg == "raid reporting" or msg == "raid-reporting" then
-		MPR.DB.RaidReporting = not MPR.DB.RaidReporting
-		MPR:Report("Raid Reporting "..getStateColor(MPR.DB.RaidReporting)..".")
+	if type(tonumber(msg)) == "number" then
+		MPR_AuraInfo:UpdateFrame(tonumber(msg))
+	elseif msg == "ai" then
+		MPR:SelfReport("Instance: |r|cff3588ff|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h "..
+											 "|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h "..
+											 "|HMPR:AuraInfo:TOC:20|h[Ruby Sanctum]|h ".."|r")		
+	elseif msg == "dbm raid" then
+		table.wipe(DBM_Users)
+		MPR:SelfReport("Reporting DBM (v4) users in 5 seconds ...", true)
+		SendAddonMessage("DBMv4-Ver", "Hi!", "RAID")
+		MPR:ScheduleTimer("Report DBM Users",TimerHandler,5)
 	elseif msg == "ccl" or msg == "clear" then
 		MPR:ClearCombatLog()
-	elseif msg == "say" then
-		MPR.DB.SayMessages = not MPR.DB.SayMessages
-		MPR:Report("Sending SAY messages "..getStateColor(MPR.DB.SayMessages)..".")
-	elseif msg:sub(1,6) == "report" then
-		msg = msg:sub(8)
-		if msg == "aura stolen" then
-			MPR.DB.ReportAuraStolen = not MPR.DB.ReportAuraStolen
-			MPR:Report("Report aura stolen "..getStateColor(MPR.DB.ReportAuraStolen)..".")
-		elseif msg == "dispels" then
-			MPR.DB.ReportDispels = not MPR.DB.ReportDispels
-			MPR:Report("Report dispels "..getStateColor(MPR.DB.ReportDispels)..".")
-		elseif msg == "mass-dispels" then
-			MPR.DB.ReportMassDispels = not MPR.DB.ReportMassDispels
-			MPR:Report("Report mass-dispels "..getStateColor(MPR.DB.ReportMassDispels)..".")
-		elseif msg == "deaths" then
-			MPR.DB.ReportDeaths = not MPR.DB.ReportDeaths
-			MPR:Report("Report deaths "..getStateColor(MPR.DB.ReportDeaths)..".")
+	elseif msg:sub(1,4) == "ping" then
+		msg = msg:sub(6)
+		if msg == "raid" then
+			--SendAddonMessage("DBMv4-Ver", "Hi!", "RAID")
+		elseif UnitInRaid(msg) then
+			PingTarget, PingTime = msg, GetTime()
+			SendAddonMessage("DBMv4-Ver", "Hi!", msg:gsub("^%l", string.upper))
 		else
-			MPR:Report("Unknown command.")
-		end
-	elseif msg:sub(1,4) == "buff" then
-		local sBuff = strlower(msg:sub(6))
-		MPR:ReportWithoutBuff(sBuff)
-	elseif msg == "buffs" then
-		MPR:ReportWithoutBuffs()
-	elseif msg == "ignores" then
-		if UnitInRaid(UnitName("player")) then
-			for i=1,GetNumRaidMembers() do
-				if UnitName("raid"..i) ~= UnitName("player") then
-					SendChatMessage("<MPR> Auto-Whisper: Checking people ignoring me.", "WHISPER", "Common", UnitName("raid"..i));
-				end
-			end
+			MPR:SelfReport("Player '"..msg.."' is not in your raid.", true)
 		end
 	elseif msg ~= "" then
-		MPR:Report("Unknown command.")
-	else
-		MPR.DB.Reporting = not MPR.DB.Reporting
-		MPR:Report(string.format("Reporting %s.",getStateColor(MPR.DB.Reporting)))
+		MPR:SelfReport("Unknown command.")
+	else -- Options
+		if not MPR_Options:IsVisible() then
+			MPR_Options:Show()
+		else
+			MPR_Options:Hide()
+		end
 	end
 end
 
 function MPR:CHAT_MSG_WHISPER(...)
 	local Message, Player = ...
-	if strlower(Message) == "raidlocks" or strlower(Message) == "raid locks" then
+	Message = strlower(Message)
+	if Message == "raidlocks" or Message == "raid locks" then
 		self:ReportLocks(Player)
 	end
-end
-
-function MPR:CHAT_MSG_IGNORED(...)
-	local Player = ...
-	MPR:Report(unit(Player).." is ignoring you.")
-	SendChatMessage("Retard "..Player.." is ignoring me.", "RAID")
 end
 
 local rrInformed = false
 function MPR:RAID_ROSTER_UPDATE(...)
 	if UnitInRaid("player") then
-		if not self.DB.RaidReporting or rrInformed then return end
+		if not self.Settings["RAID"] or rrInformed then return end
 		rrInformed = true
-		self:Report("Raid Reporting is "..getStateColor(self.DB.RaidReporting)..". It is recommended that only one member is reporting to RAID channel to prevent spam. Use "..colorWhite("/mpr rr").." to toggle Raid Reporting.")
+		self:SelfReport("Raid Reporting is "..getStateColor(self.Settings["RAID"])..". It is recommended that only one member is reporting to RAID channel to prevent spam.")
 	else -- not in raid = left raid?
 		rrInformed = false
 	end
 end
 
+local LootedCreatures = {}
 function MPR:LOOT_OPENED()
-	if not UnitInRaid("player") then return end
+	if not UnitInRaid("player") or not self.Settings["REPORT_LOOT"] then return end
 	local LootMethod, _, MasterLooterRaidID = GetLootMethod()
-	if UnitName("player") == UnitName("raid"..MasterLooterRaidID) then
-		if not LootSlotIsCoin(1) then return end
+	if LootMethod == "master" and MasterLooterRaidID and UnitName("player") == UnitName("raid"..MasterLooterRaidID) then
+		local guid = tonumber(string.sub(UnitGUID("target"),6),16)
+		if contains(LootedCreatures,guid) then return end
+		table.insert(LootedCreatures,guid)
+		
 		local BossName = (contains(BossNames,UnitName("target")) or not UnitPlayerOrPetInRaid("target")) and UnitName("target") or "unknown"
-		local WorthGold	= GetGold(select(2,GetLootSlotInfo(1))).." Gold"
+		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
+		local WorthGold	= Gold > 0 and " ("..Gold.." Gold)" or ""
 		local ItemLinks = {}
-		local Epics = false
+		local BoPs = false
 		for i=1,GetNumLootItems() do
-			local _, _, _, Rarity, _ = GetLootSlotInfo(i);
+			local _, Name, _, Rarity, _ = GetLootSlotInfo(i);
 			if Rarity >= 3 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
-				table.insert(ItemLinks, GetLootSlotLink(i))
-				if not Epics and Rarity >= 4 then Epics = true end
+				-- make BiS list
+				local bisClasses = {}
+				if self.Settings["REPORT_LOOT_BIS_INFO"] then
+					for Class,Specs in pairs(ClassBIS) do
+						local bisSpecs = {}
+						for Spec,Items in pairs(Specs) do
+							if contains(Items,Name) then
+								table.insert(bisSpecs,Spec:sub(1,3).."."..(Spec:sub(1,5) == "Feral" and select(2,strsplit(Spec,"-")) or ""))
+							end
+						end
+						if #bisSpecs > 0 then table.insert(bisClasses,Class.." ("..table.concat(bisSpecs,", ")..")") end
+					end
+				end
+				table.insert(ItemLinks, GetLootSlotLink(i)..(#bisClasses > 0 and " BiS: "..table.concat(bisClasses," ") or ""))
+				if select(5,GetLootRollItemInfo(i-1)) then BoPs = true end
 			end
 		end
 		local NotEligible = {}
-		if Epics then -- Check who is not eligible to loot BoP (rare) items.
+		if BoPs then -- Check who is not eligible to loot BoP items.
 			local Eligible = {}
 			for i=1,40 do
 				if GetMasterLootCandidate(i) then table.insert(Eligible, GetMasterLootCandidate(i)) end
@@ -433,29 +611,214 @@ function MPR:LOOT_OPENED()
 				if not contains(Eligible,Member) then table.insert(NotEligible,Member) end
 			end
 		end
-		if #ItemLinks > 0 then
-			self:RaidReport(string.format("<MP Reporter>"),true,true)
-			self:RaidReport(string.format("Linking items from loot - %s (worth %s):",BossName,WorthGold),true,true)
+		if #ItemLinks > 0 and (BoPs or not self.Settings["REPORT_LOOT_BOP_ONLY"]) then
+			self:RaidReport(string.format("%s - items in loot:%s",BossName,WorthGold),true)
 			for _,item in pairs(ItemLinks) do
 				self:RaidReport(item,true,true)
 			end
 			if #NotEligible > 0 then
-				self:RaidReport("Not eligible for BoPs: "..table.concat(NotEligible, ", "),true,true)
+				self:RaidReport("Not eligible: "..table.concat(NotEligible, ", "),true,true)
 			end
 		end
-		LootSlot(1)
 	end
 end
 
+MPR_GameTime = {
+  Get = function(self)
+  	if(self.LastMinuteTimer == nil) then
+  		local h,m = GetGameTime()
+  		return h,m,0
+  	end
+  	local GameSecond = floor(GetTime() - self.LastMinuteTimer)
+	GameSecond = (GameSecond <= 59 and GameSecond or 59)
+  	return self.LastGameHour, self.LastGameMinute, GameSecond
+  end,
+
+  OnUpdate = function(self)
+  	local h,m = GetGameTime()
+  	if(self.LastGameMinute == nil) then
+  		self.LastGameHour = h
+  		self.LastGameMinute = m
+  		return
+  	end
+  	if(self.LastGameMinute == m) then
+  		return
+  	end
+  	self.LastGameHour = h
+  	self.LastGameMinute = m
+  	self.LastMinuteTimer = GetTime()
+  end,
+
+  Initialize = function(self)
+  	self.Frame = CreateFrame("Frame")
+  	self.Frame:SetScript("OnUpdate", function() self:OnUpdate() end)
+  end
+}
+MPR_GameTime:Initialize()
+
+function MPR:ReportDeath(str)
+	if self.Settings["PD_RAID"] then
+		if UnitInRaid("player") then
+			self:RaidReport(str,true)
+		elseif GetNumPartyMembers() > 0 then
+			self:PartyReport(str,true)
+		end
+	end
+	if self.Settings["PD_WHISPER"] then
+		self:Whisper(str,true)
+	end
+	if self.Settings["PD_GUILD"] then
+		self:Guild(str)
+	end
+end
+
+local Combat = false
+local DeathData = {}
+function MPR:StartCombat(EncounterName)
+	Combat = true
+	local tbl = {}
+	tbl.Name = EncounterName
+	tbl.TimeStart = GetTime()
+	local h,m,s = MPR_GameTime:Get()
+	tbl.GameTimeStart = string.format("%i:%i:%i",h,m,s)
+	tbl.Deaths = {}
+	DeathData[#DeathData+1] = tbl
+	WipeCheck()
+end
+
+function MPR:StopCombat()
+	Combat = false
+	DeathData[#DeathData].TimeEnd = GetTime() -- Not used
+	local h,m,s = MPR_GameTime:Get()
+	DeathData[#DeathData].GameTimeStart = string.format("%i:%i:%i",h,m,s)
+	local index = #DeathData
+	local numDeaths = #(DeathData[index].Deaths)
+	self:SelfReport("Encounter "..DeathData[index].Name.." finished."..(numDeaths > 0 and "("..numDeaths.." death records. Show report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
+end
+
+function WipeCheck()
+	if not Combat then return end -- StopCombat() was called already
+	local Wipe = true
+	if UnitInRaid("player") then
+		for i=0,GetNumRaidMembers() do
+			local UnitID = (i == 0 and "player" or "raid"..i)
+			if UnitAffectingCombat(UnitID) and not UnitIsDeadOrGhost(UnitID) then
+				Wipe = false
+				break
+			end
+		end
+	end
+	if Wipe then
+		MPR:StopCombat()
+	else
+		MPR:ScheduleTimer("Wipe Check", WipeCheck, 3)
+	end
+end
+
+function MPR:DeathReport(channel, index)
+	index = tonumber(index or #DeathData)
+	local strReportTitle = "Death Report for "..DeathData[index].Name.." ("..DeathData[index].GameTimeStart.." - "..DeathData[index].GameTimeEnd..")"
+	if channel == "Raid" then
+		self:RaidReport(strReportTitle,true)
+	elseif channel == "Guild" then
+		self:Guild(strReportTitle)
+	elseif channel == "Self" then
+		self:SelfReport(strReportTitle)
+	end	
+	local Data = DeathData[index]
+	for i=1,(#DeathData[index]) do
+		local Player,Time,Source,Ability,Amount,Overkill = unpack(Data[i])
+		local strTime = floor(Time/60)..":"..(strlen(Time%60) == 1 and "0" or "")..(Time%60)
+		if channel == "Raid" then
+			self:RaidReport(string.format("%i. %s %s - %s: %s (A: %i / O: %i)",i,strTime,Player,Source,Ability,Amount-Overkill,Overkill),true,true)
+		elseif channel == "Guild" then
+			self:Guild(string.format("%i. %s %s - %s: %s (A: %i / O: %i)",i,strTime,Player,Source,Ability,Amount-Overkill,Overkill),true)
+		else
+			self:SelfReport(string.format("%i. %s - %s: %s %s (A: %i / O: %i)",i,strTime,Player,Source,Ability,Amount-Overkill,Overkill))
+		end
+	end
+end
+
+function MPR:InsertDeath(Player,Source,Ability,Amount,Overkill)
+	if not Combat then return end
+	local Time = math.floor(GetTime()-DeathData[#DeathData].TimeStart)
+	local tbl = {Player,Time,Source,Ability,Amount,Overkill}
+	table.insert(DeathData[#DeathData],tbl)
+end
+
+local PotencialDeaths = {}
 function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
-	if not self.DB.Reporting then return end 
+	if not self.Settings["SELF"] then return end 
 	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
+	
+	if UnitIsPlayer(destName) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
+		if event == "SWING_DAMAGE" then
+			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
+			
+			local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
+			if overkill > 0 then
+				self:InsertDeath(destName,(sourceName or "Unknown"),"Melee",amount,overkill)
+				if self.Settings["PD_SELF"] then
+					self:SelfReport(unit(destName).." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+				end
+				self:ReportDeath(destName.." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+			end
+		elseif event == "RANGED_DAMAGE" or event == "SPELL_DAMAGE" or event == "SPELL_PERIODIC_DAMAGE" then
+			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
+			
+			local spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
+			if overkill > 0 then
+				self:InsertDeath(destName,(sourceName or "Unknown"),GetSpellLink(spellId),amount,overkill)
+				if self.Settings["PD_SELF"] then
+					self:SelfReport(unit(destName).." died. ("..(sourceName or "Unknown")..": "..spell(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+				end
+				self:ReportDeath(destName.." died. ("..(sourceName or "Unknown")..": "..GetSpellLink(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+			end
+		elseif event == "ENVIRONMENTAL_DAMAGE" then
+			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
+			
+			local environmentalType, amount, overkill = select(9, ...)
+			if overkill > 0 then
+				self:InsertDeath(destName,"Environment",(environmentalType or "Unknown"),amount,overkill)
+				if self.Settings["PD_SELF"] then
+					self:SelfReport(unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+				end
+				self:ReportDeath(destName.." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+			else
+				PotencialDeaths[destName] = {timestamp,environmentalType,amount}
+			end
+		elseif event == "UNIT_DIED" then		
+			if PotencialDeaths[destName] then
+				if (timestamp - PotencialDeaths[destName][1]) < 1 then
+					self:InsertDeath(destName,"Environment",(PotencialDeaths[destName][2] or "Unknown"),amount,overkill)
+					if self.Settings["PD_SELF"] then
+						self:SelfReport(unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")")
+					end
+					self:ReportDeath(destName.." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")")
+				end
+				PotencialDeaths[destName] = nil
+			end
+		end
+		
+		--[[
+		if sourceName == UnitName("player") and event == "SPELL_ENERGIZE" then
+			local spellId, spellName, _, amount, powerType = select(9, ...)
+			if spellId == 48542 or spellId == 48541 or spellId == 48540 or spellId == 48543 then
+				powerType = (powerType == 0 and "Mana" or powerType == 1 and "Rage" or powerType == 4 and "Energy" or powerType == 6 and "Runic Power" or "Unknown")
+				self:SelfReport("Revitalized "..unit(destName).." ("..amount.." "..powerType..")")
+			end
+		end
+		]]
+	end
 	
 	-- taken from Blizzard_CombatLog.lua
 	if event == "SWING_DAMAGE" then
 		local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
-	
-		if contains(reportDamageOnTarget,destName) then
+		
+		if sourceName == "Vengeful Shade" and UnitIsPlayer(destName) then
+			self:SelfReport(string.format("%s failed to run from %s",unit(destName),unit(sourceName)))
+			self:RaidReport(string.format("%s failed to run from %s",destName,sourceName))
+		elseif contains(reportDamageOnTarget,destName) then
 			self:ReportDamageOnTarget(sourceName,destName,spellId)
 		end
 	elseif event == "SWING_MISSED" then
@@ -477,18 +840,26 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		end
 	elseif event:sub(1, 5) == "SPELL" then
 		local spellId, spellName, spellSchool = select(9, ...)
+		
 		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
 			if spellName == "Heroism" and UnitInRaid(sourceName) then
-				if not self:IsTimerScheduled("Heroism") then
-					table.wipe(targetsHeroism)
-					self:ScheduleTimer("Heroism", TimerHandler, 0.3, sourceName, spellId)
-				end
-			elseif contains(spellsCast,spellName) then
+				table.wipe(targetsHeroism)
+				casterHeroism = sourceName
+				self:ScheduleTimer("Heroism", TimerHandler, 1, spellId)
+			elseif contains(spellsCast,spellName) or spellId == 69381 then -- 69381 - [Gift of the Wild] Drums!
 				self:ReportCast(sourceName,spellId)
 			elseif contains(spellsCastOnTarget,spellName) then
-				self:ReportCastOnTarget(sourceName,spellId,destName)
+				self:ReportCastOnTarget(sourceName,destName,spellId)
 			elseif contains(spellsBossCastOnTarget,spellName) then
 				self:ReportBossCastOnTarget(spellId,destName)
+			end
+			
+			if sourceName == "Shadow Trap" and spellName == "Shadow Trap" then
+				self:RaidReport(GetSpellLink(spellId))
+			elseif spellName == "Swarming Shadows" then
+				self:Whisper(destName, GetSpellLink(spellId).." on you! Run along walls!!")
+			elseif spellId == 74502 then
+				self:Whisper(destName, GetSpellLink(spellId).." on you! Run awayy!!")
 			end
 		elseif event == "SPELL_CREATE" then
 			if contains(spellsCreate,destName,true) then
@@ -505,23 +876,37 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		elseif event == "SPELL_DAMAGE" then
 			local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(12, ...)
 			
-			if contains(spellsDamage,spellName) then
+			if spellName == "Pain and Suffering" and UnitInRaid(destName) then 
+				local stacks = select(4,UnitDebuff(destName,"Pain and Suffering"))
+				if stacks and stacks == 5 then
+					self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
+				end
+			end
+			
+			if contains(spellsDamage,spellName) and UnitIsPlayer(destName) then
 				self:ReportSpellDamage(spellId,destName,amount,critical)
-			elseif contains(spellsAOEDamage,spellName) then
+			elseif contains(spellsAOEDamage,spellName) and UnitIsPlayer(destName) then
 				if not nameSpellAOEDamage then
 					nameSpellAOEDamage = spellName
 				elseif nameSpellAOEDamage ~= spellName then
 					return
 				end
 				
-				if not self:IsTimerScheduled("Spell AOE Damage") then
-					self:ScheduleTimer("Spell AOE Damage", TimerHandler, 0.3, spellId)
-				end
+				self:CancelTimer("Spell AOE Damage")
+				self:ScheduleTimer("Spell AOE Damage", TimerHandler, 0.5, spellId)
 				
-				table.insert(targetsSpellAOEDamage,string.format("%s (%s)",unit(destName),num(amount)))
-				table.insert(raidTargetsSpellAOEDamage,string.format("%s (%s)",destName,num(amount)))
+				targetsSpellAOEDamage[destName] = amount
 			elseif contains(reportDamageOnTarget,destName) then
 				self:ReportDamageOnTarget(sourceName,destName,spellId)
+			--elseif spellId == 71447 or spellId == 71481 then -- Blood-Queen Lana'thel: Bloodbolt Splash
+			--	if not self:IsTimerScheduled("Bloodbolt Splash") then
+			--		self:ScheduleTimer("Bloodbolt Splash", TimerHandler, 1, spellId)
+			--	end
+			--	table.insert(BS_TargetsName,destName)
+			--	table.insert(BS_TargetsAmount,amount)
+			elseif spellId == 69770 and amount > 20000 and GetRaidDifficulty() < 3 then -- Sindragosa: Backlash
+				self:ReportSpellDamage(spellId,destName,amount,critical)
+			--elseif spellId == 71044 or spellId == 71045 or spellId == 71046 then -- Sindragosa: Backlash (hc)
 			end
 		elseif event == "SPELL_HEAL" then
 			local amount, overheal, absorbed, critical = select(12, ...)
@@ -530,215 +915,165 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			if contains(spellsHeal,spellName) then
 				self:ReportSpellHeal(spellId,destName,amount,critical)
 			end
-		elseif event == "SPELL_ENERGIZE" then
-			local valueType = 2
-			local amount, powerType = select(12, ...)
 		elseif event:sub(1, 14) == "SPELL_PERIODIC" then
-			if event == "SPELL_PERIODIC_MISSED" then
-				local missType = select(12, ...)
-			elseif event == "SPELL_PERIODIC_DAMAGE" then
+			if event == "SPELL_PERIODIC_DAMAGE" then
 				local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(12, ...)
 				
 				if contains(spellsPeriodicDamage,spellName) and UnitInRaid(destName) then
-					self:ReportSpellPeriodicDamage(spellId,destName,amount,critical)
+					self:ReportSpellDamage(spellId,destName,amount,critical)
 				end
 			elseif event == "SPELL_PERIODIC_HEAL" then
 				local amount, overheal, absorbed, critical = select(12, ...)
 				local school = spellSchool
 				
 				if contains(spellsPeriodicHeal,spellName) then
-					self:ReportSpellPeriodicHeal(spellId,destName,amount,critical)
+					self:ReportSpellHeal(spellId,destName,amount,critical)
 				end
-			elseif event == "SPELL_PERIODIC_DRAIN" then
-				local amount, powerType, extraAmount = select(12, ...)
-				local valueType = 2
-			elseif event == "SPELL_PERIODIC_LEECH" then
-				local amount, powerType, extraAmount = select(12, ...)
-				local valueType = 2
-			elseif event == "SPELL_PERIODIC_ENERGIZE" then
-				local amount, powerType = select(12, ...)
-				local valueType = 2
 			end
 		elseif event == "SPELL_DISPEL" then
 			local extraSpellId, extraSpellName, extraSpellSchool, auraType = select(12, ...)
 			
-			if self.DB.ReportDispels and spellName ~= "Mass Dispel" then
+			if extraSpellName == "Necrotic Plague" and sourceName ~= destName then
+				self:Whisper(destName, GetSpellLink(spellId).." dispeled from you!")
+			end
+			
+			if self.Settings["REPORT_DISPELS"] and (spellName ~= "Mass Dispel" or self.Settings["REPORT_MASSDISPELS"]) then
 				self:ReportDispel(sourceName,destName,extraSpellId)
-			elseif self.DB.ReportMassDispels and spellName == "Mass Dispel" then
-				if not casterMassDispel then
-					casterMassDispel = sourceName
-				elseif casterMassDispel ~= sourceName then
-					return
-				end
-				
-				if not self:IsTimerScheduled("Mass Dispel") then
-					self:ScheduleTimer("Mass Dispel", TimerHandler, 0.2)
-				end
-				table.insert(targetsMassDispel,destName,extraSpellName)
 			end
 		elseif event == "SPELL_AURA_APPLIED" then
 			local auraType = select(12, ...)
 			
-			if contains(aurasAppliedOnTarget,spellName) then
+			if spellName == "Frost Beacon" then
+				self:Whisper(destName, GetSpellLink(70126).." on you! Run away from others!!")
+			elseif spellName == "Gaseous Bloat" then
+				self:Whisper(destName, GetSpellLink(spellId).." on you! Kite it!!")
+			end
+			
+			if contains(aurasAppliedOnTarget,spellName) and UnitIsPlayer(destName) then
+				if destName == UnitName("player") and contains(sayAuraOnMe,spellName) then
+					self:Say(sayAuraOnMe[spellName])
+				end
 				self:ReportAppliedOnTarget(spellId,destName)
 			elseif contains(aurasAppliedOnTargets,spellName) then
-				if destName == UnitName("player") and self.DB.SayMessages and contains(sayAuraOnMe,spellName) then
+				if destName == UnitName("player") and contains(sayAuraOnMe,spellName) then
 					self:Say(sayAuraOnMe[spellName])
 				end
 				table.insert(targetsAura,destName)
 				self:CancelTimer("Aura Targets")
-				self:ScheduleTimer("Aura Targets", TimerHandler, 0.2, spellId)
-			elseif spellName == "Heroism" and UnitInRaid(destName) then
+				self:ScheduleTimer("Aura Targets", TimerHandler, 0.5, spellId)
+			elseif spellName == "Heroism" and sourceName == casterHeroism and UnitIsPlayer(destName) then
 				table.insert(targetsHeroism,destName)
-			elseif spellName == "Enrage" and destName("Saviana Ragefire") then
+			elseif spellName == "Enrage" and destName == "Saviana Ragefire" then
+				self:ReportAppliedOnTarget(spellId,destName)
+			elseif contains({70952,70982,70981},spellId) then -- BPC: Target Switch
+				BPC_ChangeTarget(destName)
+			elseif spellName == "Essence of the Blood Queen" and UnitIsPlayer(destName) then
+				--self:Whisper(destName, "Bite on you! (+100% dmg)")
+			elseif spellName == "Frenzied Bloodthirst" and UnitIsPlayer(destName) then
+				self:Whisper(destName, "You have to bite!!")
+			elseif spellName == "Uncontrollable Frenzy" and UnitIsPlayer(destName) then
+				--self:Whisper(destName, "You failed to bite.")
+				self:RaidReport(string.format("%s failed to bite.", destName))
+			elseif spellName == "Touch of Jaraxxus" then -- Jaraxxus: Touch of Jaraxxus
+				self:Whisper(destName, GetSpellLink(spellId).." on you! Run away till debuff is gone!!")
+			elseif spellName == "Incinerate Flesh" then -- Jaraxxus: Incinerate Flesh
 				self:ReportAppliedOnTarget(spellId,destName)
 			end
 		elseif event == "SPELL_AURA_APPLIED_DOSE" then
 			local auraType, amount = select(12, ...)
-			
 			if contains(stackAppliedOnTarget,spellName) then
 				self:ReportStacksOnTarget(destName,spellId,amount)
 			end
-		elseif event == "SPELL_AURA_STOLEN" then
-			local extraSpellId, extraSpellName, extraSpellSchool = select(12, ...)
-			local auraType = select(15, ...)
-			
-			if self.DB.ReportAurasStolen then
-				self:ReportAuraStolen(sourceName,extraSpellId,destName)
-			end
-		end
-	elseif event == "UNIT_DIED" or event == "UNIT_DESTROYED" then
-		local sourceName = destName
-		local sourceGUID = destGUID
-		local sourceFlags = destFlags
-		
-		if self.DB.ReportDeaths then
-			if not reportDeathsPlayersOnly or UnitIsPlayer(sourceName) then
-				self:ReportDeath(sourceName)
-			end
+		elseif event == "SPELL_RESURRECT" and spellId == 48477 then -- Rebirth (Druid)
+			self:ReportCombatResurrect(sourceName,spellId,destName)
 		end
 	end
 end
 
 function MPR:CHAT_MSG_MONSTER_YELL(msg)
-	if not self.DB.Reporting or not contains(BossYells,msg,true) then return end
-	local event = BossYells[msg]
-	if event == "Meteor Strike" then
-		if self.DB.RaidReporting then
-			SendChatMessage("Meteor impact in 7 sec. Run to other side!!", "SAY")
-		end
+	if not self.Settings["SELF"] then return end
+	if EncounterStartYells[msg] then
+		local EncounterName = EncounterNames[EncounterStartYells[msg]]
+		self:SelfReport("Encounter |r|cFFffffff"..EncounterName.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..EncounterStartYells[msg].."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
+		self:StartCombat(EncounterName)
+	elseif EncounterDoneYells[msg] then
+		self:StopCombat()
+	end
+	if BossYells[msg] then
+		self:Say(BossYells[msg])
 	end
 end
 
--- Unit summons Target. [Spell].
-function MPR:ReportSummon(Unit,Target,Spell)
-	self:Report(string.format("%s summons %s. (%s)",unit(Unit),unit(Target),spell(Spell)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s summons %s. (%s)",Unit,Target,spell(Spell)))
-	end
+--[[ SWING_DAMAGE, SPELL_DAMAGE, SPELL_PERIODIC_DAMAGE, SPELL_HEAL, SPELL_PERIODIC_HEAL ]]--
+function MPR:ReportSpellDamage(SPELL,TARGET,AMOUNT,CRIT) -- [Spell] hits Target for Amount [(Critical)].
+	local CRIT = CRIT and " (Critical)" or ""
+	self:SelfReport(string.format("%s hits %s for %s%s",spell(SPELL),unit(TARGET),numformat(AMOUNT),CRIT))
+end
+function MPR:ReportSpellHeal(SPELL,TARGET,AMOUNT,CRIT) -- [Spell] heals Target for Amount [(Critical)].
+	local CRIT = CRIT and " (Critical)" or ""
+	self:SelfReport(string.format("%s heals %s for %s%s",spell(SPELL),unit(TARGET),numformat(AMOUNT),CRIT))
+end
+function MPR:ReportDamageOnTarget(UNIT,TARGET,SPELL) -- Unit damages Target with [Spell].
+	self:SelfReport(string.format("%s damages %s with %s",unit(UNIT),unit(TARGET),spell(SPELL)))
+--	self:RaidReport(string.format("%s damages %s with %s",UNIT,TARGET,spell(SPELL,true)))
 end
 
--- Target summoned. [Spell]
-function MPR:ReportBossSummon(Target,Spell)
-	self:Report(string.format("%s summoned. (%s)",unit(Target),spell(Spell)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s summoned. (%s)",Target,spell(Spell)))
-	end
+--[[ SPELL_SUMMON ]]--
+function MPR:ReportSummon(UNIT,TARGET,SPELL) -- Unit summons Target. [Spell].
+	self:SelfReport(string.format("%s summons %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
+	self:RaidReport(string.format("%s summons %s (%s)",UNIT,TARGET,spell(SPELL,true)))
+end
+function MPR:ReportBossSummon(TARGET,SPELL) -- Target summoned. [Spell]
+	self:SelfReport(string.format("%s summoned (%s)",unit(TARGET),spell(SPELL)))
+	self:RaidReport(string.format("%s summoned (%s)",TARGET,spell(SPELL,true)))
 end
 
--- Player damages Target with [Spell].
-function MPR:ReportDamageOnTarget(Player,Target,Spell)
-	self:Report(string.format("%s damages %s with %s.",unit(Player),unit(Target),spell(Spell)))
+--[[ SPELL_CAST_START, SPELL_CAST_SUCCESS ]]--
+function MPR:ReportCast(UNIT,SPELL) -- Unit casts [Spell].
+	self:SelfReport(string.format("%s casts %s",unit(UNIT),spell(SPELL)))
+	self:RaidReport(string.format("%s casts %s",UNIT,spell(SPELL,true)))
+end
+function MPR:ReportCastOnTarget(UNIT,TARGET,SPELL) -- Unit casts [Spell] on Target.
+	self:SelfReport(string.format("%s casts %s on %s",unit(UNIT),spell(SPELL),unit(TARGET)))
+	self:RaidReport(string.format("%s casts %s on %s",UNIT,spell(SPELL,true),TARGET))
 end
 
--- Player casts [Spell].
-function MPR:ReportCast(Player,Spell)	
-	self:Report(string.format("%s casts %s.",unit(Player),spell(Spell)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s casts %s.",Player,spell(Spell)))
-	end
+--[[ SPELL_AURA_APPLIED ]]--
+function MPR:ReportBossCastOnTarget(SPELL,TARGET) -- [Spell] on Target.
+	self:SelfReport(string.format("%s on %s",spell(SPELL),unit(TARGET)))
+	self:RaidReport(string.format("%s on %s",spell(SPELL,true),TARGET))
+end
+function MPR:ReportAppliedOnTarget(SPELL,TARGET) -- [Spell] applied on Target.
+	self:SelfReport(string.format("%s applied on %s",spell(SPELL),unit(TARGET)))
+	self:RaidReport(string.format("%s applied on %s",spell(SPELL,true),TARGET))
 end
 
--- Player casts [Spell] on Target.
-function MPR:ReportCastOnTarget(Player,Spell,Target)
-	self:Report(string.format("%s casts %s on %s.",unit(Player),spell(Spell),unit(Target)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s casts %s on %s.",Player,spell(Spell),Target))
-	end
+--[[ SPELL_AURA_APPLIED_DOSE ]]--
+function MPR:ReportStacksOnTarget(TARGET,SPELL,AMOUNT) -- Target has Amount stacks of [Spell].
+	self:SelfReport(string.format("%s has %i stacks of %s",unit(TARGET),AMOUNT,spell(SPELL)))
+	self:RaidReport(string.format("%s has %i stacks of %s",TARGET,AMOUNT,spell(SPELL,true)))
 end
 
--- [Spell] on Target.
-function MPR:ReportBossCastOnTarget(Spell,Target)
-	self:Report(string.format("%s on %s.",spell(Spell),unit(Target)))
-	if self.DB.RaidReporting then
-		self:RaidReport(spell(Spell).." on "..Target..".", "RAID")
-	end
+--[[ SPELL_DISPEL ]]--
+function MPR:ReportDispel(UNIT,TARGET,SPELL) -- Unit dispels [Spell] from Target.
+	self:SelfReport(string.format("%s dispels %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
+	self:RaidReport(string.format("%s dispels %s (%s)",UNIT,TARGET,spell(SPELL,true)))
 end
 
--- [Spell] applied on Target.
-function MPR:ReportAppliedOnTarget(Spell,Target)
-	self:Report(string.format("%s applied on %s.",spell(Spell),unit(Target)))
+--[[ SPELL_CREATE ]]--
+function MPR:ReportSpellCreate(UNIT,SPELL) -- Unit prepares [Spell].
+	self:SelfReport(string.format("%s prepares %s",unit(UNIT),spell(SPELL)))
+	self:RaidReport(string.format("%s prepares %s",UNIT,spell(SPELL,true)))
 end
 
--- Target has Amount stacks of [Spell].
-function MPR:ReportStacksOnTarget(Target,Spell,Amount)
-	self:Report(string.format("%s has %i stacks of %s.",unit(Target),Amount,spell(Spell)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s has %i stacks of %s.",Target,Amount,spell(Spell)))
-	end
+--[[ SPELL_RESURRECT ]]-- only dudu ress
+function MPR:ReportCombatResurrect(UNIT,SPELL,TARGET) -- Unit prepares [Spell].
+	self:SelfReport(string.format("%s resurrects %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
+	self:RaidReport(string.format("%s resurrects %s (%s)",UNIT,TARGET,spell(SPELL,true)))
 end
 
--- Player steals [Spell] from Target.
-function MPR:ReportAuraStolen(Player,Spell,Target)
-	self:Report(string.format("%s steals %s from %s.",unit(Player),spell(Spell),unit(Target)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s steals %s from %s.",Player,spell(Spell),Target))
-	end
-end
-
--- Player dispels [extraSpell] from Target.
-function MPR:ReportDispel(Player,Target,extraSpell)
-	self:Report(string.format("%s dispels %s (%s).",unit(Player),unit(Target),spell(extraSpell)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s dispels %s (%s).",Player,Target,spell(extraSpell)))
-	end
-end
-
--- Player died.
-function MPR:ReportDeath(Player)
-	if UnitIsDead(Player) then self:Report(string.format("%s died.",unit(Player))) end
-end
-
--- Player prepares [Spell].
-function MPR:ReportSpellCreate(Player,Spell)
-	self:Report(string.format("%s prepares %s.",unit(Player),spell(Spell)))
-	if self.DB.RaidReporting then
-		self:RaidReport(string.format("%s prepares %s.",Player,spell(Spell)))
-	end
-end
-
--- [Spell] hits Target for Amount [(Critical)].
-function MPR:ReportSpellDamage(Spell,Target,Amount,bCrit)
-	local strCrit = bCrit and " (Critical)" or ""
-	self:Report(string.format("%s hit %s for %s%s.",spell(Spell),unit(Target),num(Amount),strCrit))
-end
-function MPR:ReportSpellPeriodicDamage(Spell,Target,Amount,bCrit)
-	local strCrit = bCrit and " (Critical)" or ""
-	self:Report(string.format("%s hits %s for %s%s.",spell(Spell),unit(Target),num(Amount),strCrit))
-end
-
--- [Spell] heals Target for Amount [(Critical)].
-function MPR:ReportSpellHeal(Spell,Target,Amount,bCrit)
-	local strCrit = bCrit and " (Critical)" or ""
-	self:Report(string.format("%s heals %s for %s%s.",spell(Spell),unit(Target),num(Amount),strCrit))
-end
-function MPR:ReportSpellPeriodicHeal(Spell,Target,Amount,bCrit)
-	local strCrit = bCrit and " (Critical)" or ""
-	self:Report(string.format("%s heals %s for %s%s.",spell(Spell),unit(Target),num(Amount),strCrit))
-end
-
--- Just adds MPR prefix and postfix.
-function MPR:Report(msg)
+-- Just adds MPR prefix.
+function MPR:SelfReport(msg)
 	if not msg then return end
 	print(MPR_Prefix..msg..MPR_Postfix)
 end
@@ -746,7 +1081,7 @@ end
 -- Just adds MPR channel prefix
 function MPR:RaidReport(msg, ...)
 	local rrBypass, prefixBypass = ...
-	if not (msg and (self.DB.RaidReporting or rrBypass)) then return end
+	if not (msg and (self.Settings["RAID"] or rrBypass)) then return end
 	if not prefixBypass then
 		SendChatMessage(MPR_ChannelPrefix..msg, "RAID")
 	else
@@ -754,228 +1089,149 @@ function MPR:RaidReport(msg, ...)
 	end
 end
 
-function MPR:Say(msg)
-	if not msg then return end
-	SendChatMessage(msg, "SAY")
+function MPR:PartyReport(msg, ...)
+	local prBypass, prefixBypass = ...
+	if not (msg and (self.Settings["RAID"] or prBypass)) then return end
+	if not prefixBypass then
+		SendChatMessage(MPR_ChannelPrefix..msg, "PARTY")
+	else
+		SendChatMessage(msg, "PARTY")
+	end
+end
+
+-- Raid Warning
+function MPR:RaidWarning(MESSAGE, ...)
+	local rwBypass = ...
+	if not (MESSAGE and (self.Settings["RAID"] or rwBypass)) then return end
+	SendChatMessage(MESSAGE, "RAID_WARNING")
+end
+
+-- Guild Message
+function MPR:Guild(MESSAGE, ...)
+	if not (MESSAGE) then return end
+	local noPrefix = ...
+	SendChatMessage((noPrefix and "" or MPR_ChannelPrefix)..MESSAGE, "GUILD")
+end
+
+-- Whisper Message
+function MPR:Whisper(TARGET, MESSAGE, ...)
+	local wBypass = ...
+	if not (MESSAGE and (self.Settings["WHISPER"] or wBypass)) then return end
+	SendChatMessage(MPR_ChannelPrefix..MESSAGE, "WHISPER", nil, TARGET)
+end
+
+-- Say Message
+function MPR:Say(MESSAGE, ...)
+	local smBypass = ...
+	if not (MESSAGE and (self.Settings["SAY"] or smBypass)) then return end
+	SendChatMessage(MESSAGE, "SAY")
 end
 
 --[[-------------------------------------------------------------------------
 	Other Methods
 ---------------------------------------------------------------------------]]
-
-function MPR:BuffHelp()
-	self:Report("Use "..colorWhite("/mpr check <buff keyword>").." to list players not having provided buff. Buff keywords:\n"..
-		spell(25898).." - bok, gbok; "..spell(48934).." - bom, gbom; "..spell(48938).." - bow, gbow; "..spell(25899).." - bos, gbos; "..
-		spell(48469).." - motw, gotw; "..spell(42995).." - ai, db; "..spell(57399).." - food, fish")
-end
-
-function MPR:ReportWithoutBuff(sBuff)
-	if not UnitInRaid(UnitName("player")) then self:Report("Must be in a raid group.") end
-	
-	local eligibleBuffs = {}
-	local buff1 = "empty"
-	local buff2 = "empty"
-	local buff3 = "empty"
-	local idBuff
-	if sBuff == "bok" or sBuff == "gbok" then
-		buff1 = "Blessing of Kings"
-		buff2 = "Greater Blessing of Kings"
-		idBuff = 20217
-	elseif sBuff == "bom" or sBuff == "gbom" then
-		buff1 = "Blessing of Might"
-		buff2 = "Greater Blessing of Might"
-		idBuff = 48932
-	elseif sBuff == "bow" or sBuff == "gbow" then
-		buff1 = "Blessing of Wisdom"
-		buff2 = "Greater Blessing of Wisdom"
-		idBuff = 48936
-	elseif sBuff == "bos" or sBuff == "gbos" then
-		buff1 = "Blessing of Sanctuary"
-		buff2 = "Greater Blessing of Sanctuary"
-		idBuff = 67480
-	elseif sBuff == "priest1" or sBuff == "pwf" or sBuff == "pof" or sBuff == "fortitude" then
-		buff1 = "Power Word: Fortitude"
-		buff2 = "Prayer of Fortitude"
-		idBuff = 48161
-	elseif sBuff == "priest2" or sBuff == "ds" or sBuff == "pos" or sBuff == "spirit" then
-		buff1 = "Divine Spirit"
-		buff2 = "Prayer of Spirit"
-		idBuff = 48073
-	elseif sBuff == "priest3" or sBuff == "sp" or sBuff == "psp" or sBuff == "shadow" or sBuff == "shadow protection" then
-		buff1 = "Shadow Protection"
-		buff2 = "Prayer of Shadow Protection"
-		idBuff = 48169
-	elseif sBuff == "druid" or sBuff == "motw" or sBuff == "gotw" or sBuff == "mark" or sBuff == "gift" then
-		buff1 = "Mark of the Wild"
-		buff2 = "Gift of the Wild"
-		idBuff = 48469
-	elseif sBuff == "mage" or sBuff == "arcane" or sBuff == "ai" or sBuff == "db" then
-		buff1 = "Arcane Intellect"
-		buff2 = "Arcane Brilliance"
-		buff3 = "Dalaran Brilliance"
-		idBuff = 42995
-	elseif sBuff == "warrior1" or sBuff == "cs" then
-		buff1 = "Commanding Shout"
-		idBuff = 47440
-	elseif sBuff == "food" or sBuff == "fish" then
-		buff1 = "Food"
-		buff2 = "Well Fed"
-		idBuff = 57399
-	else
-		buff1 = GetSpellInfo(sBuff)
-		idBuff = sBuff
-	end
-	-- Without buff arrays
-	local array = {}
-	local arrayRaid = {}
-	if UnitInRaid(UnitName("player")) then
-		for i=1,GetNumRaidMembers() do
-			if UnitPowerType("raid"..i) == 0 or (idBuff ~= 48936 and idBuff ~= 42995) then -- BoW and mage buff only for mana classes
-				if not UnitBuff(UnitName("raid"..i),buff1) and not UnitBuff(UnitName("raid"..i),buff2) and not UnitBuff(UnitName("raid"..i),buff3) then
-					array[#array + 1] = unit(UnitName("raid"..i))
-					arrayRaid[#arrayRaid + 1] = UnitName("raid"..i)
-				end
-			end
-		end
-	end
-	-- Report
-	if #array > 0 then
-		self:Report(string.format("Without %s: %s", spell(idBuff), table.concat(array, ", ")));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Without %s: %s", spell(idBuff), table.concat(arrayRaid, ", ")));
-		end
-	else
-		self:Report(string.format("Everyone has %s.",spell(idBuff)));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Everyone has %s.",spell(idBuff)));
-		end
-	end
-end
-
-function MPR:ReportWithoutBuffs()
-	if not UnitInRaid(UnitName("player")) then self:Report("You have to be in a raid group.") end
-	
-	local Paladin = {}
-	local raidPaladin = {}
-	local Priest = {}
-	local raidPriest = {}
-	local Druid = {}
-	local raidDruid = {}
-	local Mage = {}
-	local raidMage = {}
-	local Warrior = {}
-	local raidWarrior = {}
-	
-	for i=1,GetNumRaidMembers() do
-		local Player = UnitName("raid"..i)
-		local Class = UnitClass(Player)
-		if Class == "Paladin" then
-			table.insert(Paladin,unit(Player))
-			table.insert(raidPaladin,Player)
-		elseif Class == "Priest" then
-			table.insert(Priest,unit(Player))
-			table.insert(raidPriest,Player)
-		elseif Class == "Druid" then
-			table.insert(Druid,unit(Player))
-			table.insert(raidDruid,Player)
-		elseif Class == "Mage" then
-			table.insert(Mage,unit(Player))
-			table.insert(raidMage,Player)
-		elseif Class == "Warrior" then
-			table.insert(Warrior,unit(Player))
-			table.insert(raidWarrior,Player)
-		end
-	end
-	
-	local NoClassInRaid = {}
-	if #Paladin == 0 then
-		table.insert(NoClassInRaid,"Paladin")
-	elseif #Paladin > 0 then --bok
-		self:Report(string.format("Available Paladins: %s", table.concat(Paladin, ", ")));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Available Paladins: %s", table.concat(raidPaladin, ", ")));
-		end
-		self:ReportWithoutBuff("bok")
-		
-		if #Paladin > 1 then --bom,bow
-			self:ReportWithoutBuff("bom")
-			self:ReportWithoutBuff("bow")
-		end
-	end
-	
-	if #Priest == 0 then
-		table.insert(NoClassInRaid,"Priest")
-	elseif #Priest > 0 then --fortitude,spirit,shadow protection
-		self:Report(string.format("Available Priests: %s", table.concat(Priest, ", ")));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Available Priests: %s", table.concat(raidPriest, ", ")));
-		end
-		self:ReportWithoutBuff("fortitude")
-		self:ReportWithoutBuff("spirit")
-		self:ReportWithoutBuff("shadow protection")
-	end
-	
-	if #Druid == 0 then
-		table.insert(NoClassInRaid,"Druid")
-	elseif #Druid > 0 then --motw
-		self:Report(string.format("Available Druids: %s", table.concat(Druid, ", ")));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Available Druids: %s", table.concat(raidDruid, ", ")));
-		end
-		self:ReportWithoutBuff("motw")
-	end
-	
-	if #Mage == 0 then
-		table.insert(NoClassInRaid,"Mage")
-	elseif #Mage > 0 then --ai
-		self:Report(string.format("Available Mages: %s", table.concat(Mage, ", ")));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Available Mages: %s", table.concat(raidMage, ", ")));
-		end
-		self:ReportWithoutBuff("ai")
-	end
-	
-	if #Warrior == 0 then
-		table.insert(NoClassInRaid,"Warrior")
-	elseif #Warrior > 0 then --cs
-		self:Report(string.format("Available Warriors: %s", table.concat(Warrior, ", ")));
-		if self.DB.RaidReporting then
-			self:RaidReport(string.format("Available Warriors: %s", table.concat(raidWarrior, ", ")));
-		end
-		self:ReportWithoutBuff("cs")
-	end
-	
-	if #NoClassInRaid > 0 then
-		self:Report("Missing classes in raid: "..table.concat(NoClassInRaid,", "));
-		if self.DB.RaidReporting then
-			self:RaidReport("Missing classes in raid: "..table.concat(NoClassInRaid,", "));
-		end
-	end
-end
-
 function MPR:ReportLocks(Player)
-	local locks = {}
+	local Locks = {}
 	for i=1,GetNumSavedInstances() do
 		local name, id, reset, difficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName, numEncounters, encounterProgress = GetSavedInstanceInfo(i)
 		if isRaid and InstanceShortNames[name] then
-			table.insert(locks, string.format("%s %s (%i)",InstanceShortNames[name],RaidDifficulty[difficulty],id))
+			table.insert(Locks, string.format("%s %s (%i)",InstanceShortNames[name],RaidDifficulty[difficulty],id))
 		end
 	end
-	if #locks > 0 then
-		SendChatMessage("Raid Locks: "..table.concat(locks,", "), "WHISPER", nil, Player);
+	if #Locks > 0 then
+		SendChatMessage(string.format("Raid Locks: %s",table.concat(Locks,", ")), "WHISPER", nil, Player);
 	else
 		SendChatMessage("No Raid Locks.", "WHISPER", "Common", Player);
 	end
 end
 
+function MPR:GetGuildMemberInfo(Name)
+	local Searching, i = true, 0
+	while Searching do
+		i = i + 1
+		local n = GetGuildRosterInfo(i)
+		if not n then break end
+		if Name == n then
+			return i, GetGuildRosterInfo(i)
+		end
+	end
+end
+
+--[[
+function MPR:DeductDKPLink(Targets, Amount, Reason)
+	return "|r|HMPR:DeductDKP:"..table.concat(Targets,"-")..":"..Amount..":"..Reason.."|h|cFF"..Colors["DKPDEDUCTION_LINK"].."[Deduct "..Amount.." DKP]|r|h|cFF"..Colors["TEXT"]
+end
+
+function MPR:DKPDeductionHandler(Targets,Amount,Reason)
+	local Channel = self.Settings["DKPPENALTIES_OUTPUT"]
+	local DeductedTargets = {}
+	for _, Target in pairs(Targets) do
+		local TargetNewNet = self:DeductDKP(Target, Amount)
+		if TargetNewNet then
+			if Channel == "WHISPER"	then
+				SendChatMessage(MPR_ChannelPrefix.."Deducted "..Amount.." DKP (New NET: "..TargetNewNet.." DKP). Reason: "..(Reason or "no reason given"), "WHISPER", nil, Target)
+			else
+				DeductedTargets[#DeductedTargets+1] = Target
+			end
+		end
+	end
+	
+	if Channel == "RAID" or Channel == "GUILD" then
+		SendChatMessage(MPR_ChannelPrefix.."Deducted "..Amount.." DKP from: "..table.concat(DeductedTargets,", ")..". Reason: "..(Reason or "no reason given"), Channel)
+	end
+end
+
+function MPR:DeductDKP(Name, Amount)
+	if not (Name and Amount) then return end
+	if not CanEditOfficerNote() then
+		print("MPR: No permission to edit officer notes.")
+		return
+	end
+	local Index, Member, _, _, _, _, _, _, OfficerNote = self:GetGuildMemberInfo(Name)
+	if Member then -- Is a guild member?
+		if OfficerNote == "" then
+			GuildRosterSetOfficerNote(Index, "Net:0 Tot:0 Hrs:0")
+		end
+		local DeductedMember_Name, DeductedMember_OfficerNote
+		if not self:IsDKPFormat(OfficerNote) then -- Is not a main character?
+			OfficerNote = select(9,self:GetGuildMemberInfo(OfficerNote)) or nil
+			if not OfficerNote or not self:IsDKPFormat(OfficerNote) then 
+				return
+			end
+		end
+		
+		local Net, Tot, Hrs = strsplit(" ", OfficerNote)
+		local NetNum = select(2, strsplit(":", Net))
+		NetNum = tonumber(NetNum) - Amount
+		
+		GuildRosterSetOfficerNote(Index, "Net:"..NetNum.." "..Tot.." "..Hrs)
+		return NetNum
+	end
+end
+
+function MPR:IsDKPFormat(Note)
+	if Note:sub(1,4) == "Net:" and Note:find("Tot:") and Note:find("Hrs:") then 
+		return true
+	end
+end
+]]
+
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
+	if prefix == "DBMv4-Ver" then
+		if PingTarget == sender then
+			MPR:SelfReport(sender.."'s latency: "..(GetTime()-PingTime).."s", true)
+		else
+			table.insert(DBM_Users,sender)
+			return
+		end
+	end
 	if prefix ~= "MPR" or sender == UnitName("player") then return end
 	if msg == "request-version" then
 		SendAddonMessage("MPR", "version:"..MPR_Version, "WHISPER", sender)
 	elseif msg:sub(1, 8) == "version:" then
 		local sender_version = msg:sub(10, 10)..msg:sub(12, 13)
 		local player_version = MPR_Version:sub(2,2)..MPR_Version:sub(4,5)	
-		if not self:IsTimerScheduled("Report Users") then self:ScheduleTimer("Report Users",report,0.5,true) end
+		self:ScheduleTimer("Report Users",report,0.5,true)
 		if player_version >= sender_version then 
 			table.insert(usersAddon, string.format("%s (%s)",unit(sender),msg:sub(9, 13)))
 			return
@@ -983,46 +1239,58 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 		table.insert(usersAddon, string.format("%s (|cFF00FF00%s|r)",unit(sender),msg:sub(9, 13)))
 		if reportedNewerVersion then return end
 		reportedNewerVersion = true
-		self:Report(string.format("|cFF00FF00A newer version is available!|r"))
+		self:SelfReport(string.format("|cFF00FF00%s|r","A newer version is available!"))
  	end
 end
 
-function MPR:ZONE_CHANGED_NEW_AREA(x)
+function MPR:ZONE_CHANGED_NEW_AREA()
 	local inInstance, instanceType = IsInInstance()
-	if inInstance and (instanceType == "party" or instanceType == "raid") then
-		if not self.DB.Reporting then
-			self.DB.Reporting = true
-			if x == "mpr" then print("|cFF1e90ffMP Reporter|r |cFFbebebe("..MPR_Version..") loaded! Use "..colorWhite("/mpr help").." to list commands.|r") end
-			self:Report(string.format("Instance detected. Reporting has been %s.",getStateColor(self.DB.Reporting)))
-		elseif x == "mpr" then
-			return 1
-		end
-	else
-		if self.DB.Reporting then
-			self.DB.Reporting = false
-			if x == "mpr" then print("|cFF1e90ffMP Reporter|r |cFFbebebe("..MPR_Version..") loaded! Use "..colorWhite("/mpr help").." to list commands.|r") end
-			self:Report(string.format("Player not in instance. Reporting has been %s.",getStateColor(self.DB.Reporting)))
-		elseif x == "mpr" then
-			return 1
-		end
+	local state = inInstance and (instanceType == "party" or instanceType == "raid")
+	if self.Settings["SELF"] ~= state then
+		self.Settings["SELF"] = state
+		self:SelfReport((state and "Instance detected." or "Player not in instance.").." Reporting has been "..getStateColor(self.Settings["SELF"])..".")
 	end
+	--if MPR_AuraInfo.Loaded then	Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
 
 function MPR:ADDON_LOADED(addon)
 	if addon ~= "MPR" then return end
-	SendAddonMessage("MPR", "request-version", "GUILD")
-	MPR_DB = MPR_DB or { Reporting = true, ClearEntriesOnLoad = true, IconsEnabled = false, RaidReporting = false,
-						SayMessages = true, ReportAuraStolen = true, ReportDispels = true, ReportMassDispels = true,
-						ReportDeaths = true}
-	self.DB = MPR_DB
+	MPR_Settings = MPR_Settings or {
+		["SELF"] = false, ["RAID"] = false, ["SAY"] = false, ["WHISPER"] = false,
+		["REPORT_DISPELS"] = false,	["REPORT_MASSDISPELS"] = false,
+		["PD_SELF"] = true, ["PD_RAID"] = false, ["PD_SAY"] = false, ["PD_WHISPER"] = false,
+		["UPDATEFREQUENCY"] = 0.1,
+		["CCL_ONLOAD"] = true,
+		["ICONS"] = false,
+		["REPORT_LOOT"] = false, ["REPORT_LOOT_BOP_ONLY"] = false,
+		["DKPPENALTIES_AUTO"] = false,
+		["DKPPENALTIES_OUTPUT"] = "RAID",
+	}
+	self.Settings = MPR_Settings
+	--[[
+	MPR_DKPPenalties = nil or {
+		["Malleable Goo"] = 		{false,1},
+		["Choking Gas Explosion"] =	{false,1},
+		["Frost Bomb"] = 			{false,1},
+		["Defile"] = 				{false,1},
+		["Trample"] = 				{false,1},
+	}
+	self.DKPPenalties = MPR_DKPPenalties
+	]]
+	MPR_Options:Initialize()
+	MPR_AuraInfo:Initialize()
 	SLASH_MPR1 = '/mpr';
-	if self:ZONE_CHANGED_NEW_AREA("mpr") then
-		print("|cFF1e90ffMP Reporter|r |cFFbebebe("..MPR_Version..") loaded! Reporting is "..getStateColor(self.DB.Reporting)..". Use "..colorWhite("/mpr help").." to list commands.|r")
-	end
-	if self.DB.ClearEntriesOnLoad then
+	
+	local inInstance, instanceType = IsInInstance()
+	local state = inInstance and (instanceType == "raid")
+	self.Settings["SELF"] = state
+	self:SelfReport(string.format("Addon (%s) loaded! Reporting is %s. |r|HMPR:Options:Show:nil|h|cff3588ff[Options]|r|h",MPR_Version,getStateColor(self.Settings["SELF"])))
+	
+	if self.Settings["CCL_ONLOAD"] then
 		self:ClearCombatLog(true)
 	end
 	self:RegisterEvents()
+	SendAddonMessage("MPR", "request-version", "GUILD")
 end
 
 MPR:RegisterEvent("ADDON_LOADED")
