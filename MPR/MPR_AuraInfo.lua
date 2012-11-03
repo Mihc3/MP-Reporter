@@ -9,6 +9,7 @@ MPR_AuraInfo.Strings = {
 --  [i] = {FrameSize, Subtitle.text, Name1.text, Text1.fontsize, nNme2.text, Text2.fontsize, Name3.text, Text3.fontsize, Name4.text, Text4.fontsize},
 	[1] = {1, "ICC: Lord Marrowgar",		GetSpellLink(69065).." on: |cFFbebebe(health)|r", 16},
 	[2] = {1, "ICC: Lady Deathwhisper",		GetSpellLink(71289).." on: |cFFbebebe(health)(expiration)|r", 16},
+	[3] = {1, "ICC: Gunship Battle",		"", nil},
 	[4] = {1, "ICC: Saurfang Deathbringer",	GetSpellLink(72448).." on: |cFFbebebe(expiration)|r", 18},
 	[5] = {2, "ICC: Festergut",				GetSpellLink(72219).." on: |cFFbebebe|r", nil,
 											GetSpellLink(72103).." (without 3 stacks) on:", nil},
@@ -22,7 +23,8 @@ MPR_AuraInfo.Strings = {
 	[9] = {3, "ICC: Blood-Queen Lana'thel",	GetSpellLink(71473).." on: |cFFbebebe(biten)|r", nil,
 											GetSpellLink(70877).." on: |cFFbebebe(must bite)|r", nil,
 											GetSpellLink(70923).." on: |cFFbebebe(bite failed)|r", nil},
-	[10] = {1, "ICC: Dreamwalker Valithria",GetSpellLink(70873).." or "..GetSpellLink(71941).." on:", 16},
+	[10] = {2, "ICC: Dreamwalker Valithria",GetSpellLink(70873).." or "..GetSpellLink(71941).." on:", 16,
+											"Boss Health, HPS:", 16},
 	[11] = {3, "ICC: Sindragosa",			GetSpellLink(72530).." on: |cFFbebebe(stacks)|r (Phase 3)", nil,
 											GetSpellLink(69766).." on: |cFFbebebe(stacks)(expiration)|r", nil,
 											GetSpellLink(70106).." on: |cFFbebebe(stacks)(expiration)|r", nil},
@@ -611,6 +613,33 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 			end
 		end
 		Text1:SetText(table.concat(array,"\n"))
+		
+		local UnitID, Message = self:GetBossID("Anub'arak")
+		if UnitID then
+			LastCheck = LastCheck + diff
+			if not LastCheckHP then
+				LastCheckHP = UnitHealth(UnitID)
+				LastCheck = 0
+				Text2:SetText("Calculating ...")
+			elseif LastCheck >= 2 then
+				
+				local Health, MaxHealth = UnitHealth(UnitID), UnitMaxHealth(UnitID)
+				local HealthPct = math.floor(Health/MaxHealth) + (Health == HealthMax and 0 or 1)
+				local HealthDiff = LastCheckHP - Health
+				local HPS = modHP/LastCheck
+				local strHPS = ""
+				if HPS < 1000 then
+					strHPS = tostring(round(HPS,-3,true)).."k"
+				else
+					strHPS = tostring(round(HPS,0,true))
+				end
+				
+				LastCheckHP = Health
+				LastCheck = 0
+				
+				Text2:SetText(string.format("HP: %i/%i (%i%%)\nDiff/HPS: %s", Health, HealthMax, HealthPct, strHPS))
+			end
+		end
 	elseif MPR_AuraInfo.FrameNumber == 11 then -- ICC: Sindragosa
 		local array1 = {}
 		local array2 = {}

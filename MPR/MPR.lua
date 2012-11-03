@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-local MPR_Version = "v2.40"
+local MPR_Version = "v2.40b"
 local Colors = {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
 local MPR_Prefix = "|cFF"..Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..Colors["TEXT"]
 local MPR_Postfix = "|r"
@@ -31,7 +31,8 @@ local EncounterStartYells = {
 	["You have made an... unwise... decision."] = 9,
 	["Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!"] = 10,
 	["You are fools to have come to this place. The icy winds of Northrend will consume your souls!"] = 11,
-	["So the Light's vaunted justice has finally arrived? Shall I lay down Frostmourne and throw myself at your mercy, Fordring?"] = 12,
+	["You were fools to have come to this place. The icy winds of Northrend will consume your souls!"] = 11,
+	["I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image."] = 12,
 	-- TOC
 	["You face Jaraxxus, eredar lord of the Burning Legion!"] = 16,
 	["In the name of our dark master. For the Lich King. You. Will. Die."] = 18,
@@ -40,8 +41,15 @@ local EncounterStartYells = {
 	["Ah, the entertainment has arrived."] = 21,
 	["Alexstrasza has chosen capable allies... A pity that I must END YOU!"] = 22,
 	["Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!"] = 23,
+	
+	-- test Naxx
+	["Glory to the master!"] = 100,
+	["Your life is forfeit."] = 100,
+	["Die, trespasser!"] = 100,
 }
 local EncounterDoneYells = {
+	-- test Naxx
+	["I will serve the master... in death."] = 100,
 	-- ICC
 	["I see... Only darkness."] = 1,
 	["All part of the Master's plan.... Your end is inevitable...."] = 2,
@@ -68,6 +76,15 @@ local BossYells = {
 	["Watch as the world around you collapses!"]				= "Quake! Run inside!!",
 	["The heavens burn!"]										= "Meteor impact in 7 sec. Run to other side!!",
 	["I think I made an angry poo-poo. It gonna blow!"]			= "Ooze Explosion in 4 sec. Run away!!",
+	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"] = "MAGE SPAWNED!!",
+	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"] = "MAGE SPAWNED!!",
+}
+local BossRaidYells = {
+	["I think I made an angry poo-poo. It gonna blow!"]			= "OOZE EXPLOSION! Run away!!",
+	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"] = "MAGE SPAWNED on Horde ship! Kill him!!",
+	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"] = "MAGE SPAWNED on Alliance ship! Kill him!!",
+	["Rocketeers, reload!"] = "Rocketeers spawned! Kill them!!",
+	["Mortar team, reload!"] = "Soldiers spawned! Kill them!!",
 }
 local RaidDifficulty = {[1] = "10n",[2] = "25n",[3] = "10h",[4] = "25h"}
 
@@ -449,7 +466,7 @@ local function TimerHandler(name, ...)
 		local SPELL = ...
 		if #targetsHeroism > 0 then
 			MPR:SelfReport(string.format("%s casts %s (%i/%i players affected)",unit(casterHeroism),spell(SPELL),#targetsHeroism,GetNumRaidMembers()))
-			--MPR:RaidReport(string.format("%s casts %s (%i/%i players affected)",casterHeroism,spell(SPELL,true),#targetsHeroism,GetNumRaidMembers()))
+			MPR:RaidReport(string.format("%s casts %s (%i/%i players affected)",casterHeroism,spell(SPELL,true),#targetsHeroism,GetNumRaidMembers()))
 		else
 			MPR:ReportCast(casterHeroism,SPELL)
 		end
@@ -675,24 +692,25 @@ end
 local Combat = false
 local DeathData = {}
 function MPR:StartCombat(EncounterName)
+	if Combat then return end
 	Combat = true
-	local tbl = {}
-	tbl.Name = EncounterName
-	tbl.TimeStart = GetTime()
 	local h,m,s = MPR_GameTime:Get()
-	tbl.GameTimeStart = string.format("%i:%i:%i",h,m,s)
-	tbl.Deaths = {}
-	DeathData[#DeathData+1] = tbl
-	WipeCheck()
+	local index = #DeathData+1
+	DeathData[index] = {}
+	DeathData[index].Name = EncounterName
+	DeathData[index].TimeStart = GetTime()
+	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s)
+	DeathData[index].Deaths = {}
+	MPR:ScheduleTimer("Wipe Check", WipeCheck, 3)
 end
 
 function MPR:StopCombat()
 	Combat = false
-	DeathData[#DeathData].TimeEnd = GetTime() -- Not used
-	local h,m,s = MPR_GameTime:Get()
-	DeathData[#DeathData].GameTimeStart = string.format("%i:%i:%i",h,m,s)
 	local index = #DeathData
-	local numDeaths = #(DeathData[index].Deaths)
+	DeathData[index].TimeEnd = GetTime() -- Not used
+	local h,m,s = MPR_GameTime:Get()
+	DeathData[index].GameTimeEnd = string.format("%i:%i:%i",h,m,s)
+	local numDeaths = #DeathData[index].Deaths
 	self:SelfReport("Encounter "..DeathData[index].Name.." finished."..(numDeaths > 0 and "("..numDeaths.." death records. Show report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
 end
 
@@ -711,7 +729,7 @@ function WipeCheck()
 	if Wipe then
 		MPR:StopCombat()
 	else
-		MPR:ScheduleTimer("Wipe Check", WipeCheck, 3)
+		MPR:ScheduleTimer("Wipe Check", WipeCheck, 1)
 	end
 end
 
@@ -743,7 +761,8 @@ function MPR:InsertDeath(Player,Source,Ability,Amount,Overkill)
 	if not Combat then return end
 	local Time = math.floor(GetTime()-DeathData[#DeathData].TimeStart)
 	local tbl = {Player,Time,Source,Ability,Amount,Overkill}
-	table.insert(DeathData[#DeathData],tbl)
+	table.insert(DeathData[#DeathData].Deaths,tbl)
+	print("Player inserted!",unpack(tbl))
 end
 
 local PotencialDeaths = {}
@@ -877,9 +896,15 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(12, ...)
 			
 			if spellName == "Pain and Suffering" and UnitInRaid(destName) then 
-				local stacks = select(4,UnitDebuff(destName,"Pain and Suffering"))
-				if stacks and stacks == 5 then
-					self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
+				local Count = select(4,UnitDebuff(destName,"Pain and Suffering")) or 0
+				print(UnitDebuff(destName,"Pain and Suffering"))
+				for i=1,40 do
+					local Debuff, _, _, Count = Unitdebuff(destName,i)
+					if not Debuff then break end
+					if Debuff == "Pain and Suffering" and Count == 5 then
+						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
+						break
+					end
 				end
 			end
 			
@@ -934,7 +959,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			local extraSpellId, extraSpellName, extraSpellSchool, auraType = select(12, ...)
 			
 			if extraSpellName == "Necrotic Plague" and sourceName ~= destName then
-				self:Whisper(destName, GetSpellLink(spellId).." dispeled from you!")
+				self:Whisper(destName, GetSpellLink(extraSpellId).." dispeled from you!")
 			end
 			
 			if self.Settings["REPORT_DISPELS"] and (spellName ~= "Mass Dispel" or self.Settings["REPORT_MASSDISPELS"]) then
@@ -999,6 +1024,11 @@ function MPR:CHAT_MSG_MONSTER_YELL(msg)
 	elseif EncounterDoneYells[msg] then
 		self:StopCombat()
 	end
+	
+	if BossRaidYells[msg] then
+		self:RaidReport(BossRaidYells[msg])
+	end
+	
 	if BossYells[msg] then
 		self:Say(BossYells[msg])
 	end

@@ -220,5 +220,10 @@ function MPR_Options:NewCB(Text,Color,Var,LocX,LocY) -- Creates a checkbox
 	_G["CheckBox"..GetCurrentID().."Text"]:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255)
 	_G["CheckBox"..GetCurrentID().."Text"]:SetText(Text)
 	CheckBox:SetScript("OnShow",  function(self) CheckBox:SetChecked(MPR.Settings[Var]) end)
-	CheckBox:SetScript("OnClick", function(self) MPR.Settings[Var] = not MPR.Settings[Var] end)
+	CheckBox:SetScript("OnClick", function(self) 
+		MPR.Settings[Var] = not MPR.Settings[Var]
+		if Var == "RAID" then
+			MPR:RaidReport("Reporting to RAID "..(MPR.Settings[Var] and "enabled" or "disabled")..".", true)
+		end
+	end)
 end
