@@ -614,7 +614,7 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		end
 		Text1:SetText(table.concat(array,"\n"))
 		
-		local UnitID, Message = self:GetBossID("Anub'arak")
+		local UnitID, Message = self:GetBossID("Valithria Dreamwalker")
 		if UnitID then
 			LastCheck = LastCheck + diff
 			if not LastCheckHP then

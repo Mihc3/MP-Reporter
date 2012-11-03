@@ -395,31 +395,7 @@ function MPR:CancelTimer(name)
 end
 
 local function TimerHandler(name, ...)
-	if name == "Report DBM Users" then
-		local array_yes = {}
-		local array_no = {}
-		local arrayRaid_yes = {}
-		local arrayRaid_no = {}
-		for i=1,GetNumRaidMembers() do
-			local Unit = UnitName("raid"..i)
-			if contains(DBM_Users,Unit) then
-				table.insert(array_yes,unit(Unit))
-				table.insert(arrayRaid_yes,Unit)
-			else
-				table.insert(array_no,unit(Unit))
-				table.insert(arrayRaid_no,Unit)
-			end
-		end
-		if #array_no > 0 then
-			--MPR:SelfReport("Using DBM: "..table.concat(array_yes,", "))
-			MPR:SelfReport("Not using DBM: "..table.concat(array_no,", "))
-			--MPR:RaidReport("Using DBM: "..table.concat(arrayRaid_yes,", "))
-			--MPR:RaidReport("Not using DBM: "..table.concat(arrayRaid_no,", "))
-		else
-			MPR:SelfReport("Everyone is using DBM.")
-		end
-		table.wipe(DBM_Users)
-	elseif name == "Spell AOE Damage" then
+	if name == "Spell AOE Damage" then
 		local SPELL = ...
 		local SpellName = GetSpellInfo(SPELL)
 				
@@ -449,8 +425,7 @@ local function TimerHandler(name, ...)
 		end
 		]]
 		
-		MPR:SelfReport(string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
-		MPR:RaidReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")))
+		MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
 	elseif name == "Aura Targets" then
 		local SPELL = ...
 		local array = {}
@@ -460,13 +435,11 @@ local function TimerHandler(name, ...)
 			table.insert(arrayRaid,Target)
 		end
 		table.wipe(targetsAura)
-		MPR:SelfReport(string.format("%s on: %s",spell(SPELL),table.concat(array,", ")))
-		MPR:RaidReport(string.format("%s on: %s",spell(SPELL,true),table.concat(arrayRaid,", ")))
+		MPR:HandleReport(string.format("%s on: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s on: %s",spell(SPELL),table.concat(array,", ")))
 	elseif name == "Heroism" then
 		local SPELL = ...
 		if #targetsHeroism > 0 then
-			MPR:SelfReport(string.format("%s casts %s (%i/%i players affected)",unit(casterHeroism),spell(SPELL),#targetsHeroism,GetNumRaidMembers()))
-			MPR:RaidReport(string.format("%s casts %s (%i/%i players affected)",casterHeroism,spell(SPELL,true),#targetsHeroism,GetNumRaidMembers()))
+			MPR:HandleReport(string.format("%s casts %s (%i/%i players affected)",casterHeroism,spell(SPELL,true),#targetsHeroism,GetNumRaidMembers()), string.format("%s casts %s (%i/%i players affected)",unit(casterHeroism),spell(SPELL),#targetsHeroism,GetNumRaidMembers()))
 		else
 			MPR:ReportCast(casterHeroism,SPELL)
 		end
@@ -474,8 +447,7 @@ local function TimerHandler(name, ...)
 		table.wipe(targetsHeroism)
 	elseif contains(spellsCreate,name,true) then
 		local SPELL = ...
-		MPR:SelfReport(string.format("%s expires in 30 seconds.",spell(SPELL)))
-		MPR:RaidReport(string.format("%s expires in 30 seconds.",spell(SPELL,true)))
+		MPR:HandleReport(string.format("%s expires in 30 seconds.",spell(SPELL,true)), string.format("%s expires in 30 seconds.",spell(SPELL)))
 	elseif name == "Bloodbolt Splash" then
 		local SPELL = ...
 		local self = {}
@@ -487,8 +459,7 @@ local function TimerHandler(name, ...)
 		end
 		table.wipe(BS_TargetsName)
 		table.wipe(BS_TargetsAmount)
-		MPR:SelfReport(string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL),table.concat(self,", ")))
-		--MPR:RaidReport(string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL,true),table.concat(raid,", ")))
+		--MPR:HandleReport(string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL,true),table.concat(raid,", ")), string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL),table.concat(self,", ")))
 	end
 end
 
@@ -497,9 +468,8 @@ end
 ---------------------------------------------------------------------------]]
 
 local function BPC_ChangeTarget(Prince)
-	MPR:SelfReport(string.format("Switch target to: %s", unit(Prince)))
-	MPR:RaidReport(string.format("Switch target to: %s", Prince))
 	MPR:RaidWarning(string.format("Switch target to: %s", Prince))
+	MPR:HandleReport(string.format("Switch target to: %s", Prince), string.format("Switch target to: %s", unit(Prince)))
 end
 
 --[[-------------------------------------------------------------------------
