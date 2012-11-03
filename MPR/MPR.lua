@@ -762,7 +762,6 @@ function MPR:InsertDeath(Player,Source,Ability,Amount,Overkill)
 	local Time = math.floor(GetTime()-DeathData[#DeathData].TimeStart)
 	local tbl = {Player,Time,Source,Ability,Amount,Overkill}
 	table.insert(DeathData[#DeathData].Deaths,tbl)
-	print("Player inserted!",unpack(tbl))
 end
 
 local PotencialDeaths = {}
@@ -1037,74 +1036,75 @@ end
 --[[ SWING_DAMAGE, SPELL_DAMAGE, SPELL_PERIODIC_DAMAGE, SPELL_HEAL, SPELL_PERIODIC_HEAL ]]--
 function MPR:ReportSpellDamage(SPELL,TARGET,AMOUNT,CRIT) -- [Spell] hits Target for Amount [(Critical)].
 	local CRIT = CRIT and " (Critical)" or ""
-	self:SelfReport(string.format("%s hits %s for %s%s",spell(SPELL),unit(TARGET),numformat(AMOUNT),CRIT))
+	self:HandleReport(nil, string.format("%s hits %s for %s%s",spell(SPELL),unit(TARGET),numformat(AMOUNT),CRIT))
 end
 function MPR:ReportSpellHeal(SPELL,TARGET,AMOUNT,CRIT) -- [Spell] heals Target for Amount [(Critical)].
 	local CRIT = CRIT and " (Critical)" or ""
-	self:SelfReport(string.format("%s heals %s for %s%s",spell(SPELL),unit(TARGET),numformat(AMOUNT),CRIT))
+	self:HandleReport(string.format("%s heals %s for %s%s",spell(SPELL,true),TARGET,numformat(AMOUNT),CRIT), string.format("%s heals %s for %s%s",spell(SPELL),unit(TARGET),numformat(AMOUNT),CRIT))
 end
 function MPR:ReportDamageOnTarget(UNIT,TARGET,SPELL) -- Unit damages Target with [Spell].
-	self:SelfReport(string.format("%s damages %s with %s",unit(UNIT),unit(TARGET),spell(SPELL)))
---	self:RaidReport(string.format("%s damages %s with %s",UNIT,TARGET,spell(SPELL,true)))
+	self:HandleReport(nil, self:SelfReport(string.format("%s damages %s with %s",unit(UNIT),unit(TARGET),spell(SPELL))))
+	-- string.format("%s damages %s with %s",UNIT,TARGET,spell(SPELL,true))
 end
 
 --[[ SPELL_SUMMON ]]--
 function MPR:ReportSummon(UNIT,TARGET,SPELL) -- Unit summons Target. [Spell].
-	self:SelfReport(string.format("%s summons %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
-	self:RaidReport(string.format("%s summons %s (%s)",UNIT,TARGET,spell(SPELL,true)))
+	self:HandleReport(string.format("%s summons %s (%s)",UNIT,TARGET,spell(SPELL,true)), string.format("%s summons %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
 end
 function MPR:ReportBossSummon(TARGET,SPELL) -- Target summoned. [Spell]
-	self:SelfReport(string.format("%s summoned (%s)",unit(TARGET),spell(SPELL)))
-	self:RaidReport(string.format("%s summoned (%s)",TARGET,spell(SPELL,true)))
+	self:HandleReport(string.format("%s summoned. (%s)",TARGET,spell(SPELL,true)), string.format("%s summoned. (%s)",unit(TARGET),spell(SPELL)))
 end
 
 --[[ SPELL_CAST_START, SPELL_CAST_SUCCESS ]]--
 function MPR:ReportCast(UNIT,SPELL) -- Unit casts [Spell].
-	self:SelfReport(string.format("%s casts %s",unit(UNIT),spell(SPELL)))
-	self:RaidReport(string.format("%s casts %s",UNIT,spell(SPELL,true)))
+	self:HandleReport(string.format("%s casts %s",UNIT,spell(SPELL,true)), string.format("%s casts %s",unit(UNIT),spell(SPELL)))
 end
 function MPR:ReportCastOnTarget(UNIT,TARGET,SPELL) -- Unit casts [Spell] on Target.
-	self:SelfReport(string.format("%s casts %s on %s",unit(UNIT),spell(SPELL),unit(TARGET)))
-	self:RaidReport(string.format("%s casts %s on %s",UNIT,spell(SPELL,true),TARGET))
+	self:HandleReport(string.format("%s casts %s on %s",UNIT,spell(SPELL,true),TARGET), string.format("%s casts %s on %s",unit(UNIT),spell(SPELL),unit(TARGET)))
 end
 
 --[[ SPELL_AURA_APPLIED ]]--
 function MPR:ReportBossCastOnTarget(SPELL,TARGET) -- [Spell] on Target.
-	self:SelfReport(string.format("%s on %s",spell(SPELL),unit(TARGET)))
-	self:RaidReport(string.format("%s on %s",spell(SPELL,true),TARGET))
+	self:HandleReport(string.format("%s on %s",spell(SPELL,true),TARGET), string.format("%s on %s",spell(SPELL),unit(TARGET)))
 end
-function MPR:ReportAppliedOnTarget(SPELL,TARGET) -- [Spell] applied on Target.
-	self:SelfReport(string.format("%s applied on %s",spell(SPELL),unit(TARGET)))
-	self:RaidReport(string.format("%s applied on %s",spell(SPELL,true),TARGET))
+
+function MPR:ReportAppliedOnTarget(SPELL,TARGET) -- [Spell] applied on Target.	
+	self:HandleReport(string.format("%s applied on %s",spell(SPELL,true),TARGET), string.format("%s applied on %s",spell(SPELL),unit(TARGET)))
 end
 
 --[[ SPELL_AURA_APPLIED_DOSE ]]--
 function MPR:ReportStacksOnTarget(TARGET,SPELL,AMOUNT) -- Target has Amount stacks of [Spell].
-	self:SelfReport(string.format("%s has %i stacks of %s",unit(TARGET),AMOUNT,spell(SPELL)))
-	self:RaidReport(string.format("%s has %i stacks of %s",TARGET,AMOUNT,spell(SPELL,true)))
+	self:HandleReport(string.format("%s has %i stacks of %s",TARGET,AMOUNT,spell(SPELL,true)), string.format("%s has %i stacks of %s",unit(TARGET),AMOUNT,spell(SPELL)))
 end
 
 --[[ SPELL_DISPEL ]]--
 function MPR:ReportDispel(UNIT,TARGET,SPELL) -- Unit dispels [Spell] from Target.
-	self:SelfReport(string.format("%s dispels %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
-	self:RaidReport(string.format("%s dispels %s (%s)",UNIT,TARGET,spell(SPELL,true)))
+	self:HandleReport(string.format("%s dispels %s (%s)",UNIT,TARGET,spell(SPELL,true)), string.format("%s dispels %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
 end
 
 --[[ SPELL_CREATE ]]--
 function MPR:ReportSpellCreate(UNIT,SPELL) -- Unit prepares [Spell].
-	self:SelfReport(string.format("%s prepares %s",unit(UNIT),spell(SPELL)))
-	self:RaidReport(string.format("%s prepares %s",UNIT,spell(SPELL,true)))
+	self:HandleReport(string.format("%s prepares %s",UNIT,spell(SPELL,true)), string.format("%s prepares %s",unit(UNIT),spell(SPELL)))
 end
 
 --[[ SPELL_RESURRECT ]]-- only dudu ress
 function MPR:ReportCombatResurrect(UNIT,SPELL,TARGET) -- Unit prepares [Spell].
-	self:SelfReport(string.format("%s resurrects %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
-	self:RaidReport(string.format("%s resurrects %s (%s)",UNIT,TARGET,spell(SPELL,true)))
+	self:HandleReport(string.format("%s resurrects %s (%s)",UNIT,TARGET,spell(SPELL,true)), string.format("%s resurrects %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
+end
+
+-- REPORT HANDLER
+-- Formatted (string) - string supporting colors and images
+-- Unformatted (string) - colors and images not allowed (unsupported)
+function MPR:HandleReport(Formatted, Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
+	if Unformatted and (self.Settings["RAID"] or IgnoreRaidSettings) then
+		self:RaidReport(msg,IgnoreRaidSettings, WithoutChannelPrefix)
+	elseif Formatted and self.Settings["SELF"] then
+		self:SelfReport(msg)
+	end
 end
 
 -- Just adds MPR prefix.
 function MPR:SelfReport(msg)
-	if not msg then return end
 	print(MPR_Prefix..msg..MPR_Postfix)
 end
 
