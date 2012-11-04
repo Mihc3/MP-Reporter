@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-local MPR_Version = "v2.40b"
+local MPR_Version = "v2.42b"
 local Colors = {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
 local MPR_Prefix = "|cFF"..Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..Colors["TEXT"]
 local MPR_Postfix = "|r"
@@ -7,71 +7,39 @@ local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC",["Vault of Archavon"] = "VOA",["Trial of the Crusader"] = "TOC",["Naxxramas"] = "NAXX",["Ruby Sanctum"] = "RS"}
-local BossNames = {
-	-- Icecrown CitaFdel
-	"Lord Marrowgar", "Lady Deathwhisper", "Deathbringer Saurfang", "Rotface", "Festergut", "Professor Putricide", 
-	"Prince Keleseth", "Prince Valanar", "Prince Taldaram", "Queen Lana'thel", "Valithria Dreamwalker", "Sindragosa", "The Lich King",
+local BossData = {
+--	[AuraInfoNum] = {"Encounter", "Start Message", "Finish Message"},
+	-- Icecrown Citadel
+	[1] = {"Lord Marrowgar",		"The Scourge will wash over this world as a swarm of death and destruction!", "I see... only darkness..."},
+	[2] = {"Lady Deathwhisper",		"What is this disturbance?! You dare trespass upon this hallowed ground? This shall be your final resting place.", "All part of the masters plan! Your end is... inevitable!"},
+	[3] = {"Gunship Battle",		"Fire up the engines! We got a meetin' with destiny, lads!", "Damage control! Put those fires out! You haven't seen the last of the Horde!"},
+	[4] = {"Deathbringer Saurfang",	"BY THE MIGHT OF THE LICH KING!", "I... Am... Released."},
+	[5] = {"Festergut",				"Fun time!", "Da ... Ddy..."},
+	[6] = {"Rotface",				"Good news, everyone! I've fixed the poison slime pipes!", "Bad news daddy..."},
+	[7] = {"Professor Putricide",	"Good news, everyone! I think I perfected a plague that will destroy all life on Azeroth!", "Bad news, everyone! I don't think I'm going to make it."},
+	[8] = {"Blood Prince Council",	"Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!", "...why...?"},
+	[9] = {"Blood Queen Lana'thel",	"You have made an... unwise... decision.", "But... we were getting along... so well..."},
+	[10] = {"Valithria Dreamwalker","Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!", nil},
+	[11] = {"Sindragosa",			"You are fools to have come to this place! The icy winds of Northrend will consume your souls!", "Free...at last..."},
+	[12] = {"The Lich King",		"I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image.", nil},
 	-- Trial of the Crusader
-	"Gormok", "Acidmaw", "Dreadscale", "Icehowl", "Jaraxxus", "Gorgrim Shadowcleave", "Birana Stormhoof", "Erin Misthoof", 
-	"Ruj'kah", "Ginselle Blightslinger", "Liandra Suncaller", "Malithas Brightblade", "Caiphus the Stern", "Vivienne Blackwhisper", 
-	"Maz'dinah", "Thrakgar", "Broln Stouthorn", "Harkzog", "Narrhok Steelbreaker", "Fjola Lightbane", "Eydis Darkbane", "Anub'arak",
+	[13] = {"Gormok the Impaler",	nil, nil},
+	[14] = {"Jormungar Twins",		nil, nil},
+	[15] = {"Icehowl",				nil, nil},
+	[16] = {"Lord Jaraxxus",		"You face Jaraxxus, eredar lord of the Burning Legion!", "Another will take my place. Your world is doomed."},
+	[17] = {"Faction Champions",	"GLORY OF THE ALLIANCE!", "A shallow and tragic victory. We are weaker as a whole from the losses suffered today. Who but the Lich King could benefit from such foolishness? Great warriors have lost their lives. And for what? The true threat looms ahead - the Lich King awaits us all in death."},
+	[18] = {"Val'kyr Twins", 		"In the name of our dark master. For the Lich King. You. Will. Die.", nil},
+	[19] = {"Anub'arak",			nil, nil},
 	-- Ruby Sanctum
-	"Baltharus the Warborn", "Saviana Ragefire", "General Zarithrian", "Halion",
+	[20] = {"Saviana Ragefire",		"You will sssuffer for this intrusion!", nil},
+	[21] = {"Baltharus the Warborn","Ah, the entertainment has arrived.", "I... Didn't see that coming..."},
+	[22] = {"General Zarithrian",	"Alexstrasza has chosen capable allies... A pity that I must END YOU!", "HALION! I..."},
+	[23] = {"Halion",				"Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!", "Relish this victory, mortals, for it will be your last. This world will burn with the master's return!"},
 }
-local EncounterStartYells = {
-	-- ICC
-	["The Scourge will wash over this world as a swarm of death and destruction!"] = 1,
-	["What is this disturbance? You dare trespass upon this hallowed ground? This shall be your final resting place!"] = 2,
-	["GB"] = 3,
-	["BY THE MIGHT OF THE LICH KING!"] = 4,
-	["Fun time!"] = 5,
-	["WEEEEEE!"] = 6,
-	["Good news, everyone! I think I've perfected a plague that will destroy all life on Azeroth!"] = 7,
-	["Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!"] = 8,
-	["You have made an... unwise... decision."] = 9,
-	["Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!"] = 10,
-	["You are fools to have come to this place. The icy winds of Northrend will consume your souls!"] = 11,
-	["You were fools to have come to this place. The icy winds of Northrend will consume your souls!"] = 11,
-	["I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image."] = 12,
-	-- TOC
-	["You face Jaraxxus, eredar lord of the Burning Legion!"] = 16,
-	["In the name of our dark master. For the Lich King. You. Will. Die."] = 18,
-	-- RS
-	["You will sssuffer for this intrusion!"] = 20,
-	["Ah, the entertainment has arrived."] = 21,
-	["Alexstrasza has chosen capable allies... A pity that I must END YOU!"] = 22,
-	["Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!"] = 23,
-	
-	-- test Naxx
-	["Glory to the master!"] = 100,
-	["Your life is forfeit."] = 100,
-	["Die, trespasser!"] = 100,
-}
-local EncounterDoneYells = {
-	-- test Naxx
-	["I will serve the master... in death."] = 100,
-	-- ICC
-	["I see... Only darkness."] = 1,
-	["All part of the Master's plan.... Your end is inevitable...."] = 2,
-	["I... Am... Released..."] = 4,
-	["Da ... Ddy..."] = 5,
-	["Bad news, daddy..."] = 6,
-	["Bad news, everyone... I don't think I'm going to make it..."] = 7,
-	["My queen, they... come."] = 8,
-	["But... we were getting along... so... well..."] = 9,
-	["I AM RENEWED! Ysera grant me the favor to lay these foul creatures to rest!"] = 10,
-	["Free... at last...."] = 11,
-	["Is it truly righteousness that drives you? I wonder..."] = 12,
-}
-local EncounterNames = {
-	-- ICC
-	[1] = "Lord Marrowgar",	[2] = "Lady Deathwhisper", [4] = "Deathbringer Saurfang", [5] = "Rotface", [6] = "Festergut", [7] = "Professor Putricide",
-	[8] = "Blood Prince Council", [9] = "Queen Lana'thel", [10] = "Valithria Dreamwalker", [11] = "Sindragosa", [12] = "The Lich King",
-	-- TOC
-	[13] = "Gormok", [14] = "Acidmaw & Dreadscale", [15] = "Icehowl", [16] = "Jaraxxus", [17] = "Faction Champions", [18] = "Twin Val'kyr", [19] = "Anub'arak",
-	-- RS
-	[20] = "Baltharus the Warborn", [21] = "Saviana Ragefire", [22] = "General Zarithrian", [23] = "Halion",
-}
+local BossNames = {}
+local EncounterStartYells = {}
+local EncounterDoneYells = {}
+local EncounterNames = {}
 local BossYells = {
 	["Watch as the world around you collapses!"]				= "Quake! Run inside!!",
 	["The heavens burn!"]										= "Meteor impact in 7 sec. Run to other side!!",
@@ -205,6 +173,7 @@ local stackAppliedOnTarget = {"Unstable Ooze", "Cleave Armor"}
 -- Addon Variables --
 local usersAddon = {}
 local reportedNewerVersion = false
+local RaidOptions
 -- Combat Varriables --
 local casterHeroism = {}
 local targetsHeroism = {}
@@ -482,6 +451,22 @@ function MPR:RegisterEvents()
 	end
 end
 
+function CheckRaidOptions(Var)
+	RaidOptions = {}
+	SendAddonMessage("MPR", "OptionCheck:"..Var, "RAID")
+	MPR:ScheduleTimer(Var, PrintRaidOptions, 1)
+end
+
+function PrintRaidOptions(Var) 
+	local OptionName = (Var == "RAID" or Var == "SAY" or Var == "WHISPER") and "Reporting to "..Var or "Reporting deaths to "..Var:sub(3)
+	local Players = {}
+	for _,Player in pairs(RaidOptions) do
+		table.insert(Players,unit(Player))
+	end
+	MPR:SelfReport(string.format("%s %s.%s", OptionName, getStateColor(true), (#Players > 0 and " Raid members having this option enabled: "..table.concat(Players," ") or "")))
+	RaidOptions = nil
+end
+
 function MPR:ClearCombatLog(bAuto)
 	local f = CreateFrame("frame",nil,UIParent)
 	f:SetScript("OnUpdate",CombatLogClearEntries)
@@ -497,7 +482,7 @@ end
 
 
 local PingTarget, PingTime
-
+local Pings
 function SlashCmdList.MPR(msg, editbox)
 	msg = strlower(msg)
 	if type(tonumber(msg)) == "number" then
@@ -506,7 +491,7 @@ function SlashCmdList.MPR(msg, editbox)
 		MPR:SelfReport("Instance: |r|cff3588ff|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h "..
 											 "|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h "..
 											 "|HMPR:AuraInfo:TOC:20|h[Ruby Sanctum]|h ".."|r")		
-	elseif msg == "dbm raid" then
+	elseif msg == "ping check" then
 		table.wipe(DBM_Users)
 		MPR:SelfReport("Reporting DBM (v4) users in 5 seconds ...", true)
 		SendAddonMessage("DBMv4-Ver", "Hi!", "RAID")
@@ -523,6 +508,12 @@ function SlashCmdList.MPR(msg, editbox)
 		else
 			MPR:SelfReport("Player '"..msg.."' is not in your raid.", true)
 		end
+	elseif msg == "print quotes" then
+		for Message,Creature in pairs(MPR.Quotes) do
+			MPR:SelfReport(Creature..": "..Message)
+		end
+	elseif msg == "clear quotes" then
+		MPR.Quotes = {}
 	elseif msg ~= "" then
 		MPR:SelfReport("Unknown command.")
 	else -- Options
@@ -671,7 +662,7 @@ function MPR:StartCombat(EncounterName)
 	DeathData[index].TimeStart = GetTime()
 	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s)
 	DeathData[index].Deaths = {}
-	MPR:ScheduleTimer("Wipe Check", WipeCheck, 3)
+	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
 
 function MPR:StopCombat()
@@ -681,7 +672,22 @@ function MPR:StopCombat()
 	local h,m,s = MPR_GameTime:Get()
 	DeathData[index].GameTimeEnd = string.format("%i:%i:%i",h,m,s)
 	local numDeaths = #DeathData[index].Deaths
-	self:SelfReport("Encounter "..DeathData[index].Name.." finished."..(numDeaths > 0 and "("..numDeaths.." death records. Show report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
+	self:SelfReport("Encounter "..DeathData[index].Name.." finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
+end
+
+local StartChecks = 0
+function StartCheck(EncounterName)
+	if Combat or not UnitInRaid("player") then return end
+	if StartChecks == 0 then return end
+	StartChecks = StartChecks - 1
+	for i=0,GetNumRaidMembers() do
+		local UnitID = (i == 0 and "player" or "raid"..i)
+		if UnitAffectingCombat(UnitID) and not UnitIsDeadOrGhost(UnitID) then
+			MPR:StartCombat(EncounterName)
+			return
+		end
+	end
+	MPR:ScheduleTimer(EncounterName, StartCheck, 1)
 end
 
 function WipeCheck()
@@ -713,16 +719,15 @@ function MPR:DeathReport(channel, index)
 	elseif channel == "Self" then
 		self:SelfReport(strReportTitle)
 	end	
-	local Data = DeathData[index]
-	for i=1,(#DeathData[index]) do
-		local Player,Time,Source,Ability,Amount,Overkill = unpack(Data[i])
+	for i=1,#DeathData[index].Deaths do
+		local Player,Time,Source,Ability,Amount,Overkill = unpack(DeathData[index].Deaths[i])
 		local strTime = floor(Time/60)..":"..(strlen(Time%60) == 1 and "0" or "")..(Time%60)
 		if channel == "Raid" then
-			self:RaidReport(string.format("%i. %s %s - %s: %s (A: %i / O: %i)",i,strTime,Player,Source,Ability,Amount-Overkill,Overkill),true,true)
+			self:RaidReport(string.format("%i. %s %s - %s: %s (A: %i%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true,true)
 		elseif channel == "Guild" then
-			self:Guild(string.format("%i. %s %s - %s: %s (A: %i / O: %i)",i,strTime,Player,Source,Ability,Amount-Overkill,Overkill),true)
+			self:Guild(string.format("%i. %s %s - %s: %s (A: %i%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true)
 		else
-			self:SelfReport(string.format("%i. %s - %s: %s %s (A: %i / O: %i)",i,strTime,Player,Source,Ability,Amount-Overkill,Overkill))
+			self:SelfReport(string.format("%i. %s - %s: %s %s (A: %i%s)", i, strTime, unit(Player), Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""))
 		end
 	end
 end
@@ -767,7 +772,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			
 			local environmentalType, amount, overkill = select(9, ...)
 			if overkill > 0 then
-				self:InsertDeath(destName,"Environment",(environmentalType or "Unknown"),amount,overkill)
+				self:InsertDeath(destName, "Environment", (environmentalType or "Unknown"), amount, overkill or 0)
 				if self.Settings["PD_SELF"] then
 					self:SelfReport(unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
 				end
@@ -778,7 +783,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		elseif event == "UNIT_DIED" then		
 			if PotencialDeaths[destName] then
 				if (timestamp - PotencialDeaths[destName][1]) < 1 then
-					self:InsertDeath(destName,"Environment",(PotencialDeaths[destName][2] or "Unknown"),amount,overkill)
+					self:InsertDeath(destName, "Environment", PotencialDeaths[destName][2] or "Unknown", amount, 0)
 					if self.Settings["PD_SELF"] then
 						self:SelfReport(unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")")
 					end
@@ -842,7 +847,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				self:ReportBossCastOnTarget(spellId,destName)
 			end
 			
-			if sourceName == "Shadow Trap" and spellName == "Shadow Trap" then
+			if spellName == "Necrotic Plague" then
+				--self:Whisper(destName, GetSpellLink(spellId).." on you! Run to a Shambling Horror!!")
+			elseif sourceName == "Shadow Trap" and spellName == "Shadow Trap" then
 				self:RaidReport(GetSpellLink(spellId))
 			elseif spellName == "Swarming Shadows" then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Run along walls!!")
@@ -863,19 +870,6 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end			
 		elseif event == "SPELL_DAMAGE" then
 			local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(12, ...)
-			
-			if spellName == "Pain and Suffering" and UnitInRaid(destName) then 
-				local Count = select(4,UnitDebuff(destName,"Pain and Suffering")) or 0
-				print(UnitDebuff(destName,"Pain and Suffering"))
-				for i=1,40 do
-					local Debuff, _, _, Count = Unitdebuff(destName,i)
-					if not Debuff then break end
-					if Debuff == "Pain and Suffering" and Count == 5 then
-						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
-						break
-					end
-				end
-			end
 			
 			if contains(spellsDamage,spellName) and UnitIsPlayer(destName) then
 				self:ReportSpellDamage(spellId,destName,amount,critical)
@@ -913,6 +907,18 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			if event == "SPELL_PERIODIC_DAMAGE" then
 				local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(12, ...)
 				
+				if spellName == "Pain and Suffering" and UnitInRaid(destName) then 
+				local Count = select(4,UnitDebuff(destName,"Pain and Suffering")) or 0
+					for i=1,40 do
+						local Debuff, _, _, Count = UnitDebuff(destName,i)
+						if not Debuff then break end
+						if Debuff == "Pain and Suffering" and Count == 5 then
+							self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
+							break
+						end
+					end
+				end
+				
 				if contains(spellsPeriodicDamage,spellName) and UnitInRaid(destName) then
 					self:ReportSpellDamage(spellId,destName,amount,critical)
 				end
@@ -928,7 +934,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			local extraSpellId, extraSpellName, extraSpellSchool, auraType = select(12, ...)
 			
 			if extraSpellName == "Necrotic Plague" and sourceName ~= destName then
-				self:Whisper(destName, GetSpellLink(extraSpellId).." dispeled from you!")
+				--self:Whisper(destName, GetSpellLink(extraSpellId).." dispeled from you!")
 			end
 			
 			if self.Settings["REPORT_DISPELS"] and (spellName ~= "Mass Dispel" or self.Settings["REPORT_MASSDISPELS"]) then
@@ -941,6 +947,28 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				self:Whisper(destName, GetSpellLink(70126).." on you! Run away from others!!")
 			elseif spellName == "Gaseous Bloat" then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Kite it!!")
+			end
+			
+			if sourceName == "Sindragosa" and spellName == "Instability" and UnitInRaid(destName) then 
+				local Count = select(4,UnitDebuff(destName,"Instability")) or 0
+				for i=1,40 do
+					local Debuff, _, _, Count = UnitDebuff(destName,i)
+					if not Debuff then break end
+					if Debuff == "Instability" and Count == 5 then
+						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Stop casting!!")
+						break
+					end
+				end
+			elseif sourceName == "Sindragosa" and spellName == "Chilled to the Bone" and UnitInRaid(destName) then 
+				local Count = select(4,UnitDebuff(destName,"Chilled to the Bone")) or 0
+				for i=1,40 do
+					local Debuff, _, _, Count = UnitDebuff(destName,i)
+					if not Debuff then break end
+					if Debuff == "Chilled to the Bone" and Count == 5 then
+						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Stop attacking!!")
+						break
+					end
+				end
 			end
 			
 			if contains(aurasAppliedOnTarget,spellName) and UnitIsPlayer(destName) then
@@ -984,22 +1012,30 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	end
 end
 
-function MPR:CHAT_MSG_MONSTER_YELL(msg)
-	if not self.Settings["SELF"] then return end
-	if EncounterStartYells[msg] then
-		local EncounterName = EncounterNames[EncounterStartYells[msg]]
-		self:SelfReport("Encounter |r|cFFffffff"..EncounterName.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..EncounterStartYells[msg].."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
-		self:StartCombat(EncounterName)
-	elseif EncounterDoneYells[msg] then
-		self:StopCombat()
+function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
+	if not self.Quotes[Message] then
+		self.Quotes[Message] = Sender
 	end
 	
-	if BossRaidYells[msg] then
-		self:RaidReport(BossRaidYells[msg])
+	for ID,Data in pairs(BossData) do
+		if Data[2] and Data[2] == Message then
+			local EncounterName = Data[1]
+			--self:SelfReport("Encounter |r|cFFffffff"..EncounterName.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..EncounterStartYells[Message].."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
+			StartChecks = 20
+			StartCheck(EncounterName)
+			break
+		elseif Data[3] and Data[3] == Message then
+			self:StopCombat()
+			break
+		end
+	end	
+	
+	if BossRaidYells[Message] then
+		self:RaidReport(BossRaidYells[Message])
 	end
 	
-	if BossYells[msg] then
-		self:Say(BossYells[msg])
+	if BossYells[Message] then
+		self:Say(BossYells[Message])
 	end
 end
 
@@ -1063,13 +1099,13 @@ function MPR:ReportCombatResurrect(UNIT,SPELL,TARGET) -- Unit prepares [Spell].
 end
 
 -- REPORT HANDLER
--- Formatted (string) - string supporting colors and images
 -- Unformatted (string) - colors and images not allowed (unsupported)
-function MPR:HandleReport(Formatted, Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
+-- Formatted (string) - string supporting colors and images
+function MPR:HandleReport(Unformatted, Formatted, IgnoreRaidSettings, WithoutChannelPrefix)
 	if Unformatted and (self.Settings["RAID"] or IgnoreRaidSettings) then
-		self:RaidReport(msg,IgnoreRaidSettings, WithoutChannelPrefix)
+		self:RaidReport(Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
 	elseif Formatted and self.Settings["SELF"] then
-		self:SelfReport(msg)
+		self:SelfReport(Formatted)
 	end
 end
 
@@ -1228,7 +1264,16 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 	if prefix ~= "MPR" or sender == UnitName("player") then return end
 	if msg == "request-version" then
 		SendAddonMessage("MPR", "version:"..MPR_Version, "WHISPER", sender)
-	elseif msg:sub(1, 8) == "version:" then
+	elseif msg == "OptionCheck:ENABLED" then
+		if RaidOptions then
+			table.insert(RaidOptions, sender)
+		end
+	elseif msg:sub(1,12) == "OptionCheck:" then
+		local Var = msg:sub(13)
+		if self.Settings[Var] then
+			SendAddonMessage("MPR", "OptionCheck:ENABLED", "WHISPER", sender)
+		end
+	elseif msg:sub(1,8) == "version:" then
 		local sender_version = msg:sub(10, 10)..msg:sub(12, 13)
 		local player_version = MPR_Version:sub(2,2)..MPR_Version:sub(4,5)	
 		self:ScheduleTimer("Report Users",report,0.5,true)
@@ -1255,10 +1300,12 @@ end
 
 function MPR:ADDON_LOADED(addon)
 	if addon ~= "MPR" then return end
+	MPR_Quotes = MPR_Quotes or {}
+	self.Quotes = MPR_Quotes
 	MPR_Settings = MPR_Settings or {
 		["SELF"] = false, ["RAID"] = false, ["SAY"] = false, ["WHISPER"] = false,
 		["REPORT_DISPELS"] = false,	["REPORT_MASSDISPELS"] = false,
-		["PD_SELF"] = true, ["PD_RAID"] = false, ["PD_SAY"] = false, ["PD_WHISPER"] = false,
+		["PD_SELF"] = true, ["PD_RAID"] = false, ["PD_WHISPER"] = false, ["PD_WHISPER"] = false,
 		["UPDATEFREQUENCY"] = 0.1,
 		["CCL_ONLOAD"] = true,
 		["ICONS"] = false,

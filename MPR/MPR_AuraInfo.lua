@@ -623,7 +623,7 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 				Text2:SetText("Calculating ...")
 			elseif LastCheck >= 2 then
 				
-				local Health, MaxHealth = UnitHealth(UnitID), UnitMaxHealth(UnitID)
+				local Health, MaxHealth = UnitHealth(UnitID), UnitHealthMax(UnitID)
 				local HealthPct = math.floor(Health/MaxHealth) + (Health == HealthMax and 0 or 1)
 				local HealthDiff = LastCheckHP - Health
 				local HPS = modHP/LastCheck

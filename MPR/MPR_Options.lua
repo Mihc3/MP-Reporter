@@ -63,7 +63,7 @@ function MPR_Options:Initialize()
 	MPR_Options:NewFS("Player Deaths","3CB371",16,-93)
 	MPR_Options:NewCB("Self",	"1E90FF",	"PD_SELF",14,-104)		-- [ ] Self
 	MPR_Options:NewCB("Raid",	"EE7600",	"PD_RAID",54,-104)		-- [ ] Raid
-	MPR_Options:NewCB("Whisper","DA70D6",	"PD_SAY",100,-104)		-- [ ] Whisper
+	MPR_Options:NewCB("Whisper","DA70D6",	"PD_WHISPER",100,-104)	-- [ ] Whisper
 	MPR_Options:NewCB("Guild",	"40FF40",	"PD_GUILD",160,-104)	-- [ ] Guild
 	
 	--[[ Aura Info ]]--
@@ -220,10 +220,10 @@ function MPR_Options:NewCB(Text,Color,Var,LocX,LocY) -- Creates a checkbox
 	_G["CheckBox"..GetCurrentID().."Text"]:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255)
 	_G["CheckBox"..GetCurrentID().."Text"]:SetText(Text)
 	CheckBox:SetScript("OnShow",  function(self) CheckBox:SetChecked(MPR.Settings[Var]) end)
-	CheckBox:SetScript("OnClick", function(self) 
+	CheckBox:SetScript("OnClick", function(self)
 		MPR.Settings[Var] = not MPR.Settings[Var]
-		if Var == "RAID" then
-			MPR:RaidReport("Reporting to RAID "..(MPR.Settings[Var] and "enabled" or "disabled")..".", true)
+		if MPR.Settings[Var] and (Var == "RAID" or Var == "SAY" or Var == "WHISPER" or Var == "PD_RAID" or Var == "PD_WHISPER" or Var == "PD_GUILD") then
+			CheckRaidOptions(Var)
 		end
 	end)
 end
