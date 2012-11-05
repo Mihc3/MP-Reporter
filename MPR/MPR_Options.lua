@@ -33,7 +33,7 @@ function MPR_Options:Initialize()
 	Title:SetPoint("TOP", 0, -12)
 	if type(Color) ~= "string" then Color = "FFFFFF" end
 	Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
-	Title:SetText("|cFF1E90FFMP Reporter|r - Options")
+	Title:SetText("|cFF1E90FFMP Reporter|r ("..MPR.Version..") - Options")
 	Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 	Title:SetShadowOffset(1, -1)
 	

@@ -9,7 +9,7 @@ MPR_AuraInfo.Strings = {
 --  [i] = {FrameSize, Subtitle.text, Name1.text, Text1.fontsize, nNme2.text, Text2.fontsize, Name3.text, Text3.fontsize, Name4.text, Text4.fontsize},
 	[1] = {1, "ICC: Lord Marrowgar",		GetSpellLink(69065).." on: |cFFbebebe(health)|r", 16},
 	[2] = {1, "ICC: Lady Deathwhisper",		GetSpellLink(71289).." on: |cFFbebebe(health)(expiration)|r", 16},
-	[3] = {1, "ICC: Gunship Battle",		"Ships (Hit Points):", nil},
+	[3] = {1, "ICC: Gunship Battle",		"Ships (Hit Points):", 16},
 	[4] = {1, "ICC: Saurfang Deathbringer",	GetSpellLink(72448).." on: |cFFbebebe(expiration)|r", 18},
 	[5] = {2, "ICC: Festergut",				GetSpellLink(72219).." on: |cFFbebebe|r", nil,
 											GetSpellLink(72103).." (without 3 stacks) on:", nil},
@@ -387,6 +387,9 @@ function MPR_AuraInfo:UpdateFrame(num)
 	Subtitle:SetText(AI_Strings[2])
 	
 	Name1:SetText(AI_Strings[3])
+	if MPR_AuraInfo.FrameNumber == 3 then
+		Name1:SetText("|cFF6666FFSkybreaker|r and |cFFFF6666Orgrim's Hammer|r (Hit Points):")
+	end
 	Text1:SetFont("Fonts\\FRIZQT__.TTF", AI_Strings[4] or 9, nil)
 	if num > 1 then
 		Name2:SetText(AI_Strings[5])
@@ -475,39 +478,43 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		end
 		Text1:SetText(table.concat(array,"\n"))
 	elseif MPR_AuraInfo.FrameNumber == 3 then -- ICC: Gunship Battle
-		local A_Health, A_HealthMax = UnitHealth("Boss1"), UnitHealthMax("Boss1")
-		local H_Health, H_HealthMax = UnitHealth("Boss2"), UnitHealthMax("Boss2")
-		local Skybreaker, OgrimsHammer = "|cFF6666FFSkybreaker|r", "|cFFFF6666Orgrim's Hammer|r"
+		--if not (UnitName("Boss1") == "Skybreaker" or UnitName("Boss1") == "Orgrim's Hammer") then return end
+		local A_Health, A_HealthMax = UnitHealth("Boss2"), UnitHealthMax("Boss2")
+		local H_Health, H_HealthMax = UnitHealth("Boss1"), UnitHealthMax("Boss1")
+		local Skybreaker, OgrimsHammer = "|cFF6666FFSB|r", "|cFFFF6666OH|r"
 		local Alliance = UnitFactionGroup("player") == "Alliance"
 		local A_Ship, H_Ship = Alliance and Skybreaker or OgrimsHammer, Alliance and OgrimsHammer or Skybreaker
 		local String = ""
-		String = String..A_Ship..":\n"
+		String = String..A_Ship..": "
 		if A_HealthMax > 0 then
-			String = String..string.format("%s / %s (%s)\n", A_Health, A_HealthMax, round(100*A_Health/A_HealthMax,0,true))
+			String = String..string.format("%s / %s (%s%%)\n", math.floor(A_Health*10^-3), math.floor(A_HealthMax*10^-3), round(100*A_Health/A_HealthMax,0,true))
 		else
 			String = String.."No information\n"
 		end
-		String = String..H_Ship..":\n"
+		String = String..H_Ship..": "
 		if A_HealthMax > 0 then
-			String = String..string.format("%s / %s (%s)\n", H_Health, H_HealthMax, round(100*H_Health/H_HealthMax,0,true))
+			String = String..string.format("%sk / %sk (%s%%)\n", math.floor(H_Health*10^-3), math.floor(H_HealthMax*10^-3), round(100*H_Health/H_HealthMax,0,true))
 		else
 			String = String.."No information\n"
 		end
-		
-		GB_LastCheck = (GB_LastCheck or 0) + diff
-		if not G_LastCheckHP then
-			GB_LastCheckHP = H_Health
-			GB_LastCheck = 0
-			String = String.."DPS: nil - Estimated Time Left: nil\n"
-		elseif GB_LastCheck >= 2 then
-			
-			local modHP = GB_LastCheckHP - H_Health
-			local DPS = modHP/GB_LastCheck
-			local TimeLeft = H_Health/DPS
-			
-			GB_LastCheckHP = Health
-			GB_LastCheck = 0
-			String = String..string.format("DPS: %s; Estimated Time Left: %s seconds", round(DPS,-2,true), round(TimeLeft,0,true))
+		if A_HealthMax > 0 then
+			GB_LastCheck = (GB_LastCheck or 0) + diff
+			if not GB_LastCheckHP then
+				GB_LastCheckHP = H_Health
+				GB_LastCheck = 0
+				String = String.."DPS: nil - Estimated Time Left: nil"
+			elseif GB_LastCheck >= 2 then
+				
+				local modHP = GB_LastCheckHP - H_Health
+				local DPS = modHP/GB_LastCheck
+				local TimeLeft = H_Health/DPS
+				
+				GB_LastCheckHP = Health
+				GB_LastCheck = 0
+				String = String..string.format("DPS: %s; Est. Finish: %s seconds", round(DPS,-2,true), round(TimeLeft,0,true))
+			end
+		else
+			String = String.."DPS: nil - Est. Finish: nil"
 		end
 		Text1:SetText(String) 
 	elseif MPR_AuraInfo.FrameNumber == 4 then -- ICC: Saurfang Deathbringer

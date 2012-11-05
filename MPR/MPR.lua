@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-local MPR_Version = "v2.43b"
+MPR.Version = "v2.43b"
 local Colors = {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
 local MPR_Prefix = "|cFF"..Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..Colors["TEXT"]
 local MPR_Postfix = "|r"
@@ -48,11 +48,9 @@ local BossYells = {
 	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"] = "MAGE SPAWNED!!",
 }
 local BossRaidYells = {
-	["I think I made an angry poo-poo. It gonna blow!"]			= "OOZE EXPLOSION! Run away!!",
-	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"] = "MAGE SPAWNED on Horde ship! Kill him!!",
-	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"] = "MAGE SPAWNED on Alliance ship! Kill him!!",
-	["Rocketeers, reload!"] = "Rocketeers spawned! Kill them!!",
-	["Mortar team, reload!"] = "Soldiers spawned! Kill them!!",
+	["I think I made an angry poo-poo. It gonna blow!"]										= "OOZE EXPLOSION! Run away!!",
+	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"]	= "MAGE SPAWNED on Horde ship! Kill him!!",
+	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"]		= "MAGE SPAWNED on Alliance ship! Kill him!!",
 }
 local RaidDifficulty = {[1] = "10n",[2] = "25n",[3] = "10h",[4] = "25h"}
 
@@ -1273,7 +1271,7 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 	end
 	if prefix ~= "MPR" or sender == UnitName("player") then return end
 	if msg == "request-version" then
-		SendAddonMessage("MPR", "version:"..MPR_Version, "WHISPER", sender)
+		SendAddonMessage("MPR", "version:"..self.Version, "WHISPER", sender)
 	elseif msg == "OptionCheck:ENABLED" then
 		if RaidOptions then
 			table.insert(RaidOptions, sender)
@@ -1285,13 +1283,13 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 		end
 	elseif msg:sub(1,8) == "version:" then
 		local sender_version = msg:sub(10, 10)..msg:sub(12, 13)
-		local player_version = MPR_Version:sub(2,2)..MPR_Version:sub(4,5)	
+		local player_version = self.Version:sub(2,2)..self.Version:sub(4,5)	
 		self:ScheduleTimer("Report Users",report,0.5,true)
 		if player_version >= sender_version then 
-			table.insert(usersAddon, string.format("%s (%s)",unit(sender),msg:sub(9, 13)))
+			table.insert(usersAddon, string.format("%s (%s)",unit(sender),msg:sub(9)))
 			return
 		end
-		table.insert(usersAddon, string.format("%s (|cFF00FF00%s|r)",unit(sender),msg:sub(9, 13)))
+		table.insert(usersAddon, string.format("%s (|cFF00FF00%s|r)",unit(sender),msg:sub(9)))
 		if reportedNewerVersion then return end
 		reportedNewerVersion = true
 		self:SelfReport(string.format("|cFF00FF00%s|r","A newer version is available!"))
@@ -1347,7 +1345,7 @@ function MPR:ADDON_LOADED(addon)
 	local inInstance, instanceType = IsInInstance()
 	local state = inInstance and (instanceType == "raid")
 	self.Settings["SELF"] = state
-	self:SelfReport(string.format("Addon (%s) loaded! Reporting is %s. |r|HMPR:Options:Show:nil|h|cff3588ff[Options]|r|h",MPR_Version,getStateColor(self.Settings["SELF"])))
+	self:SelfReport(string.format("Addon (%s) loaded! Reporting is %s. |r|HMPR:Options:Show:nil|h|cff3588ff[Options]|r|h",self.Version,getStateColor(self.Settings["SELF"])))
 	
 	if self.Settings["CCL_ONLOAD"] then
 		self:ClearCombatLog(true)
