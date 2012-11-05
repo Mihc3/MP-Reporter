@@ -634,19 +634,21 @@ MPR_GameTime = {
 }
 MPR_GameTime:Initialize()
 
-function MPR:ReportDeath(str)
+function MPR:ReportDeath(Unformatted, Formatted)
 	if self.Settings["PD_RAID"] then
 		if UnitInRaid("player") then
-			self:RaidReport(str,true)
+			self:RaidReport(Unformatted,true)
 		elseif GetNumPartyMembers() > 0 then
-			self:PartyReport(str,true)
+			self:PartyReport(Unformatted,true)
 		end
+	elseif self.Settings["PD_SELF"] then
+		self:SelfReport(Formatted)
 	end
 	if self.Settings["PD_WHISPER"] then
-		self:Whisper(str,true)
+		self:Whisper(Unformatted,true)
 	end
 	if self.Settings["PD_GUILD"] then
-		self:Guild(str)
+		self:Guild(Unformatted)
 	end
 end
 
@@ -751,10 +753,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
 			if overkill > 0 then
 				self:InsertDeath(destName,(sourceName or "Unknown"),"Melee",amount,overkill)
-				if self.Settings["PD_SELF"] then
-					self:SelfReport(unit(destName).." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
-				end
-				self:ReportDeath(destName.." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+				local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+				local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+				self:ReportDeath(Unformatted, Formatted)
 			end
 		elseif event == "RANGED_DAMAGE" or event == "SPELL_DAMAGE" or event == "SPELL_PERIODIC_DAMAGE" then
 			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
@@ -762,10 +763,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			local spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
 			if overkill > 0 then
 				self:InsertDeath(destName,(sourceName or "Unknown"),GetSpellLink(spellId),amount,overkill)
-				if self.Settings["PD_SELF"] then
-					self:SelfReport(unit(destName).." died. ("..(sourceName or "Unknown")..": "..spell(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
-				end
-				self:ReportDeath(destName.." died. ("..(sourceName or "Unknown")..": "..GetSpellLink(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+				local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": "..GetSpellLink(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+				local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": "..spell(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+				self:ReportDeath(Unformatted, Formatted)
 			end
 		elseif event == "ENVIRONMENTAL_DAMAGE" then
 			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
@@ -773,10 +773,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			local environmentalType, amount, overkill = select(9, ...)
 			if overkill > 0 then
 				self:InsertDeath(destName, "Environment", (environmentalType or "Unknown"), amount, overkill or 0)
-				if self.Settings["PD_SELF"] then
-					self:SelfReport(unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
-				end
-				self:ReportDeath(destName.." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")")
+				local Unformatted = destName.." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+				local Formatted = unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+				self:ReportDeath(Unformatted, Formatted)
 			else
 				PotencialDeaths[destName] = {timestamp,environmentalType,amount}
 			end
@@ -784,10 +783,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			if PotencialDeaths[destName] then
 				if (timestamp - PotencialDeaths[destName][1]) < 1 then
 					self:InsertDeath(destName, "Environment", PotencialDeaths[destName][2] or "Unknown", amount, 0)
-					if self.Settings["PD_SELF"] then
-						self:SelfReport(unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")")
-					end
-					self:ReportDeath(destName.." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")")
+					local Unformatted = destName.." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
+					local Formatted = unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
+					self:ReportDeath(Unformatted, Formatted)
 				end
 				PotencialDeaths[destName] = nil
 			end
@@ -954,8 +952,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				for i=1,40 do
 					local Debuff, _, _, Count = UnitDebuff(destName,i)
 					if not Debuff then break end
-					if Debuff == "Instability" and Count == 5 then
-						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Stop casting!!")
+					if Debuff == "Instability" and Count == 8 then
+						self:Whisper(destName, GetSpellLink(spellId).." (8 stacks) on you! Stop casting!!")
 						break
 					end
 				end
@@ -964,8 +962,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				for i=1,40 do
 					local Debuff, _, _, Count = UnitDebuff(destName,i)
 					if not Debuff then break end
-					if Debuff == "Chilled to the Bone" and Count == 5 then
-						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Stop attacking!!")
+					if Debuff == "Chilled to the Bone" and Count == 10 then
+						self:Whisper(destName, GetSpellLink(spellId).." (10 stacks) on you! Stop attacking!!")
 						break
 					end
 				end
