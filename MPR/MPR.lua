@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-local MPR_Version = "v2.42b"
+local MPR_Version = "v2.43b"
 local Colors = {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
 local MPR_Prefix = "|cFF"..Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..Colors["TEXT"]
 local MPR_Postfix = "|r"
@@ -8,14 +8,14 @@ local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC",["Vault of Archavon"] = "VOA",["Trial of the Crusader"] = "TOC",["Naxxramas"] = "NAXX",["Ruby Sanctum"] = "RS"}
 local BossData = {
---	[AuraInfoNum] = {"Encounter", "Start Message", "Finish Message"},
+--	[AuraInfoNum] = {"Encounter", "Start Message", "Finish Message" [, StartDelay]},
 	-- Icecrown Citadel
 	[1] = {"Lord Marrowgar",		"The Scourge will wash over this world as a swarm of death and destruction!", "I see... only darkness..."},
 	[2] = {"Lady Deathwhisper",		"What is this disturbance?! You dare trespass upon this hallowed ground? This shall be your final resting place.", "All part of the masters plan! Your end is... inevitable!"},
 	[3] = {"Gunship Battle",		"Fire up the engines! We got a meetin' with destiny, lads!", "Damage control! Put those fires out! You haven't seen the last of the Horde!"},
 	[4] = {"Deathbringer Saurfang",	"BY THE MIGHT OF THE LICH KING!", "I... Am... Released."},
 	[5] = {"Festergut",				"Fun time!", "Da ... Ddy..."},
-	[6] = {"Rotface",				"Good news, everyone! I've fixed the poison slime pipes!", "Bad news daddy..."},
+	[6] = {"Rotface",				"Good news, everyone! I've fixed the poison slime pipes!", "Bad news daddy...", -3},
 	[7] = {"Professor Putricide",	"Good news, everyone! I think I perfected a plague that will destroy all life on Azeroth!", "Bad news, everyone! I don't think I'm going to make it."},
 	[8] = {"Blood Prince Council",	"Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!", "...why...?"},
 	[9] = {"Blood Queen Lana'thel",	"You have made an... unwise... decision.", "But... we were getting along... so well..."},
@@ -654,15 +654,15 @@ end
 
 local Combat = false
 local DeathData = {}
-function MPR:StartCombat(EncounterName)
+function MPR:StartCombat(ID)
 	if Combat then return end
 	Combat = true
 	local h,m,s = MPR_GameTime:Get()
 	local index = #DeathData+1
 	DeathData[index] = {}
-	DeathData[index].Name = EncounterName
-	DeathData[index].TimeStart = GetTime()
-	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s)
+	DeathData[index].Name = BossData[ID][1]
+	DeathData[index].TimeStart = GetTime() + (BossData[4] or 0)
+	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s+(BossData[4] or 0))
 	DeathData[index].Deaths = {}
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
@@ -678,18 +678,18 @@ function MPR:StopCombat()
 end
 
 local StartChecks = 0
-function StartCheck(EncounterName)
+function StartCheck(ID)
 	if Combat or not UnitInRaid("player") then return end
 	if StartChecks == 0 then return end
 	StartChecks = StartChecks - 1
 	for i=0,GetNumRaidMembers() do
 		local UnitID = (i == 0 and "player" or "raid"..i)
 		if UnitAffectingCombat(UnitID) and not UnitIsDeadOrGhost(UnitID) then
-			MPR:StartCombat(EncounterName)
+			MPR:StartCombat(ID)
 			return
 		end
 	end
-	MPR:ScheduleTimer(EncounterName, StartCheck, 1)
+	MPR:ScheduleTimer(ID, StartCheck, 1)
 end
 
 function WipeCheck()
@@ -1020,7 +1020,7 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 			local EncounterName = Data[1]
 			--self:SelfReport("Encounter |r|cFFffffff"..EncounterName.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..EncounterStartYells[Message].."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
 			StartChecks = 20
-			StartCheck(EncounterName)
+			StartCheck(ID)
 			break
 		elseif Data[3] and Data[3] == Message then
 			self:StopCombat()
@@ -1250,6 +1250,18 @@ function MPR:IsDKPFormat(Note)
 end
 ]]
 
+function MPR:UpdateBackdrop()
+	local Backdrop, BackdropColor, BackdropBorderColor = MPR.Settings["BACKDROP"], MPR.Settings["BACKDROPCOLOR"], MPR.Settings["BACKDROPBORDERCOLOR"]
+	-- MPR Options
+	MPR_Options:SetBackdrop(Backdrop)
+	MPR_Options:SetBackdropColor(unpack(BackdropColor))
+	MPR_Options:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+	-- MPR Aura Info
+	MPR_AuraInfo:SetBackdrop(Backdrop)
+	MPR_AuraInfo:SetBackdropColor(unpack(BackdropColor))
+	MPR_AuraInfo:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+end
+
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 	if prefix == "DBMv4-Ver" then
 		if PingTarget == sender then
@@ -1311,6 +1323,12 @@ function MPR:ADDON_LOADED(addon)
 		["DKPPENALTIES_AUTO"] = false,
 		["DKPPENALTIES_OUTPUT"] = "RAID",
 	}
+	MPR_Settings["BACKDROP"] = MPR_Settings["BACKDROP"] or {
+		bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+		edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
+	}
+	MPR_Settings["BACKDROPCOLOR"] = MPR_Settings["BACKDROPCOLOR"] or {0, 0, 0, 0.7}
+	MPR_Settings["BACKDROPBORDERCOLOR"] = MPR_Settings["BACKDROPBORDERCOLOR"] or {R = 30, G = 144, B = 255}
 	self.Settings = MPR_Settings
 	--[[
 	MPR_DKPPenalties = nil or {

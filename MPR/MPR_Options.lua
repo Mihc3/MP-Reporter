@@ -13,12 +13,9 @@ function MPR_Options:Initialize()
 	MPR_Options:Hide()
 	MPR_Options.name = "MPR_Options"
 	
-	MPR_Options:SetBackdrop({
-		bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-		edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
-	})
-	MPR_Options:SetBackdropColor(0, 0, 0, 0.7)
-	MPR_Options:SetBackdropBorderColor(30/255, 144/255, 255/255)
+	MPR_Options:SetBackdrop(MPR.Settings["BACKDROP"])
+	MPR_Options:SetBackdropColor(unpack(MPR.Settings["BACKDROPCOLOR"]))
+	MPR_Options:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
 	
 	MPR_Options:SetPoint("CENTER",UIParent)
 	MPR_Options:SetWidth(410)
@@ -115,6 +112,32 @@ function MPR_Options:Initialize()
 	MPR_Options:NewCB("Report items in loot",nil,"REPORT_LOOT", 214, -88)	-- [ ] ReportLoot
 	MPR_Options:NewCB("Only when BoP in loot",nil,"REPORT_LOOT_BOP_ONLY", 234, -102) -- [ ] ReportOnlyWhenBOP
 	MPR_Options:NewCB("Add BiS information",nil,"REPORT_LOOT_BIS_INFO", 234, -116) -- [ ] AddClassBISinfo
+	
+	-- Window Style
+	MPR_Options:NewFS("Window Style","FF9912",216,-149)
+	local OpacityValue = MPR.Settings["BACKDROPCOLOR"][4]*100
+	
+	-- Opacity slider --
+	MPR_OpacitySlider = CreateFrame("Slider", "MPR_OpacitySlider", MPR_Options, "OptionsSliderTemplate")
+	MPR_OpacitySlider:SetWidth(160)
+	MPR_OpacitySlider:SetHeight(20)
+	MPR_OpacitySlider:SetPoint('TOPLEFT', 222, -181)
+	MPR_OpacitySlider:SetOrientation('HORIZONTAL')
+	
+	MPR_OpacitySlider:SetMinMaxValues(0, 100)
+	MPR_OpacitySlider:SetValueStep(1)
+	
+	MPR_OpacitySlider:SetValue(OpacityValue)
+	
+	_G[MPR_OpacitySlider:GetName().."Low"]:SetText("0%")
+	_G[MPR_OpacitySlider:GetName().."High"]:SetText("100%")
+	_G[MPR_OpacitySlider:GetName().."Text"]:SetText("|cFFffffffOpacity: "..OpacityValue.."%|r |cFFbebebe(Default: 70%)|r")
+	
+	MPR_OpacitySlider:SetScript("OnValueChanged",function()
+		_G[MPR_OpacitySlider:GetName()..'Text']:SetText("|cFFffffffOpacity: "..MPR_OpacitySlider:GetValue().."%|r |cFFbebebe(Default: 70%)|r")
+		MPR.Settings["BACKDROPCOLOR"][4] = MPR_OpacitySlider:GetValue()/100
+		MPR:UpdateBackdrop()
+	end)
 	
 	--[[
 	--if not CanEditOfficerNote() then return end

@@ -2,14 +2,14 @@ MPR_AuraInfo = CreateFrame("Frame", "MPR Aura Info")
 MPR_AuraInfo.Loaded = false
 MPR_AuraInfo.TimeSinceLastUpdate = 0
 MPR_AuraInfo.FrameNumber = nil
-MPR_AuraInfo.FrameNumbers = {1,2,4,5,6,7,8,9,10,11,12,13,14,16,18,19,20,21,22,23}
+MPR_AuraInfo.FrameNumbers = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,19,20,21,22,23}
 MPR_AuraInfo.FrameSize = nil
 MPR_AuraInfo.MaxFrameSize = nil
 MPR_AuraInfo.Strings = {
 --  [i] = {FrameSize, Subtitle.text, Name1.text, Text1.fontsize, nNme2.text, Text2.fontsize, Name3.text, Text3.fontsize, Name4.text, Text4.fontsize},
 	[1] = {1, "ICC: Lord Marrowgar",		GetSpellLink(69065).." on: |cFFbebebe(health)|r", 16},
 	[2] = {1, "ICC: Lady Deathwhisper",		GetSpellLink(71289).." on: |cFFbebebe(health)(expiration)|r", 16},
-	[3] = {1, "ICC: Gunship Battle",		"", nil},
+	[3] = {1, "ICC: Gunship Battle",		"Ships (Hit Points):", nil},
 	[4] = {1, "ICC: Saurfang Deathbringer",	GetSpellLink(72448).." on: |cFFbebebe(expiration)|r", 18},
 	[5] = {2, "ICC: Festergut",				GetSpellLink(72219).." on: |cFFbebebe|r", nil,
 											GetSpellLink(72103).." (without 3 stacks) on:", nil},
@@ -116,12 +116,9 @@ end
 function MPR_AuraInfo:Initialize()
 	MPR_AuraInfo:Hide()
 	MPR_AuraInfo.name = "MPR_AuraInfo"
-	MPR_AuraInfo:SetBackdrop({
-		bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-		edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
-	})
-	MPR_AuraInfo:SetBackdropColor(0, 0, 0, 0.7)
-	MPR_AuraInfo:SetBackdropBorderColor(30/255, 144/255, 255/255)
+	MPR_AuraInfo:SetBackdrop(MPR.Settings["BACKDROP"])
+	MPR_AuraInfo:SetBackdropColor(unpack(MPR.Settings["BACKDROPCOLOR"]))
+	MPR_AuraInfo:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
 	MPR_AuraInfo:SetPoint("CENTER",UIParent)
 	MPR_AuraInfo:SetWidth(200)
 	MPR_AuraInfo:SetHeight(308)
@@ -446,9 +443,10 @@ function MPR_AuraInfo:GetBuffInfo(Unit,Name)
 	end
 end
 
--- Anub'arak variables
-local LastCheck = 0
-local LastCheckHP
+-- Variables
+local GB_LastCheck, GB_LastCheckHP -- Gunship Battle
+local VD_LastCheck, VD_LastCheckHP -- Valithria Dreamwalker
+local AR_LastCheck, AR_LastCheckHP -- Anub'arak
 --
 
 function MPR_AuraInfo:UpdateFrameData(diff)
@@ -476,6 +474,42 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 			end
 		end
 		Text1:SetText(table.concat(array,"\n"))
+	elseif MPR_AuraInfo.FrameNumber == 3 then -- ICC: Gunship Battle
+		local A_Health, A_HealthMax = UnitHealth("Boss1"), UnitHealthMax("Boss1")
+		local H_Health, H_HealthMax = UnitHealth("Boss2"), UnitHealthMax("Boss2")
+		local Skybreaker, OgrimsHammer = "|cFF6666FFSkybreaker|r", "|cFFFF6666Orgrim's Hammer|r"
+		local Alliance = UnitFactionGroup("player") == "Alliance"
+		local A_Ship, H_Ship = Alliance and Skybreaker or OgrimsHammer, Alliance and OgrimsHammer or Skybreaker
+		local String = ""
+		String = String..A_Ship..":\n"
+		if A_HealthMax > 0 then
+			String = String..string.format("%s / %s (%s)\n", A_Health, A_HealthMax, round(100*A_Health/A_HealthMax,0,true))
+		else
+			String = String.."No information\n"
+		end
+		String = String..H_Ship..":\n"
+		if A_HealthMax > 0 then
+			String = String..string.format("%s / %s (%s)\n", H_Health, H_HealthMax, round(100*H_Health/H_HealthMax,0,true))
+		else
+			String = String.."No information\n"
+		end
+		
+		GB_LastCheck = (GB_LastCheck or 0) + diff
+		if not G_LastCheckHP then
+			GB_LastCheckHP = H_Health
+			GB_LastCheck = 0
+			String = String.."DPS: nil - Estimated Time Left: nil\n"
+		elseif GB_LastCheck >= 2 then
+			
+			local modHP = GB_LastCheckHP - H_Health
+			local DPS = modHP/GB_LastCheck
+			local TimeLeft = H_Health/DPS
+			
+			GB_LastCheckHP = Health
+			GB_LastCheck = 0
+			String = String..string.format("DPS: %s; Estimated Time Left: %s seconds", round(DPS,-2,true), round(TimeLeft,0,true))
+		end
+		Text1:SetText(String) 
 	elseif MPR_AuraInfo.FrameNumber == 4 then -- ICC: Saurfang Deathbringer
 		local array = {}
 		for i=1,GetNumRaidMembers() do
@@ -616,17 +650,17 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		
 		local UnitID, Message = self:GetBossID("Valithria Dreamwalker")
 		if UnitID then
-			LastCheck = LastCheck + diff
-			if not LastCheckHP then
-				LastCheckHP = UnitHealth(UnitID)
-				LastCheck = 0
+			VD_LastCheck = (VD_LastCheck or 0) + diff
+			if not VD_LastCheckHP then
+				VD_LastCheckHP = UnitHealth(UnitID)
+				VD_LastCheck = 0
 				Text2:SetText("Calculating ...")
-			elseif LastCheck >= 2 then
+			elseif VD_LastCheck >= 2 then
 				
 				local Health, MaxHealth = UnitHealth(UnitID), UnitHealthMax(UnitID)
 				local HealthPct = math.floor(Health/MaxHealth) + (Health == HealthMax and 0 or 1)
-				local HealthDiff = LastCheckHP - Health
-				local HPS = modHP/LastCheck
+				local HealthDiff = VD_LastCheckHP - Health
+				local HPS = modHP/VD_LastCheck
 				local strHPS = ""
 				if HPS < 1000 then
 					strHPS = tostring(round(HPS,-3,true)).."k"
@@ -634,8 +668,8 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 					strHPS = tostring(round(HPS,0,true))
 				end
 				
-				LastCheckHP = Health
-				LastCheck = 0
+				VD_LastCheckHP = Health
+				VD_LastCheck = 0
 				
 				Text2:SetText(string.format("HP: %i/%i (%i%%)\nDiff/HPS: %s", Health, HealthMax, HealthPct, strHPS))
 			end
@@ -748,20 +782,20 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 	elseif MPR_AuraInfo.FrameNumber == 19 then -- TOC: Anub'arak
 		local UnitID, Message = self:GetBossID("Anub'arak")
 		if UnitID then
-			LastCheck = LastCheck + diff
-			if not LastCheckHP then
-				LastCheckHP = UnitHealth(UnitID)
-				LastCheck = 0
+			AR_LastCheck = (AR_LastCheck or 0) + diff
+			if not AR_LastCheckHP then
+				AR_LastCheckHP = UnitHealth(UnitID)
+				AR_LastCheck = 0
 				Text1:SetText("Calculating ...")
-			elseif LastCheck >= 2 then
+			elseif AR_LastCheck >= 2 then
 				
 				local Health = UnitHealth(UnitID)
-				local modHP = LastCheckHP - Health
-				local DPS = modHP/LastCheck
+				local modHP = AR_LastCheckHP - Health
+				local DPS = modHP/AR_LastCheck
 				local TimeLeft = Health/DPS
 				
-				LastCheckHP = Health
-				LastCheck = 0
+				AR_LastCheckHP = Health
+				AR_LastCheck = 0
 				
 				Text1:SetText("DPS: "..round(DPS,-3,true).."\nAssumed Finish: "..round(TimeLeft,0,true).." sec")
 			end
