@@ -283,7 +283,7 @@ function RemoveByValue(tbl,key)
 end
 
 function colorWhite(str)
-	return string.format("|r|cFFffffff%s|r|cFF%s",str,self.Colors["TEXT"])
+	return string.format("|r|cFFffffff%s|r|cFF%s",str,MPR.Colors["TEXT"])
 end
 
 function report(TimerName, ...)
@@ -299,10 +299,10 @@ function unit(name)
 	if name then
 		local class = select(2, UnitClass(name)) or select(6, MPR:GetGuildMemberInfo(name))
 		if class then
-			return string.format("|r|cFF%s|Hplayer:%s|h[%s]|h|r|cFF%s",Classself.Colors[strupper(class)],name,name,self.Colors["TEXT"])
+			return string.format("|r|cFF%s|Hplayer:%s|h[%s]|h|r|cFF%s",ClassColors[strupper(class)],name,name,MPR.Colors["TEXT"])
 			--return string.format("|Hplayer:%s|h[|r|cFF%s%s|r|cFF%s]|h",name,Class,self.self.Colors[select(2, UnitClass(name))],name,self.Colors["TEXT"])
 		elseif contains(BossNames,name) then
-			return "|r|cFFff8c00"..name.."|r|cFF"..self.self.Colors["TEXT"]
+			return "|r|cFFff8c00"..name.."|r|cFF"..MPR.Colors["TEXT"]
 		else
 			return colorWhite(name)
 		end

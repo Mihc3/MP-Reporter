@@ -8,3 +8,4 @@ Dongle.lua
 MPR.lua
 MPR_Options.lua
 MPR_AuraInfo.lua
+MPR_ValkyrTracker.lua
