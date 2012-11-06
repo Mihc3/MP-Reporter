@@ -29,13 +29,13 @@ function MPR_Options:Initialize()
 	MPR_Options:SetFrameStrata("FULLSCREEN_DIALOG")
 	
 	--[[ MP Reporter - Options ]]--
-	local Title = MPR_Options:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
-	Title:SetPoint("TOP", 0, -12)
+	MPR_Options.Title = MPR_Options:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
+	MPR_Options.Title:SetPoint("TOP", 0, -12)
 	if type(Color) ~= "string" then Color = "FFFFFF" end
-	Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
-	Title:SetText("|cFF1E90FFMP Reporter|r ("..MPR.Version..") - Options")
-	Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-	Title:SetShadowOffset(1, -1)
+	MPR_Options.Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
+	MPR_Options.Title:SetText("|cFF"..MPR.Colors["TITLE"].."MP Reporter|r ("..MPR.Version..") - Options")
+	MPR_Options.Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	MPR_Options.Title:SetShadowOffset(1, -1)
 	
 	MPR_Options_BtnClose = CreateFrame("button","MPR_Options_BtnClose", MPR_Options, "UIPanelButtonTemplate")
 	MPR_Options_BtnClose:SetHeight(14)
@@ -114,14 +114,75 @@ function MPR_Options:Initialize()
 	MPR_Options:NewCB("Add BiS information",nil,"REPORT_LOOT_BIS_INFO", 234, -116) -- [ ] AddClassBISinfo
 	
 	-- Window Style
-	MPR_Options:NewFS("Window Style","FF9912",216,-149)
-	local OpacityValue = MPR.Settings["BACKDROPCOLOR"][4]*100
+	MPR_Options:NewFS("Window Style","FF9912",216,-135)
+	MPR_Options:NewFS("Border Color:","FFFFFF",219,-148)
+	-- BLUE (1E90FF / 30 144 255)
+	MPR_Options.CB_Blue = CreateFrame("CheckButton", "CB_Blue", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Blue:SetWidth(20)
+	MPR_Options.CB_Blue:SetHeight(20)
+	MPR_Options.CB_Blue:SetPoint("TOPLEFT", 219, -159)
+	_G["CB_BlueText"]:SetTextColor(30/255, 144/255, 255/255)
+	_G["CB_BlueText"]:SetText("Blue")
+	MPR_Options.CB_Blue:SetScript("OnShow",  function(self) MPR_Options.CB_Blue:SetChecked(MPR.Settings["BACKDROPBORDERCOLOR"].R == 30 and MPR.Settings["BACKDROPBORDERCOLOR"].G == 144 and MPR.Settings["BACKDROPBORDERCOLOR"].B == 255) end)
+	MPR_Options.CB_Blue:SetScript("OnClick", function(self)
+		MPR_Options:UncheckColors()
+		MPR_Options.CB_Blue:SetChecked(true)
+		MPR.Settings["BACKDROPBORDERCOLOR"] = {R = 30, G = 144, B = 255}
+		MPR.Colors["TITLE"] = "1E90FF"
+		MPR:UpdateBackdrop()
+	end)
+	-- GREEN (00CC33 / 0 204 51)
+	MPR_Options.CB_Green = CreateFrame("CheckButton", "CB_Green", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Green:SetWidth(20)
+	MPR_Options.CB_Green:SetHeight(20)
+	MPR_Options.CB_Green:SetPoint("TOPLEFT", 259, -159)
+	_G["CB_GreenText"]:SetTextColor(0/255, 204/255, 51/255)
+	_G["CB_GreenText"]:SetText("Green")
+	MPR_Options.CB_Green:SetScript("OnShow",  function(self) MPR_Options.CB_Green:SetChecked(MPR.Settings["BACKDROPBORDERCOLOR"].R == 0 and MPR.Settings["BACKDROPBORDERCOLOR"].G == 204 and MPR.Settings["BACKDROPBORDERCOLOR"].B == 51) end)
+	MPR_Options.CB_Green:SetScript("OnClick", function(self)
+		MPR_Options:UncheckColors()
+		MPR_Options.CB_Green:SetChecked(true)
+		MPR.Settings["BACKDROPBORDERCOLOR"] = {R = 0, G = 204, B = 51}
+		MPR.Colors["TITLE"] = "00CC33"
+		MPR:UpdateBackdrop()
+	end)
+	-- YELLOW (FFCC00 / 255 204 0)
+	MPR_Options.CB_Yellow = CreateFrame("CheckButton", "CB_Yellow", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Yellow:SetWidth(20)
+	MPR_Options.CB_Yellow:SetHeight(20)
+	MPR_Options.CB_Yellow:SetPoint("TOPLEFT", 309, -159)
+	_G["CB_YellowText"]:SetTextColor(255/255, 204/255, 0/255)
+	_G["CB_YellowText"]:SetText("Yellow")
+	MPR_Options.CB_Yellow:SetScript("OnShow",  function(self) MPR_Options.CB_Yellow:SetChecked(MPR.Settings["BACKDROPBORDERCOLOR"].R == 255 and MPR.Settings["BACKDROPBORDERCOLOR"].G == 204 and MPR.Settings["BACKDROPBORDERCOLOR"].B == 0) end)
+	MPR_Options.CB_Yellow:SetScript("OnClick", function(self)
+		MPR_Options:UncheckColors()
+		MPR_Options.CB_Yellow:SetChecked(true)
+		MPR.Settings["BACKDROPBORDERCOLOR"] = {R = 255, G = 204, B = 0}
+		MPR.Colors["TITLE"] = "FFCC00"
+		MPR:UpdateBackdrop()
+	end)
+	-- RED (FF0033 / 255 0 51)
+	MPR_Options.CB_Red = CreateFrame("CheckButton", "CB_Red", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Red:SetWidth(20)
+	MPR_Options.CB_Red:SetHeight(20)
+	MPR_Options.CB_Red:SetPoint("TOPLEFT", 359, -159)
+	_G["CB_RedText"]:SetTextColor(255/255, 0/255, 51/255)
+	_G["CB_RedText"]:SetText("Red")
+	MPR_Options.CB_Red:SetScript("OnShow",  function(self) MPR_Options.CB_Red:SetChecked(MPR.Settings["BACKDROPBORDERCOLOR"].R == 255 and MPR.Settings["BACKDROPBORDERCOLOR"].G == 0 and MPR.Settings["BACKDROPBORDERCOLOR"].B == 51) end)
+	MPR_Options.CB_Red:SetScript("OnClick", function(self)
+		MPR_Options:UncheckColors()
+		MPR_Options.CB_Red:SetChecked(true)
+		MPR.Settings["BACKDROPBORDERCOLOR"] = {R = 255, G = 0, B = 51}
+		MPR.Colors["TITLE"] = "FF0033"
+		MPR:UpdateBackdrop()
+	end)
 	
 	-- Opacity slider --
+	local OpacityValue = MPR.Settings["BACKDROPCOLOR"][4]*100
 	MPR_OpacitySlider = CreateFrame("Slider", "MPR_OpacitySlider", MPR_Options, "OptionsSliderTemplate")
 	MPR_OpacitySlider:SetWidth(160)
 	MPR_OpacitySlider:SetHeight(20)
-	MPR_OpacitySlider:SetPoint('TOPLEFT', 222, -181)
+	MPR_OpacitySlider:SetPoint('TOPLEFT', 222, -194)
 	MPR_OpacitySlider:SetOrientation('HORIZONTAL')
 	
 	MPR_OpacitySlider:SetMinMaxValues(0, 100)
@@ -185,6 +246,13 @@ function MPR_Options:Initialize()
 		Pack_PosY = Pack_PosY - 14
 	end
 	]]
+end
+
+function MPR_Options:UncheckColors()
+	MPR_Options.CB_Blue:SetChecked(false)
+	MPR_Options.CB_Green:SetChecked(false)
+	MPR_Options.CB_Yellow:SetChecked(false)
+	MPR_Options.CB_Red:SetChecked(false)
 end
 
 Pack_PosY = -133

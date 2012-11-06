@@ -105,7 +105,7 @@ function MPR_ReportOptions:NewCB(Text,Color,Var,LocX,LocY,FontSize) -- Creates a
 	CheckBox:SetWidth(20)
 	CheckBox:SetHeight(20)
 	CheckBox:SetPoint("TOPLEFT", LocX, LocY)
-	
+	{a=1,b=2}
 	local SpellVar, Channel = strsplit("-",Var)
 	SpellVar, Channel = tonumber(SpellVar), tonumber(Channel)
 	local array = MPR.ReportOptions[SpellVar]

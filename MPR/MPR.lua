@@ -1,7 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.43b"
-local Colors = {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
-local MPR_Prefix = "|cFF"..Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..Colors["TEXT"]
+MPR.Version = "v2.46b"
 local MPR_Postfix = "|r"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
@@ -23,13 +21,13 @@ local BossData = {
 	[11] = {"Sindragosa",			"You are fools to have come to this place! The icy winds of Northrend will consume your souls!", "Free...at last..."},
 	[12] = {"The Lich King",		"I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image.", nil},
 	-- Trial of the Crusader
-	[13] = {"Gormok the Impaler",	nil, nil},
-	[14] = {"Jormungar Twins",		nil, nil},
-	[15] = {"Icehowl",				nil, nil},
+	[13] = {"Gormok the Impaler",	"Hailing from the deepest, darkest carverns of the storm peaks, Gormok the Impaler! Battle on, heroes!", "Steel yourselves, heroes, for the twin terrors Acidmaw and Dreadscale. Enter the arena!"},
+	[14] = {"Jormungar Twins",		"Steel yourselves, heroes, for the twin terrors Acidmaw and Dreadscale. Enter the arena!", "The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!"},
+	[15] = {"Icehowl",				"The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!", nil},
 	[16] = {"Lord Jaraxxus",		"You face Jaraxxus, eredar lord of the Burning Legion!", "Another will take my place. Your world is doomed."},
 	[17] = {"Faction Champions",	"GLORY OF THE ALLIANCE!", "A shallow and tragic victory. We are weaker as a whole from the losses suffered today. Who but the Lich King could benefit from such foolishness? Great warriors have lost their lives. And for what? The true threat looms ahead - the Lich King awaits us all in death."},
 	[18] = {"Val'kyr Twins", 		"In the name of our dark master. For the Lich King. You. Will. Die.", nil},
-	[19] = {"Anub'arak",			nil, nil},
+	[19] = {"Anub'arak",			"Ahhh, our guests have arrived, just as the master promised.", nil},
 	-- Ruby Sanctum
 	[20] = {"Saviana Ragefire",		"You will sssuffer for this intrusion!", nil},
 	[21] = {"Baltharus the Warborn","Ah, the entertainment has arrived.", "I... Didn't see that coming..."},
@@ -285,7 +283,7 @@ function RemoveByValue(tbl,key)
 end
 
 function colorWhite(str)
-	return string.format("|r|cFFffffff%s|r|cFF%s",str,Colors["TEXT"])
+	return string.format("|r|cFFffffff%s|r|cFF%s",str,self.Colors["TEXT"])
 end
 
 function report(TimerName, ...)
@@ -301,10 +299,10 @@ function unit(name)
 	if name then
 		local class = select(2, UnitClass(name)) or select(6, MPR:GetGuildMemberInfo(name))
 		if class then
-			return string.format("|r|cFF%s|Hplayer:%s|h[%s]|h|r|cFF%s",ClassColors[strupper(class)],name,name,Colors["TEXT"])
-			--return string.format("|Hplayer:%s|h[|r|cFF%s%s|r|cFF%s]|h",name,ClassColors[select(2, UnitClass(name))],name,Colors["TEXT"])
+			return string.format("|r|cFF%s|Hplayer:%s|h[%s]|h|r|cFF%s",Classself.Colors[strupper(class)],name,name,self.Colors["TEXT"])
+			--return string.format("|Hplayer:%s|h[|r|cFF%s%s|r|cFF%s]|h",name,Class,self.self.Colors[select(2, UnitClass(name))],name,self.Colors["TEXT"])
 		elseif contains(BossNames,name) then
-			return "|r|cFFff8c00"..name.."|r|cFF"..Colors["TEXT"]
+			return "|r|cFFff8c00"..name.."|r|cFF"..self.self.Colors["TEXT"]
 		else
 			return colorWhite(name)
 		end
@@ -322,17 +320,17 @@ function spell(id, ...)
 	if bRaid then return GetSpellLink(id) end
 	if type(id) ~= "number" then return id end
 	if MPR.Settings["ICONS"] and select(3, GetSpellInfo(id)) then
-		return string.format("\124T%s:12:12:0:0:64:64:5:59:5:59\124t |r%s|cFF%s",select(3, GetSpellInfo(id)),GetSpellLink(id),Colors["TEXT"])
+		return string.format("\124T%s:12:12:0:0:64:64:5:59:5:59\124t |r%s|cFF%s",select(3, GetSpellInfo(id)),GetSpellLink(id),MPR.Colors["TEXT"])
 	else
-		return string.format("|r%s|cFF%s",GetSpellLink(id),Colors["TEXT"])
+		return string.format("|r%s|cFF%s",GetSpellLink(id),MPR.Colors["TEXT"])
 	end
 end
 
 function getStateColor(state) 
 	if state then
-		return "|r|cFF00FF00enabled|r|cFF"..Colors["TEXT"]
+		return "|r|cFF00FF00enabled|r|cFF"..MPR.Colors["TEXT"]
 	else
-		return "|r|cFFFF0000disabled|r|cFF"..Colors["TEXT"]
+		return "|r|cFFFF0000disabled|r|cFF"..MPR.Colors["TEXT"]
 	end
 end
 
@@ -456,7 +454,7 @@ function CheckRaidOptions(Var)
 end
 
 function PrintRaidOptions(Var) 
-	local OptionName = (Var == "RAID" or Var == "SAY" or Var == "WHISPER") and "Reporting to "..Var or "Reporting deaths to "..Var:sub(3)
+	local OptionName = Var:sub(1,3) == "PD_" and "Reporting deaths to "..Var:sub(4) or "Reporting to "..Var 
 	local Players = {}
 	for _,Player in pairs(RaidOptions) do
 		table.insert(Players,unit(Player))
@@ -659,9 +657,10 @@ function MPR:StartCombat(ID)
 	local index = #DeathData+1
 	DeathData[index] = {}
 	DeathData[index].Name = BossData[ID][1]
-	DeathData[index].TimeStart = GetTime() + (BossData[4] or 0)
-	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s+(BossData[4] or 0))
+	DeathData[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
+	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s+(BossData[ID][4] or 0))
 	DeathData[index].Deaths = {}
+	self:SelfReport("Encounter |r|cFFffffff"..DeathData[index].Name.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..ID.."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
 
@@ -676,7 +675,7 @@ function MPR:StopCombat()
 end
 
 local StartChecks = 0
-function StartCheck(ID)
+function StartCheck(Event, ID)
 	if Combat or not UnitInRaid("player") then return end
 	if StartChecks == 0 then return end
 	StartChecks = StartChecks - 1
@@ -687,7 +686,7 @@ function StartCheck(ID)
 			return
 		end
 	end
-	MPR:ScheduleTimer(ID, StartCheck, 1)
+	MPR:ScheduleTimer("Start Check", StartCheck, 1, ID)
 end
 
 function WipeCheck()
@@ -721,13 +720,13 @@ function MPR:DeathReport(channel, index)
 	end	
 	for i=1,#DeathData[index].Deaths do
 		local Player,Time,Source,Ability,Amount,Overkill = unpack(DeathData[index].Deaths[i])
-		local strTime = floor(Time/60)..":"..(strlen(Time%60) == 1 and "0" or "")..(Time%60)
+		local strTime = string.format("%2d:%02d",floor(Time/60),(Time%60))
 		if channel == "Raid" then
-			self:RaidReport(string.format("%i. %s %s - %s: %s (A: %i%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true,true)
+			self:RaidReport(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true,true)
 		elseif channel == "Guild" then
-			self:Guild(string.format("%i. %s %s - %s: %s (A: %i%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true)
+			self:Guild(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true)
 		else
-			self:SelfReport(string.format("%i. %s - %s: %s %s (A: %i%s)", i, strTime, unit(Player), Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""))
+			self:SelfReport(string.format("%i. %s - %s: %s %s (A: %s%s)", i, strTime, unit(Player), Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""))
 		end
 	end
 end
@@ -1014,14 +1013,14 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 	end
 	
 	for ID,Data in pairs(BossData) do
+		if Data[3] and Data[3] == Message then
+			self:StopCombat()
+			break
+		end
 		if Data[2] and Data[2] == Message then
 			local EncounterName = Data[1]
-			--self:SelfReport("Encounter |r|cFFffffff"..EncounterName.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..EncounterStartYells[Message].."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
 			StartChecks = 20
-			StartCheck(ID)
-			break
-		elseif Data[3] and Data[3] == Message then
-			self:StopCombat()
+			StartCheck("nil", ID)
 			break
 		end
 	end	
@@ -1107,7 +1106,7 @@ end
 
 -- Just adds MPR prefix.
 function MPR:SelfReport(msg)
-	print(MPR_Prefix..msg..MPR_Postfix)
+	print(self:Prefix()..msg..MPR_Postfix)
 end
 
 -- Just adds MPR channel prefix
@@ -1191,7 +1190,7 @@ end
 
 --[[
 function MPR:DeductDKPLink(Targets, Amount, Reason)
-	return "|r|HMPR:DeductDKP:"..table.concat(Targets,"-")..":"..Amount..":"..Reason.."|h|cFF"..Colors["DKPDEDUCTION_LINK"].."[Deduct "..Amount.." DKP]|r|h|cFF"..Colors["TEXT"]
+	return "|r|HMPR:DeductDKP:"..table.concat(Targets,"-")..":"..Amount..":"..Reason.."|h|cFF"..self.Colors["DKPDEDUCTION_LINK"].."[Deduct "..Amount.." DKP]|r|h|cFF"..self.Colors["TEXT"]
 end
 
 function MPR:DKPDeductionHandler(Targets,Amount,Reason)
@@ -1251,10 +1250,12 @@ end
 function MPR:UpdateBackdrop()
 	local Backdrop, BackdropColor, BackdropBorderColor = MPR.Settings["BACKDROP"], MPR.Settings["BACKDROPCOLOR"], MPR.Settings["BACKDROPBORDERCOLOR"]
 	-- MPR Options
+	MPR_Options.Title:SetText("|cFF"..self.Colors["TITLE"].."MP Reporter|r ("..MPR.Version..") - Options")
 	MPR_Options:SetBackdrop(Backdrop)
 	MPR_Options:SetBackdropColor(unpack(BackdropColor))
 	MPR_Options:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 	-- MPR Aura Info
+	MPR_AuraInfo.Title:SetText("|cff"..self.Colors["TITLE"].." Reporter|r - Aura Info")
 	MPR_AuraInfo:SetBackdrop(Backdrop)
 	MPR_AuraInfo:SetBackdropColor(unpack(BackdropColor))
 	MPR_AuraInfo:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
@@ -1306,6 +1307,10 @@ function MPR:ZONE_CHANGED_NEW_AREA()
 	--if MPR_AuraInfo.Loaded then	Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
 
+function MPR:Prefix()
+	return "|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..self.Colors["TEXT"]
+end
+
 function MPR:ADDON_LOADED(addon)
 	if addon ~= "MPR" then return end
 	MPR_Quotes = MPR_Quotes or {}
@@ -1321,6 +1326,10 @@ function MPR:ADDON_LOADED(addon)
 		["DKPPENALTIES_AUTO"] = false,
 		["DKPPENALTIES_OUTPUT"] = "RAID",
 	}
+	
+	
+	
+	
 	MPR_Settings["BACKDROP"] = MPR_Settings["BACKDROP"] or {
 		bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 		edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
@@ -1328,6 +1337,8 @@ function MPR:ADDON_LOADED(addon)
 	MPR_Settings["BACKDROPCOLOR"] = MPR_Settings["BACKDROPCOLOR"] or {0, 0, 0, 0.7}
 	MPR_Settings["BACKDROPBORDERCOLOR"] = MPR_Settings["BACKDROPBORDERCOLOR"] or {R = 30, G = 144, B = 255}
 	self.Settings = MPR_Settings
+	MPR_Colors = MPR_Colors or {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
+	self.Colors = MPR_Colors
 	--[[
 	MPR_DKPPenalties = nil or {
 		["Malleable Goo"] = 		{false,1},
