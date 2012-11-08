@@ -1,6 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.46b"
-local MPR_Postfix = "|r"
+MPR.Version = "v2.48b"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -26,7 +25,7 @@ local BossData = {
 	[15] = {"Icehowl",				"The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!", nil},
 	[16] = {"Lord Jaraxxus",		"You face Jaraxxus, eredar lord of the Burning Legion!", "Another will take my place. Your world is doomed."},
 	[17] = {"Faction Champions",	"GLORY OF THE ALLIANCE!", "A shallow and tragic victory. We are weaker as a whole from the losses suffered today. Who but the Lich King could benefit from such foolishness? Great warriors have lost their lives. And for what? The true threat looms ahead - the Lich King awaits us all in death."},
-	[18] = {"Val'kyr Twins", 		"In the name of our dark master. For the Lich King. You. Will. Die.", nil},
+	[18] = {"Val'kyr Twins", 		"In the name of our dark master. For the Lich King. You. Will. Die.", "The Scourge cannot be stopped..."},
 	[19] = {"Anub'arak",			"Ahhh, our guests have arrived, just as the master promised.", nil},
 	-- Ruby Sanctum
 	[20] = {"Saviana Ragefire",		"You will sssuffer for this intrusion!", nil},
@@ -41,12 +40,12 @@ local EncounterNames = {}
 local BossYells = {
 	["Watch as the world around you collapses!"]				= "Quake! Run inside!!",
 	["The heavens burn!"]										= "Meteor impact in 7 sec. Run to other side!!",
-	["I think I made an angry poo-poo. It gonna blow!"]			= "Ooze Explosion in 4 sec. Run away!!",
+	["I think I made an angry poo-poo. It gonna blow!"]			= "OOZE EXPLOSION! Run away!!",
 	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"] = "MAGE SPAWNED!!",
 	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"] = "MAGE SPAWNED!!",
 }
 local BossRaidYells = {
-	["I think I made an angry poo-poo. It gonna blow!"]										= "OOZE EXPLOSION! Run away!!",
+	["I think I made an angry poo-poo. It gonna blow!"]										= "Ooze Explosion in 4 sec. Run away!!",
 	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"]	= "MAGE SPAWNED on Horde ship! Kill him!!",
 	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"]		= "MAGE SPAWNED on Alliance ship! Kill him!!",
 }
@@ -195,6 +194,8 @@ local Events = {
 	"CHAT_MSG_WHISPER",
 	"RAID_ROSTER_UPDATE",
 	"LOOT_OPENED",
+	
+	"UNIT_ENTERING_VEHICLE",
 }
 
 MPR:SetScript("OnEvent", function(self, event, ...)
@@ -251,8 +252,7 @@ function numformat(Number)
 	end
 end
 
-function contains(array, element, ...)
-	boolKey = ...
+function contains(array, element, boolKey)
 	if boolKey then
 		for key, _ in pairs(array) do
 			if key == element then
@@ -266,7 +266,6 @@ function contains(array, element, ...)
 			end
 		end
 	end
-	return false
 end
 
 function RemoveByKey(tbl,key)
@@ -483,6 +482,8 @@ function SlashCmdList.MPR(msg, editbox)
 	msg = strlower(msg)
 	if type(tonumber(msg)) == "number" then
 		MPR_AuraInfo:UpdateFrame(tonumber(msg))
+	elseif msg == "vt" then
+		MPR_ValkyrTracker:Toggle()
 	elseif msg == "ai" then
 		MPR:SelfReport("Instance: |r|cff3588ff|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h "..
 											 "|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h "..
@@ -658,18 +659,20 @@ function MPR:StartCombat(ID)
 	DeathData[index] = {}
 	DeathData[index].Name = BossData[ID][1]
 	DeathData[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
-	DeathData[index].GameTimeStart = string.format("%i:%i:%i",h,m,s+(BossData[ID][4] or 0))
+	DeathData[index].GameTimeStart = string.format("%2d:%02d:%02d",h,m,s+(BossData[ID][4] or 0))
 	DeathData[index].Deaths = {}
-	self:SelfReport("Encounter |r|cFFffffff"..DeathData[index].Name.."|r|cFFbebebe started. |r|cff3588ff|HMPR:AuraInfo:Update:"..ID.."|h[Click here]|h|r|cFFbebebe to show Aura Info frame.")
+	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
+	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..DeathData[index].Name.."]|h|r|cFFbebebe started.")
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
 
 function MPR:StopCombat()
+	if not Combat then return end
 	Combat = false
 	local index = #DeathData
 	DeathData[index].TimeEnd = GetTime() -- Not used
 	local h,m,s = MPR_GameTime:Get()
-	DeathData[index].GameTimeEnd = string.format("%i:%i:%i",h,m,s)
+	DeathData[index].GameTimeEnd = string.format("%2d:%02d:%02d",h,m,s)
 	local numDeaths = #DeathData[index].Deaths
 	self:SelfReport("Encounter "..DeathData[index].Name.." finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
 end
@@ -701,7 +704,8 @@ function WipeCheck()
 			end
 		end
 	end
-	if Wipe then
+	-- Don't stop encounter if we're in Frostmourne at the Lich King...
+	if Wipe and GetSubZoneText() ~= "Frostmourne" then
 		MPR:StopCombat()
 	else
 		MPR:ScheduleTimer("Wipe Check", WipeCheck, 1)
@@ -743,6 +747,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if not self.Settings["SELF"] then return end 
 	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
 	
+	if event == "UNIT_DIED" and destName == "Rookery Whelp" then
+		MPR_ValkyrTracker:KillCredit()
+		return
+	end
+	
 	if UnitIsPlayer(destName) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
 		if event == "SWING_DAMAGE" then
 			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
@@ -776,7 +785,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			else
 				PotencialDeaths[destName] = {timestamp,environmentalType,amount}
 			end
-		elseif event == "UNIT_DIED" then		
+		elseif event == "UNIT_DIED" then
 			if PotencialDeaths[destName] then
 				if (timestamp - PotencialDeaths[destName][1]) < 1 then
 					self:InsertDeath(destName, "Environment", PotencialDeaths[destName][2] or "Unknown", amount, 0)
@@ -830,6 +839,14 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		local spellId, spellName, spellSchool = select(9, ...)
 		
 		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
+			if spellId == 68981 then -- Remorseless Winter
+				MPR_ValkyrTracker:RemorselessWinterCast()
+			elseif spellId == 72262 then -- Quake
+				MPR_ValkyrTracker:QuakeCast()
+			elseif spellId == 72762 then -- Defile
+				MPR_ValkyrTracker:DefileCast()
+			end
+		
 			if spellName == "Heroism" and UnitInRaid(sourceName) then
 				table.wipe(targetsHeroism)
 				casterHeroism = sourceName
@@ -858,6 +875,10 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				self:ScheduleTimer(destName, TimerHandler, spellsCreate[destName]-30, spellId)
 			end
 		elseif event == "SPELL_SUMMON" then
+			if spellId == 69037 then
+				MPR_ValkyrTracker:ValkyrSummoned(tonumber(string.sub(destGUID,6),16))
+			end
+			
 			if contains(npcsSpellSumon,destName) then
 				self:ReportSummon(sourceName,destName,spellId)
 			elseif contains(npcsBossSpellSumon,destName) then
@@ -903,14 +924,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(12, ...)
 				
 				if spellName == "Pain and Suffering" and UnitInRaid(destName) then 
-				local Count = select(4,UnitDebuff(destName,"Pain and Suffering")) or 0
-					for i=1,40 do
-						local Debuff, _, _, Count = UnitDebuff(destName,i)
-						if not Debuff then break end
-						if Debuff == "Pain and Suffering" and Count == 5 then
-							self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
-							break
-						end
+					local Debuff, _, _, Count = UnitDebuff(destName,"Pain and Suffering")
+					if Debuff and Count == 5 then
+						self:Whisper(destName, GetSpellLink(spellId).." (5 stacks) on you! Spread!! ("..amount.." damage)")
 					end
 				end
 				
@@ -945,24 +961,14 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 			
 			if sourceName == "Sindragosa" and spellName == "Instability" and UnitInRaid(destName) then 
-				local Count = select(4,UnitDebuff(destName,"Instability")) or 0
-				for i=1,40 do
-					local Debuff, _, _, Count = UnitDebuff(destName,i)
-					if not Debuff then break end
-					if Debuff == "Instability" and Count == 8 then
-						self:Whisper(destName, GetSpellLink(spellId).." (8 stacks) on you! Stop casting!!")
-						break
-					end
+				local Debuff, _, _, Count = UnitDebuff(destName,"Instability")
+				if Debuff == "Instability" and Count == 8 then
+					self:Whisper(destName, GetSpellLink(spellId).." (8 stacks) on you! Stop casting!!")
 				end
 			elseif sourceName == "Sindragosa" and spellName == "Chilled to the Bone" and UnitInRaid(destName) then 
-				local Count = select(4,UnitDebuff(destName,"Chilled to the Bone")) or 0
-				for i=1,40 do
-					local Debuff, _, _, Count = UnitDebuff(destName,i)
-					if not Debuff then break end
-					if Debuff == "Chilled to the Bone" and Count == 10 then
-						self:Whisper(destName, GetSpellLink(spellId).." (10 stacks) on you! Stop attacking!!")
-						break
-					end
+				local Debuff, _, _, Count = UnitDebuff(destName,"Chilled to the Bone")
+				if Debuff and Count == 10 then
+					self:Whisper(destName, GetSpellLink(spellId).." (10 stacks) on you! Stop attacking!!")
 				end
 			end
 			
@@ -1007,6 +1013,14 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	end
 end
 
+function MPR:UNIT_ENTERING_VEHICLE(UnitID)
+	if GetSubZoneText() == "The Frozen Throne" then
+		-- Needs testing
+		print("MPR: Is "..UnitName(UnitID).." grabbed by Val'kyr?")
+		-- self:ReportValkyrGrab(UnitID)
+	end
+end
+
 function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 	if not self.Quotes[Message] then
 		self.Quotes[Message] = Sender
@@ -1015,12 +1029,15 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 	for ID,Data in pairs(BossData) do
 		if Data[3] and Data[3] == Message then
 			self:StopCombat()
-			break
+			-- No break, some Trial of the Crusader quotes end and start encounters at same time (Northrend Beasts)
 		end
 		if Data[2] and Data[2] == Message then
 			local EncounterName = Data[1]
-			StartChecks = 20
+			StartChecks = 60
 			StartCheck("nil", ID)
+			if ID == 12 then -- Just started The Lich King, reset Quake counter
+				MPR_ValkyrTracker:Reset()
+			end
 			break
 		end
 	end	
@@ -1106,7 +1123,7 @@ end
 
 -- Just adds MPR prefix.
 function MPR:SelfReport(msg)
-	print(self:Prefix()..msg..MPR_Postfix)
+	print("|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..self.Colors["TEXT"]..msg.."|r")
 end
 
 -- Just adds MPR channel prefix
@@ -1307,10 +1324,6 @@ function MPR:ZONE_CHANGED_NEW_AREA()
 	--if MPR_AuraInfo.Loaded then	Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
 
-function MPR:Prefix()
-	return "|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..self.Colors["TEXT"]
-end
-
 function MPR:ADDON_LOADED(addon)
 	if addon ~= "MPR" then return end
 	MPR_Quotes = MPR_Quotes or {}
@@ -1351,6 +1364,7 @@ function MPR:ADDON_LOADED(addon)
 	]]
 	MPR_Options:Initialize()
 	MPR_AuraInfo:Initialize()
+	MPR_ValkyrTracker:Initialize()
 	SLASH_MPR1 = '/mpr';
 	
 	local inInstance, instanceType = IsInInstance()

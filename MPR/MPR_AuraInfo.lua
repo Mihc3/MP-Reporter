@@ -120,8 +120,6 @@ function MPR_AuraInfo:Initialize()
 	MPR_AuraInfo:SetBackdropColor(unpack(MPR.Settings["BACKDROPCOLOR"]))
 	MPR_AuraInfo:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
 	MPR_AuraInfo:SetPoint("CENTER",UIParent)
-	MPR_AuraInfo:SetWidth(200)
-	MPR_AuraInfo:SetHeight(308)
 	MPR_AuraInfo:EnableMouse(true)
 	MPR_AuraInfo:SetMovable(true)
 	MPR_AuraInfo:RegisterForDrag("LeftButton")
@@ -137,7 +135,7 @@ function MPR_AuraInfo:Initialize()
 	MPR_AuraInfo.Title = MPR_AuraInfo:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 	MPR_AuraInfo.Title:SetPoint("TOP", 0, -8)
 	MPR_AuraInfo.Title:SetTextColor(190/255, 190/255, 190/255)
-	MPR_AuraInfo.Title:SetText("|cff"..MPR.Colors["TITLE"].." Reporter|r - Aura Info")
+	MPR_AuraInfo.Title:SetText("|cff"..MPR.Colors["TITLE"].."MP Reporter|r - Aura Info")
 	MPR_AuraInfo.Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 	MPR_AuraInfo.Title:SetShadowOffset(1, -1)
 	
@@ -447,8 +445,8 @@ function MPR_AuraInfo:GetBuffInfo(Unit,Name)
 end
 
 -- Variables
-local GB_LastCheck, GB_LastCheckHP, Under5Pct, Under3Pct -- Gunship Battle
-local VD_LastCheck, VD_LastCheckHP -- Valithria Dreamwalker
+local GB_String1, GB_LastCheck, GB_LastCheckHP, Under10Pct, Under5Pct, Under3Pct -- Gunship Battle
+local VD_String1, VD_LastCheck, VD_LastCheckHP -- Valithria Dreamwalker
 local AR_LastCheck, AR_LastCheckHP -- Anub'arak
 --
 
@@ -503,33 +501,40 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 			if not GB_LastCheckHP then
 				GB_LastCheckHP = H_Health
 				GB_LastCheck = 0
-				String = String.."DPS: nil - Estimated Time Left: nil"
-			elseif GB_LastCheck >= 2 then
+				GB_String1 = "DPS: nil - Estimated Time Left: nil"
+			elseif GB_LastCheck >= 5 then
 				local HealthDiff = GB_LastCheckHP - H_Health
 				local DPS = HealthDiff/GB_LastCheck
 				local TimeLeft = H_Health/DPS
 				
 				GB_LastCheckHP = H_Health
 				GB_LastCheck = 0
-				String = String..string.format("DPS: %s; Est. Finish: %s seconds", round(DPS,-2,true), round(TimeLeft,0,true))
+				GB_String1 = string.format("DPS: %s; Est. Finish: %s sec", round(DPS,-2,true), round(TimeLeft,0,true))
 			end
 		else
-			String = String.."DPS: nil - Est. Finish: nil"
+			GB_String1 = "DPS: nil - Est. Finish: nil"
 		end
 		
-		Text1:SetText(String)
+		Text1:SetText(String..GB_String1)
 		
 		-- Warning: FALL BACK!
+		if round(100*H_Health/H_HealthMax,0,true) <= 10 and not Under10Pct then
+			Under10Pct = true
+			MPR:RaidReport("Warning: Enemy ship has 10% HP remaining!",true)
+		elseif round(100*H_Health/H_HealthMax,0,true) > 10 and Under10Pct then
+			Under10Pct = nil
+		end
+		
 		if round(100*H_Health/H_HealthMax,0,true) <= 5 and not Under5Pct then
 			Under5Pct = true
-			MPR:RaidReport("Warning: Enemy ship has 5% HP remaining!",true)	
+			MPR:RaidReport("Warning: Enemy ship has 5% HP remaining! Prepare to fall back!",true)	
 		elseif round(100*H_Health/H_HealthMax,0,true) > 5 and Under5Pct then
 			Under5Pct = nil
 		end
 		
 		if round(100*H_Health/H_HealthMax,0,true) <= 3 and not Under3Pct then
 			Under3Pct = true
-			MPR:RaidReport("Warning: Enemy ship has 3% HP remaining! Prepare to fall back!!",true)
+			MPR:RaidReport("Warning: Enemy ship has 3% HP remaining! FALL BACK!!",true)
 		elseif round(100*H_Health/H_HealthMax,0,true) > 3 and Under3Pct then
 			Under3Pct = nil
 		end
@@ -655,6 +660,32 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		Text2:SetText(table.concat(array2,", "))
 		Text3:SetText(table.concat(array3,", "))
 	elseif MPR_AuraInfo.FrameNumber == 10 then -- ICC: Dreamwalker Valithria
+		local String
+		if UnitName("Boss2") == "Valithria Dreamwalker" then
+			local Health, HealthMax = UnitHealth("Boss2"), UnitHealthMax("Boss2")
+			local HealthPct = math.floor(Health/HealthMax) + (Health == HealthMax and 0 or 1)
+			String = string.format("|cFF00ff00VD|r: %i/%i (%i%%)", Health, HealthMax, HealthPct)
+			
+			VD_LastCheck = (VD_LastCheck or 0) + diff
+			if not VD_LastCheckHP then
+				VD_LastCheckHP = UnitHealth("Boss2")
+				VD_LastCheck = 0
+				VD_String1 = "Diff/HPS: No information"
+			elseif VD_LastCheck >= 2 then
+				local HealthDiff = VD_LastCheckHP - Health
+				local HPS = HealthDiff/VD_LastCheck
+				local strHPS = ""
+				strHPS = "|cFF"..(HPS > 0 and "00FF" or "FF00").."00"..tostring(round(HPS,-3,true)).."k|r"
+				
+				VD_LastCheckHP = Health
+				VD_LastCheck = 0
+				VD_String1 = string.format("\nDiff/HPS: %s", strHPS)
+			end
+		else
+			String = "|cFF00ff00VD|r: No information"
+		end
+		Text1:SetTExt(String..VD_String1)
+		
 		local array = {}
 		for i=1,GetNumRaidMembers() do
 			local Unit = UnitName("raid"..i)
@@ -669,34 +700,7 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 				table.insert(array,string.format("%s (%s)(%ss)",self:UnitRaid(Unit),Count,Expiration))
 			end
 		end
-		Text1:SetText(table.concat(array,"\n"))
-		
-		local UnitID, Message = self:GetBossID("Valithria Dreamwalker")
-		if UnitID then
-			VD_LastCheck = (VD_LastCheck or 0) + diff
-			if not VD_LastCheckHP then
-				VD_LastCheckHP = UnitHealth(UnitID)
-				VD_LastCheck = 0
-				Text2:SetText("Calculating ...")
-			elseif VD_LastCheck >= 2 then
-				
-				local Health, MaxHealth = UnitHealth(UnitID), UnitHealthMax(UnitID)
-				local HealthPct = math.floor(Health/MaxHealth) + (Health == HealthMax and 0 or 1)
-				local HealthDiff = VD_LastCheckHP - Health
-				local HPS = HealthDiff/VD_LastCheck
-				local strHPS = ""
-				if HPS < 1000 then
-					strHPS = tostring(round(HPS,-3,true)).."k"
-				else
-					strHPS = tostring(round(HPS,0,true))
-				end
-				
-				VD_LastCheckHP = Health
-				VD_LastCheck = 0
-				
-				Text2:SetText(string.format("HP: %i/%i (%i%%)\nDiff/HPS: %s", Health, HealthMax, HealthPct, strHPS))
-			end
-		end
+		Text2:SetText(table.concat(array,"\n"))
 	elseif MPR_AuraInfo.FrameNumber == 11 then -- ICC: Sindragosa
 		local array1 = {}
 		local array2 = {}
