@@ -1,8 +1,8 @@
 MPR_ValkyrTracker = CreateFrame("Frame", "MPR Val'kyr Tracker")
 MPR_ValkyrTracker.TimeSinceLastUpdate = 0
 MPR_ValkyrTracker.QuakeCount = 0
-MPR_ValkyrTracker.DefileCooldown = 32
-MPR_ValkyrTracker.SummonValkyrCooldown = 45
+MPR_ValkyrTracker.DefileCooldown = nil
+MPR_ValkyrTracker.SummonValkyrCooldown = nil
 MPR_ValkyrTracker.ValkyrCount = 0
 MPR_ValkyrTracker.ValkyrTable = {} -- {IconID, Health, HealthMax, Speed}
 MPR_ValkyrTracker.ValkyrUpdated = {}
@@ -60,13 +60,13 @@ function MPR_ValkyrTracker:Initialize()
 	MPR_ValkyrTracker.Label1 = MPR_ValkyrTracker:CreateFontString("Label3", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.Label1:SetPoint("TOPLEFT", 8, -22)
 	MPR_ValkyrTracker.Label1:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-	MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": <>")
+	MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFFbebebenil|r")
 	
 	-- Defile
 	MPR_ValkyrTracker.Label2 = MPR_ValkyrTracker:CreateFontString("Label1", "OVERLAY", "GameTooltipText")
-	MPR_ValkyrTracker.Label2:SetPoint("TOPLEFT", 146, -22)
+	MPR_ValkyrTracker.Label2:SetPoint("TOPLEFT", 144, -22)
 	MPR_ValkyrTracker.Label2:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-	MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: <>")
+	MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: |cFFbebebenil|r")
 		
 	MPR_ValkyrTracker.Label3 = MPR_ValkyrTracker:CreateFontString("Label5", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.Label3:SetPoint("TOPLEFT", 8, -36)
@@ -79,57 +79,63 @@ function MPR_ValkyrTracker:Initialize()
 	MPR_ValkyrTracker.Texture1:SetWidth(24)
 	MPR_ValkyrTracker.Texture1:SetHeight(24)
 	MPR_ValkyrTracker.Texture1:SetTexture(ValkyrIcon)
-	MPR_ValkyrTracker.Texture1:SetAlpha(0.6)
+	MPR_ValkyrTracker.Texture1:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.T1Label1 = MPR_ValkyrTracker:CreateFontString("Label5", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.T1Label1:SetPoint("TOPLEFT", MPR_ValkyrTracker.Texture1, "TOPRIGHT", 4, 0)
 	MPR_ValkyrTracker.T1Label1:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-	MPR_ValkyrTracker.T1Label1:SetTextColor(160/255, 160/255, 160/255)
+	MPR_ValkyrTracker.T1Label1:SetTextColor(1,1,1)
 	MPR_ValkyrTracker.T1Label1:SetText("Val'kyr 1")
+	MPR_ValkyrTracker.T1Label1:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.T1Label2 = MPR_ValkyrTracker:CreateFontString("Label5", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.T1Label2:SetPoint("TOPLEFT", MPR_ValkyrTracker.Texture1, "TOPRIGHT", 4, -12)
 	MPR_ValkyrTracker.T1Label2:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-	MPR_ValkyrTracker.T1Label2:SetTextColor(190/255, 190/255, 190/255)
+	MPR_ValkyrTracker.T1Label2:SetTextColor(0.9,0.9,0.9)
 	MPR_ValkyrTracker.T1Label2:SetText("HP: nil")
+	MPR_ValkyrTracker.T1Label2:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.Texture2 = MPR_ValkyrTracker:CreateTexture("$parentTexture")
 	MPR_ValkyrTracker.Texture2:SetPoint('TOPLEFT', 88, -50)
 	MPR_ValkyrTracker.Texture2:SetWidth(24)
 	MPR_ValkyrTracker.Texture2:SetHeight(24)
 	MPR_ValkyrTracker.Texture2:SetTexture(ValkyrIcon)
-	MPR_ValkyrTracker.Texture2:SetAlpha(0.6)
+	MPR_ValkyrTracker.Texture2:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.T2Label1 = MPR_ValkyrTracker:CreateFontString("T2Label1", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.T2Label1:SetPoint("TOPLEFT", MPR_ValkyrTracker.Texture2, "TOPRIGHT", 4, 0)
 	MPR_ValkyrTracker.T2Label1:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-	MPR_ValkyrTracker.T2Label1:SetTextColor(160/255, 160/255, 160/255)
+	MPR_ValkyrTracker.T2Label1:SetTextColor(0.9,0.9,0.9)
 	MPR_ValkyrTracker.T2Label1:SetText("Val'kyr 2")
+	MPR_ValkyrTracker.T2Label1:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.T2Label2 = MPR_ValkyrTracker:CreateFontString("T2Label2", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.T2Label2:SetPoint("TOPLEFT", MPR_ValkyrTracker.Texture2, "TOPRIGHT", 4, -12)
 	MPR_ValkyrTracker.T2Label2:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
 	MPR_ValkyrTracker.T2Label2:SetTextColor(190/255, 190/255, 190/255)
 	MPR_ValkyrTracker.T2Label2:SetText("HP: nil")
+	MPR_ValkyrTracker.T2Label2:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.Texture3 = MPR_ValkyrTracker:CreateTexture("$parentTexture")
 	MPR_ValkyrTracker.Texture3:SetPoint('TOPLEFT', 168, -50)
 	MPR_ValkyrTracker.Texture3:SetWidth(24)
 	MPR_ValkyrTracker.Texture3:SetHeight(24)
 	MPR_ValkyrTracker.Texture3:SetTexture(ValkyrIcon)
-	MPR_ValkyrTracker.Texture3:SetAlpha(0.6)
+	MPR_ValkyrTracker.Texture3:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.T3Label1 = MPR_ValkyrTracker:CreateFontString("T3Label1", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.T3Label1:SetPoint("TOPLEFT", MPR_ValkyrTracker.Texture3, "TOPRIGHT", 4, 0)
 	MPR_ValkyrTracker.T3Label1:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-	MPR_ValkyrTracker.T3Label1:SetTextColor(160/255, 160/255, 160/255)
+	MPR_ValkyrTracker.T3Label1:SetTextColor(0.9,0.9,0.9)
 	MPR_ValkyrTracker.T3Label1:SetText("Val'kyr 3")
+	MPR_ValkyrTracker.T3Label1:SetAlpha(0.4)
 	
 	MPR_ValkyrTracker.T3Label2 = MPR_ValkyrTracker:CreateFontString("T3Label2", "OVERLAY", "GameTooltipText")
 	MPR_ValkyrTracker.T3Label2:SetPoint("TOPLEFT", MPR_ValkyrTracker.Texture3, "TOPRIGHT", 4, -12)
 	MPR_ValkyrTracker.T3Label2:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)	
 	MPR_ValkyrTracker.T3Label2:SetTextColor(190/255, 190/255, 190/255)
 	MPR_ValkyrTracker.T3Label2:SetText("HP: nil")
+	MPR_ValkyrTracker.T3Label2:SetAlpha(0.4)
 	
 	self.ValkyrObjects[1] = {}
 	self.ValkyrObjects[1][1] = self.Texture1
@@ -158,17 +164,17 @@ function MPR_ValkyrTracker:OnUpdate(elapsed)
 	if self.DefileCooldown then
 		Seconds = round(self.DefileCooldown,0,true)
 		Color = Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
-		MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: |cFF"..Color..Seconds.." sec.|r")
+		MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: |cFF"..Color..Seconds.." sec|r")
 	else  
-		MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: <>")
+		MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: |cFFbebebenil|r")
 	end
 	-- Summon Val'kyr timer
 	if self.DefileCooldown then
 		Seconds = round(self.SummonValkyrCooldown,0,true)
 		Color = Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
-		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFF"..Color..Seconds.." sec.|r")
+		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFF"..Color..Seconds.." sec|r")
 	else
-		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": <>")
+		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFFbebebenil|r")
 	end
 		
 	MPR_ValkyrTracker.TimeSinceLastUpdate = MPR_ValkyrTracker.TimeSinceLastUpdate + elapsed
@@ -178,6 +184,8 @@ function MPR_ValkyrTracker:OnUpdate(elapsed)
 		MPR_ValkyrTracker:Update(diff)
     end
 end
+
+local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA", ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 function MPR_ValkyrTracker:Update()
 	local countValkyr = 0
 	for i=0,GetNumRaidMembers() do
@@ -187,9 +195,9 @@ function MPR_ValkyrTracker:Update()
 		if UnitInVehicle(UnitID) then
 			if not self.GrabbedPlayers[UnitName(UnitID)] then -- Insert grabbed player
 				self.GrabbedPlayers[UnitName(UnitID)] = {} -- {UnitName => TargetMarker}
-				self.GrabbedPlayers[UnitName(UnitID)].Name = string.format("|c%s%s|r",ClassColors[strupper(select(2,UnitClass(UnitID)))],UnitName(UnitID))
+				self.GrabbedPlayers[UnitName(UnitID)].Name = string.format("|cFF%s%s|r",ClassColors[strupper(select(2,UnitClass(UnitID)))],UnitName(UnitID))
 				self.GrabbedPlayers[UnitName(UnitID)].Icon = GetRaidTargetIndex(UnitID)
-			elseif not self.GrabbedPlayers[UnitName(UnitID)].Icon then -- Update grabbed player's icon if we don't have it yet
+			elseif GetRaidTargetIndex(UnitID) then -- Update grabbed player's icon if we don't have it yet
 				self.GrabbedPlayers[UnitName(UnitID)].Icon = GetRaidTargetIndex(UnitID)
 			end
 		elseif self.GrabbedPlayers[UnitName(UnitID)] then -- Remove grabbed player
@@ -202,35 +210,34 @@ function MPR_ValkyrTracker:Update()
 			local Health, HealthMax, Speed = UnitHealth(UnitID.."target"), UnitHealthMax(UnitID.."target"), GetUnitSpeed(UnitID.."target")
 			local HealthPct = round(100*Health/HealthMax,0,true)
 			local ValkyrGUID = tonumber(string.sub(UnitGUID(UnitID.."target"),6),16)
-			if not self.ValkyrUpdated[ValkyrGUID] then
+			if not self.ValkyrUpdated[ValkyrGUID] and self.ValkyrTable[ValkyrGUID] then
 				self.ValkyrUpdated[ValkyrGUID] = true
-				if not self.ValkyrTable[ValkyrGUID] then -- Val'kyr not in table yet
-					if (GetInstanceDifficulty() <= 2 or HealthPct > 50) then -- Insert Val'kyr
-						-- {1 => TextureID, 2 => RaidMarkerID, 3 => HealthPct, 4 => Speed}
-						self.ValkyrTable[ValkyrGUID] = {}
-						self.ValkyrTable[ValkyrGUID][1] = #self.ValkyrTable
-						self.ValkyrTable[ValkyrGUID][2] = RaidMarker
-						self.ValkyrTable[ValkyrGUID][3] = HealthPct						
-						self.ValkyrTable[ValkyrGUID][4] = Speed
-					end -- Else, do nothing because we don't want to print a Val'kyr under 50% HP on heroic diff.
-				else -- Val'kyr in table already
-					if (GetInstanceDifficulty() <= 2 or HealthPct > 50) then -- Update Val'kyr
-						self.ValkyrTable[ValkyrGUID][2] = RaidMarker
-						self.ValkyrTable[ValkyrGUID][3] = HealthPct
-						self.ValkyrTable[ValkyrGUID][4] = Speed
-					else  -- Remove Val'kyr
-						self.ValkyrTable[ValkyrGUID] = nil
-					end
+				if (GetInstanceDifficulty() <= 2 or HealthPct > 50) then -- Update this Val'kyr
+					-- {1 => TextureID, 2 => RaidMarkerID, 3 => HealthPct, 4 => Speed}
+					self.ValkyrTable[ValkyrGUID][2] = RaidMarker
+					self.ValkyrTable[ValkyrGUID][3] = HealthPct
+					self.ValkyrTable[ValkyrGUID][4] = Speed
+				else  -- Remove this Val'kyr
+					self.ValkyrTable[ValkyrGUID] = nil
 				end
-			end -- Else, do nothing because we updated this Val'kyr already.
+			end
 		end
 	end
-	
+		
 	-- Print grabbed players
 	local arrayGrabbed = {}
 	for _,Unit in pairs(self.GrabbedPlayers) do
-		table.insert(arrayGrabbed,string.format("%s %s",Unit.Icon and "{rt"..Unit.Icon.."}" or "",Unit.Name))
+		table.insert(arrayGrabbed,(Unit.Icon and Unit.Icon > 0 and "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_"..Unit.Icon..":12:12|t" or "")..Unit.Name)
 	end
+	-- Blinking label if players are grabbed
+	local Color = {R = 1, G = 1, B = 1}
+	if #arrayGrabbed > 0 then
+		if GetTime()%1.4 < 0.7 then
+			Color = {R = 1, G = 0, B = 0}
+		end
+	end
+	
+	self.Label3:SetTextColor(Color.R, Color.G, Color.B)
 	self.Label3:SetText("Grabbed players: "..table.concat(arrayGrabbed,", "))
 	
 	-- Print Valky data
@@ -239,15 +246,15 @@ function MPR_ValkyrTracker:Update()
 			local Index, RaidMarker, HealthPct, Speed = unpack(Data)
 			local Color = GetInstanceDifficulty() <= 2 and (HealthPct <= 10 and "00FF00" or HealthPct <= 20 and "FFFF00" or HealthPct <= 30 and "FFAA00" or HealthPct <= 50 and "FF7700" or "FF0000") or (HealthPct <= 55 and "00FF00" or HealthPct <= 60 and "FFFF00" or HealthPct <= 65 and "FFAA00" or HealthPct <= 75 and "FF7700" or "FF0000")
 			self.ValkyrObjects[Index][1]:SetAlpha(1)
-			self.ValkyrObjects[Index][2]:SetColor(0, 0.44, 0.87)
-			self.ValkyrObjects[Index][3]:SetColor(1, 1, 1)
+			self.ValkyrObjects[Index][2]:SetAlpha(1)
+			self.ValkyrObjects[Index][3]:SetAlpha(1)
 			self.ValkyrObjects[Index][3]:SetText(string.format("HP: |c%s%s%%|r",Color,HealthPct))
 		else -- None of members targeting this Val'kyr, so we'll just remove it.
 			local Index = Data[1]
-			self.ValkyrObjects[Index][1]:SetAlpha(0.6)
-			self.ValkyrObjects[Index][2]:SetColor(160/255, 160/255, 160/255)
-			self.ValkyrObjects[Index][3]:SetColor(190/255, 190/255, 190/255)
-			self.ValkyrObjects[Index][3]:SetText("HP: <>")
+			self.ValkyrObjects[Index][1]:SetAlpha(0.4)
+			self.ValkyrObjects[Index][2]:SetAlpha(0.4)
+			self.ValkyrObjects[Index][3]:SetAlpha(0.4)
+			self.ValkyrObjects[Index][3]:SetText("HP: |cFFbebebenil|r")
 			self.ValkyrTable[GUID] = nil
 		end
 	end
@@ -260,6 +267,7 @@ function MPR_ValkyrTracker:ValkyrSummoned(GUID)
 		self.SummonValkyrCooldown = 45
 	end
 	self.ValkyrTable[GUID] = {}
+	self.ValkyrTable[GUID][1] = self.ValkyrCount
 	if self.ValkyrCount == (GetInstanceDifficulty()%2 == 1 and 1 or 3) then -- Last Valkyr
 		self.ValkyrCount = 0
 	end
@@ -274,7 +282,7 @@ function MPR_ValkyrTracker:RemorselessWinterCast()
 end
 function MPR_ValkyrTracker:QuakeCast()
 	QuakeCount = QuakeCount + 1
-	self.SummonValkyrCooldown = QuakeCount == 1 and 16 or nil
+	self.SummonValkyrCooldown = QuakeCount == 1 and 26 or nil
 	self.DefileCooldown = QuakeCount == 1 and 45 or 44
 end
 function MPR_ValkyrTracker:FuryOfFrostmourneCast()
