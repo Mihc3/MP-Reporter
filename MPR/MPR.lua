@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.48b"
+MPR.Version = "v2.49b"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -133,7 +133,7 @@ local npcsBossSpellSumon = {"Vengeful Shade"} -- Boss summons, destination is un
 --| Output: Unit casts [Spell]. |--
 local spellsCast = {"Remorseless Winter", "Quake", "Dark Vortex", "Light Vortex", "Blessing of Forgotten Kings", "Runescroll of Fortitude", "Drums of the Wild"}
 --| Output: Unit casts [Spell] on Target. |--
-local spellsCastOnTarget = {"Hand of Protection"}
+local spellsCastOnTarget = {"Hand of Protection", "Innervate", }
 --| Output: [Spell] on Target. |--
 local spellsBossCastOnTarget = {"Rune of Blood", "Vile Gas", "Swarming Shadows", "Necrotic Plague", "Soul Reaper"} -- If sourceName isn't important (ex. Boss casting).
 
@@ -216,11 +216,11 @@ do
 		elseif arg1 == "AuraInfo" then
 			if arg2 == "Update" then
 				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
-			elseif arg2 == "ICC" then
-				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
-			elseif arg2 == "TOC" then
+			else -- arg2 is ICC, TOC or RS
 				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
 			end
+		elseif arg1 == "ValkyrTracker" then
+			MPR_ValkyrTracker:Toggle()
 		elseif arg1 == "DeductDKP" then
 			arg2 = {strsplit("-",arg2)}
 			arg4 = arg4:gsub("{(.-)}", function(a) return GetSpellLink(tonumber(a)) end)
@@ -469,8 +469,7 @@ function MPR:ClearCombatLog(bAuto)
 	self:SelfReport("Combat log entries cleared.")
 end
 
-function round(num, idp, ...)
-	local up = ...
+function round(num, idp, up)
 	local mult = 10^(idp or 0)
 	return math.floor(num * mult + (up and 0.99 or 0.5)) / mult
 end
@@ -487,7 +486,7 @@ function SlashCmdList.MPR(msg, editbox)
 	elseif msg == "ai" then
 		MPR:SelfReport("Instance: |r|cff3588ff|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h "..
 											 "|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h "..
-											 "|HMPR:AuraInfo:TOC:20|h[Ruby Sanctum]|h ".."|r")		
+											 "|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h ".."|r")		
 	elseif msg == "ping check" then
 		table.wipe(DBM_Users)
 		MPR:SelfReport("Reporting DBM (v4) users in 5 seconds ...", true)
@@ -572,7 +571,7 @@ function MPR:LOOT_OPENED()
 					end
 				end
 				table.insert(ItemLinks, GetLootSlotLink(i)..(#bisClasses > 0 and " BiS: "..table.concat(bisClasses," ") or ""))
-				if select(5,GetLootRollItemInfo(i-1)) then BoPs = true end
+				if select(5,GetLootRollItemInfo(i-1)) and not BoPs then BoPs = true end
 			end
 		end
 		local NotEligible = {}
@@ -662,7 +661,7 @@ function MPR:StartCombat(ID)
 	DeathData[index].GameTimeStart = string.format("%2d:%02d:%02d",h,m,s+(BossData[ID][4] or 0))
 	DeathData[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
-	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..DeathData[index].Name.."]|h|r|cFFbebebe started.")
+	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..DeathData[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:ValkyrTracker:nil:nil|h[Val'kyr Tracker]|h|r" or ""))
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
 
@@ -958,6 +957,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				self:Whisper(destName, GetSpellLink(70126).." on you! Run away from others!!")
 			elseif spellName == "Gaseous Bloat" then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Kite it!!")
+			elseif spellId == 33786 then
+				self:ReportCastOnTarget(sourceName,destName,spellId)
 			end
 			
 			if sourceName == "Sindragosa" and spellName == "Instability" and UnitInRaid(destName) then 
@@ -1015,9 +1016,7 @@ end
 
 function MPR:UNIT_ENTERING_VEHICLE(UnitID)
 	if GetSubZoneText() == "The Frozen Throne" then
-		-- Needs testing
-		print("MPR: Is "..UnitName(UnitID).." grabbed by Val'kyr?")
-		-- self:ReportValkyrGrab(UnitID)
+		self:ReportValkyrGrab(UnitName(UnitID))
 	end
 end
 
@@ -1110,6 +1109,10 @@ function MPR:ReportCombatResurrect(UNIT,SPELL,TARGET) -- Unit prepares [Spell].
 	self:HandleReport(string.format("%s resurrects %s (%s)",UNIT,TARGET,spell(SPELL,true)), string.format("%s resurrects %s (%s)",unit(UNIT),unit(TARGET),spell(SPELL)))
 end
 
+function MPR:ReportValkyrGrab(UNIT) -- X Unit grabbed! X
+	self:HandleReport(string.format("{rt7} %s grabbed! {rt7}",UNIT),string.format("{rt7} %s grabbed! {rt7}",unit(UNIT)))
+end
+
 -- REPORT HANDLER
 -- Unformatted (string) - colors and images not allowed (unsupported)
 -- Formatted (string) - string supporting colors and images
@@ -1165,7 +1168,11 @@ end
 function MPR:Whisper(TARGET, MESSAGE, ...)
 	local wBypass = ...
 	if not (MESSAGE and (self.Settings["WHISPER"] or wBypass)) then return end
-	SendChatMessage(MPR_ChannelPrefix..MESSAGE, "WHISPER", nil, TARGET)
+	if UnitName("player") ~= TARGET then
+		SendChatMessage(MPR_ChannelPrefix..MESSAGE, "WHISPER", nil, TARGET)
+	else -- Don't whisper myself, print with :Self()
+		self:Self(MESSAGE)
+	end
 end
 
 -- Say Message
@@ -1272,10 +1279,15 @@ function MPR:UpdateBackdrop()
 	MPR_Options:SetBackdropColor(unpack(BackdropColor))
 	MPR_Options:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 	-- MPR Aura Info
-	MPR_AuraInfo.Title:SetText("|cff"..self.Colors["TITLE"].." Reporter|r - Aura Info")
+	MPR_AuraInfo.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - Aura Info")
 	MPR_AuraInfo:SetBackdrop(Backdrop)
 	MPR_AuraInfo:SetBackdropColor(unpack(BackdropColor))
 	MPR_AuraInfo:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+	-- MPR Val'kyr Tracker
+	MPR_ValkyrTracker.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - Val'kyr Tracker")
+	MPR_ValkyrTracker:SetBackdrop(Backdrop)
+	MPR_ValkyrTracker:SetBackdropColor(unpack(BackdropColor))
+	MPR_ValkyrTracker:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 end
 
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
