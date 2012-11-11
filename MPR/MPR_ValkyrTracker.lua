@@ -1,5 +1,12 @@
 MPR_ValkyrTracker = CreateFrame("Frame", "MPR Val'kyr Tracker")
 MPR_ValkyrTracker.TimeSinceLastUpdate = 0
+MPR_ValkyrTracker.LichKingWarnings = {
+--	[%%] = {Warned, Message},
+	[77] = {false, ""},
+	[74] = {false, "Transition soon!"},
+	[47] = {false, ""},
+	[44] = {false, "Transition soon!"},
+}
 MPR_ValkyrTracker.QuakeCount = 0
 MPR_ValkyrTracker.SummonShadowTrapCooldown = nil
 MPR_ValkyrTracker.SummonValkyrCooldown = nil
@@ -221,8 +228,8 @@ function MPR_ValkyrTracker:Update()
 	for i=0,GetNumRaidMembers() do
 		local UnitID = i == 0 and "player" or "raid"..i
 		
-		-- Check if grabbed
-		if UnitInVehicle(UnitID) then
+		-- Check if grabbed (only during Phase 2 - from first till second/last Quake)
+		if self.QuakeCount == 1 and UnitInVehicle(UnitID) then
 			if not self.GrabbedPlayers[UnitName(UnitID)] then -- Insert grabbed player
 				self.GrabbedPlayers[UnitName(UnitID)] = {} -- {UnitName => TargetMarker}
 				self.GrabbedPlayers[UnitName(UnitID)].Name = string.format("|cFF%s%s|r",ClassColors[strupper(select(2,UnitClass(UnitID)))],UnitName(UnitID))
@@ -237,18 +244,17 @@ function MPR_ValkyrTracker:Update()
 		-- Check if targeting Valkyr and get data
 		if UnitName(UnitID.."target") == "Val'kyr Shadowguard" then
 			local RaidMarker = GetRaidTargetIndex(UnitID.."target")
-			local Health, HealthMax, Speed = UnitHealth(UnitID.."target"), UnitHealthMax(UnitID.."target"), GetUnitSpeed(UnitID.."target")
-			local HealthPct = round(100*Health/HealthMax,0,true)
-			local ValkyrGUID = tonumber(string.sub(UnitGUID(UnitID.."target"),6),16)
-			if not self.ValkyrUpdated[ValkyrGUID] and self.ValkyrTable[ValkyrGUID] then
-				self.ValkyrUpdated[ValkyrGUID] = true
+			local GUID, Health, HealthMax, Speed = tonumber(string.sub(UnitGUID(UnitID.."target"),6),16), UnitHealth(UnitID.."target"), UnitHealthMax(UnitID.."target"), GetUnitSpeed(UnitID.."target")
+			local HealthPct = round(100*Health/HealthMax,0,true) 
+			if not self.ValkyrUpdated[GUID] and self.ValkyrTable[GUID] then
+				self.ValkyrUpdated[GUID] = true
 				if (GetInstanceDifficulty() <= 2 or HealthPct > 50) then -- Update this Val'kyr
 					-- {1 => TextureID, 2 => RaidMarkerID, 3 => HealthPct, 4 => Speed}
-					self.ValkyrTable[ValkyrGUID][2] = RaidMarker
-					self.ValkyrTable[ValkyrGUID][3] = HealthPct
-					self.ValkyrTable[ValkyrGUID][4] = Speed
+					self.ValkyrTable[GUID][2] = RaidMarker
+					self.ValkyrTable[GUID][3] = HealthPct
+					self.ValkyrTable[GUID][4] = Speed
 				else  -- Remove this Val'kyr
-					self.ValkyrTable[ValkyrGUID] = nil
+					self.ValkyrTable[GUID] = nil
 				end
 			end
 		end

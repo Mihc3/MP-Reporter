@@ -545,12 +545,14 @@ local LootedCreatures = {}
 function MPR:LOOT_OPENED()
 	if not UnitInRaid("player") or not self.Settings["REPORT_LOOT"] then return end
 	local LootMethod, _, MasterLooterRaidID = GetLootMethod()
-	if LootMethod == "master" and MasterLooterRaidID and UnitName("player") == UnitName("raid"..MasterLooterRaidID) then
-		local GUID = tonumber(string.sub(UnitGUID("target"),6),16)
-		if LootedCreatures[GUID] then return end
-		LootedCreatures[GUID] = true
-		
+	if LootMethod == "master" and MasterLooterRaidID and UnitName("player") == UnitName("raid"..MasterLooterRaidID) then		
 		local BossName = not UnitPlayerOrPetInRaid("target") and UnitName("target") or "unknown"
+		local BossGUID = BossName ~= "unknown" and tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16) or nil
+		if BossGUID then
+			if LootedCreatures[BossGUID] then return end
+			LootedCreatures[BossGUID]
+		end
+		
 		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
 		local WorthGold	= Gold > 0 and "("..Gold.." Gold)" or ""
 		local ItemLinks = {}
@@ -559,7 +561,7 @@ function MPR:LOOT_OPENED()
 			local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
 			local ItemLink = GetLootSlotLink(i)
 			local ItemBoP = select(5,GetLootRollItemInfo(i-1))
-			if Name and ItemLink and Rarity >= 3 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
+			if Name and ItemLink and Rarity >= 0 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
 				-- make BiS list
 				local bisClasses = {}
 				if self.Settings["REPORT_LOOT_BIS_INFO"] then
@@ -679,7 +681,7 @@ function MPR:StopCombat()
 	local numDeaths = #DeathData[index].Deaths
 	local ID = DeathData[index].ID
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
-	self:SelfReport("Encounter |cFF"..Color..DeathData[index].Name.."|r finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
+	self:SelfReport("Encounter |r|cFF"..Color..DeathData[index].Name.."|r|cFFbebebe finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to:|r |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h|cFFbebebe)|r" or ""))
 end
 
 local StartChecks = 0
