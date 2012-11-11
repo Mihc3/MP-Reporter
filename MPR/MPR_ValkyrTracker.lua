@@ -1,6 +1,6 @@
 MPR_ValkyrTracker = CreateFrame("Frame", "MPR Val'kyr Tracker")
 MPR_ValkyrTracker.TimeSinceLastUpdate = 0
-MPR_ValkyrTracker.LichKingWarnings = {
+MPR_ValkyrTracker.LichKingWarnings = { -- Not implented yet
 --	[%%] = {Warned, Message},
 	[77] = {false, ""},
 	[74] = {false, "Transition soon!"},
@@ -189,8 +189,7 @@ end
 
 function MPR_ValkyrTracker:OnUpdate(elapsed)
 	local Seconds, Color
-	-- Summon Shadow Trap timer 
-	if self.SummonShadowTrapCooldown then
+	if self.SummonShadowTrapCooldown then -- Summon Shadow Trap
 		Seconds = round(self.SummonShadowTrapCooldown,0,true)
 		Color = Seconds > 12 and "00FF00" or Seconds > 9 and "FFFF00" or Seconds > 6 and "FFAA00" or Seconds > 3 and "FF7700" or "FF0000"
 		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(73539).." CD: |cFF"..Color..Seconds.." sec|r")
@@ -244,7 +243,7 @@ function MPR_ValkyrTracker:Update()
 		-- Check if targeting Valkyr and get data
 		if UnitName(UnitID.."target") == "Val'kyr Shadowguard" then
 			local RaidMarker = GetRaidTargetIndex(UnitID.."target")
-			local GUID, Health, HealthMax, Speed = tonumber(string.sub(UnitGUID(UnitID.."target"),6),16), UnitHealth(UnitID.."target"), UnitHealthMax(UnitID.."target"), GetUnitSpeed(UnitID.."target")
+			local GUID, Health, HealthMax, Speed = tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16), UnitHealth(UnitID.."target"), UnitHealthMax(UnitID.."target"), GetUnitSpeed(UnitID.."target")
 			local HealthPct = round(100*Health/HealthMax,0,true) 
 			if not self.ValkyrUpdated[GUID] and self.ValkyrTable[GUID] then
 				self.ValkyrUpdated[GUID] = true
@@ -297,12 +296,6 @@ function MPR_ValkyrTracker:Update()
 	self.ValkyrUpdated = {}
 end
 function MPR_ValkyrTracker:SummonShadowTrap()
-	local Cooldown = 14
-	local activeCooldown = round(self.SummonShadowTrapCooldown,0,true)
-	if activeCooldown > 0 then
-		Cooldown = Cooldown - activeCooldown
-		print("|cFFFF0000MP Reporter: New Shadow Trap cooldown - "..Cooldown.." seconds! Please report this number to the addon author!|r")
-	end
 	self.SummonShadowTrapCooldown = 14
 end
 function MPR_ValkyrTracker:SummonValkyr(GUID)
@@ -317,7 +310,7 @@ function MPR_ValkyrTracker:SummonValkyr(GUID)
 	end
 end
 function MPR_ValkyrTracker:Defile()
-	local Cooldown = self.QuakeCount == 1 and 32.5 or 30
+	local Cooldown = self.QuakeCount == 1 and 32 or 27
 	local activeCooldown = round(self.DefileCooldown,0,true)
 	if activeCooldown > 0 then
 		Cooldown = Cooldown - activeCooldown
@@ -339,7 +332,7 @@ end
 function MPR_ValkyrTracker:Quake()
 	self.QuakeCount = self.QuakeCount + 1
 	self.SummonValkyrCooldown = self.QuakeCount == 1 and 26 or nil
-	self.DefileCooldown = self.QuakeCount == 1 and 45 or 32.5 --44
+	self.DefileCooldown = self.QuakeCount == 1 and 44 or 32.5 --
 	self.HarvestSoulsCooldown = self.QuakeCount == 2 and 20 or nil
 	
 	self.Label2:Show() -- Show Defile label
@@ -359,6 +352,6 @@ function MPR_ValkyrTracker:EncounterStart()
 	self:Reset()
 	if GetInstanceDifficulty() > 2 then -- Heroic
 		self.Label2:Hide() -- Hide Defile label
-		self.SummonShadowTrapCooldown = 30
+		self.SummonShadowTrapCooldown = 32
 	end
 end

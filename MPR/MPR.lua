@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.50b"
+MPR.Version = "v2.50"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -133,7 +133,7 @@ local npcsBossSpellSumon = {"Vengeful Shade"} -- Boss summons, destination is un
 --| Output: Unit casts [Spell]. |--
 local spellsCast = {"Remorseless Winter", "Quake", "Dark Vortex", "Light Vortex", "Blessing of Forgotten Kings", "Runescroll of Fortitude", "Drums of the Wild"}
 --| Output: Unit casts [Spell] on Target. |--
-local spellsCastOnTarget = {"Hand of Protection", "Innervate", }
+local spellsCastOnTarget = {"Hand of Protection"}
 --| Output: [Spell] on Target. |--
 local spellsBossCastOnTarget = {"Rune of Blood", "Vile Gas", "Swarming Shadows", "Necrotic Plague", "Soul Reaper"} -- If sourceName isn't important (ex. Boss casting).
 
@@ -550,7 +550,7 @@ function MPR:LOOT_OPENED()
 		local BossGUID = BossName ~= "unknown" and tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16) or nil
 		if BossGUID then
 			if LootedCreatures[BossGUID] then return end
-			LootedCreatures[BossGUID]
+			LootedCreatures[BossGUID] = true
 		end
 		
 		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
@@ -846,7 +846,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		local spellId, spellName, spellSchool = select(9, ...)
 		
 		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
-			if spellId == 68981 then -- Remorseless Winter
+			if spellId == 68981 or spellId == 74270 or spellId == 74271 or spellId == 74272 then -- Remorseless Winter
 				MPR_ValkyrTracker:RemorselessWinter()
 			elseif spellId == 72262 then -- Quake
 				MPR_ValkyrTracker:Quake()
@@ -889,7 +889,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 		elseif event == "SPELL_SUMMON" then
 			if spellId == 69037 then -- Summon Val'kyr
-				MPR_ValkyrTracker:SummonValkyr(tonumber(string.sub(destGUID,6),16))
+				MPR_ValkyrTracker:SummonValkyr(tonumber(string.sub(destGUID,9,12),16).."-"..tonumber(string.sub(destGUID,13),16))
 			end
 			
 			if contains(npcsSpellSumon,destName) then
