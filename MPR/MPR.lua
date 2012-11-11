@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.49b"
+MPR.Version = "v2.50b"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -56,7 +56,7 @@ local ClassBIS = {
 --		["Spec1"] = {ItemName1, ItemName2, ItemName3},
 --		["Spec2"] = {...},
 --		["Spec3"] = {...},
---	}
+--	}	
 	["Paladin"] = {
 		["Retribution"] = {"Penumbra Pendant", "Shadowvault Slayer's Cloak", "Polar Bear Claw Bracers", "Umbrage Armbands", "Fleshrending Gauntlets", "Astrylian's Sutured Cinch", "Apocalypse's Advance", "Signet of Twilight", "Sharpened Twilight Scale", "Tiny Abomination in a Jar", "Oathbinder, Charge of the Ranger-General"},
 		["Holy"] = {"Blood Queen's Crimson Choker", "Cloak of Burning Dusk", "Mail of Crimson Coins", "Bracers of Fiery Night", "Unclean Surgical Gloves", "Split Shape Belt", "Plaguebringer's Stained Pants", "Foreshadow Steps", "Marrowgar's Frigid Eye", "Solace of the Defeated", "Bulwark of Smouldering Steel", "Bloodsurge, Kel'Thuzad's Blade of Agony"},
@@ -470,6 +470,7 @@ function MPR:ClearCombatLog(bAuto)
 end
 
 function round(num, idp, up)
+	if not num then return 0 end
 	local mult = 10^(idp or 0)
 	return math.floor(num * mult + (up and 0.99 or 0.5)) / mult
 end
@@ -545,18 +546,20 @@ function MPR:LOOT_OPENED()
 	if not UnitInRaid("player") or not self.Settings["REPORT_LOOT"] then return end
 	local LootMethod, _, MasterLooterRaidID = GetLootMethod()
 	if LootMethod == "master" and MasterLooterRaidID and UnitName("player") == UnitName("raid"..MasterLooterRaidID) then
-		local guid = tonumber(string.sub(UnitGUID("target"),6),16)
-		if contains(LootedCreatures,guid) then return end
-		table.insert(LootedCreatures,guid)
+		local GUID = tonumber(string.sub(UnitGUID("target"),6),16)
+		if LootedCreatures[GUID] then return end
+		LootedCreatures[GUID] = true
 		
-		local BossName = (contains(BossNames,UnitName("target")) or not UnitPlayerOrPetInRaid("target")) and UnitName("target") or "unknown"
+		local BossName = not UnitPlayerOrPetInRaid("target") and UnitName("target") or "unknown"
 		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
-		local WorthGold	= Gold > 0 and " ("..Gold.." Gold)" or ""
+		local WorthGold	= Gold >= 0 and "("..Gold.." Gold)" or ""
 		local ItemLinks = {}
 		local BoPs = false
 		for i=1,GetNumLootItems() do
-			local _, Name, _, Rarity, _ = GetLootSlotInfo(i);
-			if Rarity >= 3 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
+			local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
+			local ItemLink = GetLootSlotLink(i)
+			local ItemBoP = select(5,GetLootRollItemInfo(i-1))
+			if Name and ItemLink and Rarity >= 3 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
 				-- make BiS list
 				local bisClasses = {}
 				if self.Settings["REPORT_LOOT_BIS_INFO"] then
@@ -570,8 +573,8 @@ function MPR:LOOT_OPENED()
 						if #bisSpecs > 0 then table.insert(bisClasses,Class.." ("..table.concat(bisSpecs,", ")..")") end
 					end
 				end
-				table.insert(ItemLinks, GetLootSlotLink(i)..(#bisClasses > 0 and " BiS: "..table.concat(bisClasses," ") or ""))
-				if select(5,GetLootRollItemInfo(i-1)) and not BoPs then BoPs = true end
+				table.insert(ItemLinks, ItemLink..(#bisClasses > 0 and " BiS: "..table.concat(bisClasses," ") or ""))
+				if ItemBoP and not BoPs then BoPs = true end
 			end
 		end
 		local NotEligible = {}
@@ -586,7 +589,7 @@ function MPR:LOOT_OPENED()
 			end
 		end
 		if #ItemLinks > 0 and (BoPs or not self.Settings["REPORT_LOOT_BOP_ONLY"]) then
-			self:RaidReport(string.format("%s - items in loot:%s",BossName,WorthGold),true)
+			self:RaidReport(string.format("%s - items in loot: %s",BossName,WorthGold),true)
 			for _,item in pairs(ItemLinks) do
 				self:RaidReport(item,true,true)
 			end
@@ -656,6 +659,7 @@ function MPR:StartCombat(ID)
 	local h,m,s = MPR_GameTime:Get()
 	local index = #DeathData+1
 	DeathData[index] = {}
+	DeathData[index].ID = ID
 	DeathData[index].Name = BossData[ID][1]
 	DeathData[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
 	DeathData[index].GameTimeStart = string.format("%2d:%02d:%02d",h,m,s+(BossData[ID][4] or 0))
@@ -673,7 +677,9 @@ function MPR:StopCombat()
 	local h,m,s = MPR_GameTime:Get()
 	DeathData[index].GameTimeEnd = string.format("%2d:%02d:%02d",h,m,s)
 	local numDeaths = #DeathData[index].Deaths
-	self:SelfReport("Encounter "..DeathData[index].Name.." finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
+	local ID = DeathData[index].ID
+	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
+	self:SelfReport("Encounter |cFF"..Color..DeathData[index].Name.."|r finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to: |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h)" or ""))
 end
 
 local StartChecks = 0
@@ -839,11 +845,17 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		
 		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
 			if spellId == 68981 then -- Remorseless Winter
-				MPR_ValkyrTracker:RemorselessWinterCast()
+				MPR_ValkyrTracker:RemorselessWinter()
 			elseif spellId == 72262 then -- Quake
-				MPR_ValkyrTracker:QuakeCast()
+				MPR_ValkyrTracker:Quake()
 			elseif spellId == 72762 then -- Defile
-				MPR_ValkyrTracker:DefileCast()
+				MPR_ValkyrTracker:Defile()
+			elseif spellId == 73539 then -- Summon Shadow Trap (heroic only)
+				MPR_ValkyrTracker:SummonShadowTrap()
+			elseif spellId == 74297 then -- Harvest Souls (heroic only)
+				MPR_ValkyrTracker:HarvestSouls()
+			elseif spellId == 72350 then -- Fury of Frostmourne
+				MPR_ValkyrTracker:FuryOfFrostmourne()
 			end
 		
 			if spellName == "Heroism" and UnitInRaid(sourceName) then
@@ -874,8 +886,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				self:ScheduleTimer(destName, TimerHandler, spellsCreate[destName]-30, spellId)
 			end
 		elseif event == "SPELL_SUMMON" then
-			if spellId == 69037 then
-				MPR_ValkyrTracker:ValkyrSummoned(tonumber(string.sub(destGUID,6),16))
+			if spellId == 69037 then -- Summon Val'kyr
+				MPR_ValkyrTracker:SummonValkyr(tonumber(string.sub(destGUID,6),16))
 			end
 			
 			if contains(npcsSpellSumon,destName) then
@@ -1034,8 +1046,8 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 			local EncounterName = Data[1]
 			StartChecks = 60
 			StartCheck("nil", ID)
-			if ID == 12 then -- Just started The Lich King, reset Quake counter
-				MPR_ValkyrTracker:Reset()
+			if ID == 12 then -- The Lich King encounter
+				MPR_ValkyrTracker:EncounterStart()
 			end
 			break
 		end
@@ -1171,7 +1183,7 @@ function MPR:Whisper(TARGET, MESSAGE, ...)
 	if UnitName("player") ~= TARGET then
 		SendChatMessage(MPR_ChannelPrefix..MESSAGE, "WHISPER", nil, TARGET)
 	else -- Don't whisper myself, print with :Self()
-		self:Self(MESSAGE)
+		self:SelfReport(MESSAGE)
 	end
 end
 
@@ -1194,9 +1206,9 @@ function MPR:ReportLocks(Player)
 		end
 	end
 	if #Locks > 0 then
-		SendChatMessage(string.format("Raid Locks: %s",table.concat(Locks,", ")), "WHISPER", nil, Player);
+		SendChatMessage(string.format("Raid Locks: %s",table.concat(Locks,", ")), "WHISPER", nil, Player)
 	else
-		SendChatMessage("No Raid Locks.", "WHISPER", "Common", Player);
+		SendChatMessage("No Raid Locks.", "WHISPER", "Common", Player)
 	end
 end
 

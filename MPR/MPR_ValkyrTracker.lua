@@ -1,8 +1,11 @@
 MPR_ValkyrTracker = CreateFrame("Frame", "MPR Val'kyr Tracker")
 MPR_ValkyrTracker.TimeSinceLastUpdate = 0
 MPR_ValkyrTracker.QuakeCount = 0
-MPR_ValkyrTracker.DefileCooldown = nil
+MPR_ValkyrTracker.SummonShadowTrapCooldown = 30
 MPR_ValkyrTracker.SummonValkyrCooldown = nil
+MPR_ValkyrTracker.DefileCooldown = nil
+MPR_ValkyrTracker.HarvestSoulsCooldown = nil
+MPR_ValkyrTracker.InFrostmourne = false
 MPR_ValkyrTracker.ValkyrCount = 0
 MPR_ValkyrTracker.ValkyrTable = {} -- {IconID, Health, HealthMax, Speed}
 MPR_ValkyrTracker.ValkyrUpdated = {}
@@ -24,21 +27,40 @@ function MPR_ValkyrTracker:Initialize()
 	MPR_ValkyrTracker:SetScript("OnDragStart", function(self) MPR_ValkyrTracker:StartMoving() end)
 	MPR_ValkyrTracker:SetScript("OnDragStop", function(self) MPR_ValkyrTracker:StopMovingOrSizing() end)
 	MPR_ValkyrTracker:SetScript("OnUpdate", function(self, elapsed)
-		if MPR_ValkyrTracker.DefileCooldown and MPR_ValkyrTracker.DefileCooldown > 0 then
-			MPR_ValkyrTracker.DefileCooldown = MPR_ValkyrTracker.DefileCooldown - elapsed
-			if MPR_ValkyrTracker.DefileCooldown < 0 then
-				MPR_ValkyrTracker.DefileCooldown = 0
+		-- Check if player left Frostmourne
+		if MPR_ValkyrTracker.InFrostmourne and GetSubZoneText() ~= "Frostmourne" then
+			MPR_ValkyrTracker.InFrostmourne = false
+		end
+		
+		if not MPR_ValkyrTracker.InFrostmourne then
+			if MPR_ValkyrTracker.SummonShadowTrapCooldown and MPR_ValkyrTracker.SummonShadowTrapCooldown > 0 then
+				MPR_ValkyrTracker.SummonShadowTrapCooldown = MPR_ValkyrTracker.SummonShadowTrapCooldown - elapsed
+				if MPR_ValkyrTracker.SummonShadowTrapCooldown < 0 then
+					MPR_ValkyrTracker.SummonShadowTrapCooldown = 0
+				end
+			end
+			if MPR_ValkyrTracker.SummonValkyrCooldown and MPR_ValkyrTracker.SummonValkyrCooldown > 0 then
+				MPR_ValkyrTracker.SummonValkyrCooldown = MPR_ValkyrTracker.SummonValkyrCooldown - elapsed
+				if MPR_ValkyrTracker.SummonValkyrCooldown < 0 then
+					MPR_ValkyrTracker.SummonValkyrCooldown = 0
+				end
+			end
+			if MPR_ValkyrTracker.DefileCooldown and MPR_ValkyrTracker.DefileCooldown > 0 then
+				MPR_ValkyrTracker.DefileCooldown = MPR_ValkyrTracker.DefileCooldown - elapsed
+				if MPR_ValkyrTracker.DefileCooldown < 0 then
+					MPR_ValkyrTracker.DefileCooldown = 0
+				end
 			end
 		end
-		if MPR_ValkyrTracker.SummonValkyrCooldown and MPR_ValkyrTracker.SummonValkyrCooldown > 0 then
-			MPR_ValkyrTracker.SummonValkyrCooldown = MPR_ValkyrTracker.SummonValkyrCooldown - elapsed
-			if MPR_ValkyrTracker.SummonValkyrCooldown < 0 then
-				MPR_ValkyrTracker.SummonValkyrCooldown = 0
+		
+		if MPR_ValkyrTracker.HarvestSoulsCooldown and MPR_ValkyrTracker.HarvestSoulsCooldown > 0 then
+			MPR_ValkyrTracker.HarvestSoulsCooldown = MPR_ValkyrTracker.HarvestSoulsCooldown - elapsed
+			if MPR_ValkyrTracker.HarvestSoulsCooldown < 0 then
+				MPR_ValkyrTracker.HarvestSoulsCooldown = 0
 			end
 		end
-		if MPR_ValkyrTracker:IsVisible() then 
-			MPR_ValkyrTracker:OnUpdate(elapsed)
-		end 
+		
+		MPR_ValkyrTracker:OnUpdate(elapsed)
 	end)
 	MPR_ValkyrTracker:SetFrameStrata("FULLSCREEN_DIALOG")
 	
@@ -160,6 +182,22 @@ end
 
 function MPR_ValkyrTracker:OnUpdate(elapsed)
 	local Seconds, Color
+	-- Summon Shadow Trap timer 
+	if self.SummonShadowTrapCooldown then
+		Seconds = round(self.SummonShadowTrapCooldown,0,true)
+		Color = Seconds > 12 and "00FF00" or Seconds > 9 and "FFFF00" or Seconds > 6 and "FFAA00" or Seconds > 3 and "FF7700" or "FF0000"
+		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(73539).." CD: |cFF"..Color..Seconds.." sec|r")
+	elseif self.HarvestSoulsCooldown then -- Harvest Souls
+		Seconds = round(self.HarvestSoulsCooldown,0,true)
+		Color = Seconds > 12 and "00FF00" or Seconds > 9 and "FFFF00" or Seconds > 6 and "FFAA00" or Seconds > 3 and "FF7700" or "FF0000"
+		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(74297).." CD: |cFF"..Color..Seconds.." sec|r")
+	elseif self.SummonValkyrCooldown then -- Summon Val'kyr timer
+		Seconds = round(self.SummonValkyrCooldown,0,true)
+		Color = Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
+		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFF"..Color..Seconds.." sec|r")
+	else
+		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFFbebebenil|r")
+	end
 	-- Defile CD timer
 	if self.DefileCooldown then
 		Seconds = round(self.DefileCooldown,0,true)
@@ -168,15 +206,7 @@ function MPR_ValkyrTracker:OnUpdate(elapsed)
 	else  
 		MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: |cFFbebebenil|r")
 	end
-	-- Summon Val'kyr timer
-	if self.DefileCooldown then
-		Seconds = round(self.SummonValkyrCooldown,0,true)
-		Color = Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
-		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFF"..Color..Seconds.." sec|r")
-	else
-		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFFbebebenil|r")
-	end
-		
+	
 	MPR_ValkyrTracker.TimeSinceLastUpdate = MPR_ValkyrTracker.TimeSinceLastUpdate + elapsed
     if MPR_ValkyrTracker.TimeSinceLastUpdate >= MPR.Settings["UPDATEFREQUENCY"] then
 		local diff = MPR_ValkyrTracker.TimeSinceLastUpdate
@@ -260,8 +290,16 @@ function MPR_ValkyrTracker:Update()
 	end
 	self.ValkyrUpdated = {}
 end
-
-function MPR_ValkyrTracker:ValkyrSummoned(GUID)
+function MPR_ValkyrTracker:SummonShadowTrap()
+	local Cooldown = 14
+	local activeCooldown = round(self.SummonShadowTrapCooldown,0,true)
+	if activeCooldown > 0 then
+		Cooldown = Cooldown - activeCooldown
+		print("|cFFFF0000MP Reporter: New Shadow Trap cooldown - "..Cooldown.." seconds! Please report this number to the addon author!|r")
+	end
+	self.SummonShadowTrapCooldown = 14
+end
+function MPR_ValkyrTracker:SummonValkyr(GUID)
 	self.ValkyrCount = self.ValkyrCount + 1
 	if self.ValkyrCount == 1 then -- First Valkyr
 		self.SummonValkyrCooldown = 45
@@ -272,24 +310,49 @@ function MPR_ValkyrTracker:ValkyrSummoned(GUID)
 		self.ValkyrCount = 0
 	end
 end
-
-function MPR_ValkyrTracker:DefileCast()
-	self.DefileCooldown = QuakeCount == 1 and 32 or 31
+function MPR_ValkyrTracker:Defile()
+	local Cooldown = self.QuakeCount == 1 and 32.5 or 30
+	local activeCooldown = round(self.DefileCooldown,0,true)
+	if activeCooldown > 0 then
+		Cooldown = Cooldown - activeCooldown
+		print("|cFFFF0000MP Reporter: New Defile cooldown - "..Cooldown.." seconds! Please report this number to the addon author!|r")
+	end
+	self.DefileCooldown = Cooldown
 end
-function MPR_ValkyrTracker:RemorselessWinterCast()
+function MPR_ValkyrTracker:HarvestSouls()
+	if GetInstanceDifficulty() > 2 then -- Heroic
+		self.InFrostmourne = true
+		self.HarvestSoulsCooldown = 120
+	end
+end
+function MPR_ValkyrTracker:RemorselessWinter()
+	self.SummonShadowTrapCooldown = nil
 	self.SummonValkyrCooldown = nil
 	self.DefileCooldown = nil
 end
-function MPR_ValkyrTracker:QuakeCast()
-	QuakeCount = QuakeCount + 1
-	self.SummonValkyrCooldown = QuakeCount == 1 and 26 or nil
-	self.DefileCooldown = QuakeCount == 1 and 45 or 44
+function MPR_ValkyrTracker:Quake()
+	self.QuakeCount = self.QuakeCount + 1
+	self.SummonValkyrCooldown = self.QuakeCount == 1 and 26 or nil
+	self.DefileCooldown = self.QuakeCount == 1 and 45 or 32.5 --44
+	self.HarvestSoulsCooldown = self.QuakeCount == 2 and 20 or nil
+	
+	self.Label2:Show() -- Show Defile label
 end
-function MPR_ValkyrTracker:FuryOfFrostmourneCast()
+function MPR_ValkyrTracker:FuryOfFrostmourne()
 	self:Reset()
 end
 function MPR_ValkyrTracker:Reset()
 	self.QuakeCount = 0
+	self.ValkyrCount = 0
+	self.SummonShadowTrapCooldown = nil
 	self.SummonValkyrCooldown = nil
 	self.DefileCooldown = nil
+	self.HarvestSoulsCooldown = nil
+end
+function MPR_ValkyrTracker:EncounterStart()
+	self:Reset()
+	if GetInstanceDifficulty() > 2 then -- Heroic
+		self.Label2:Hide() -- Hide Defile label
+		self.SummonShadowTrapCooldown = 30
+	end
 end

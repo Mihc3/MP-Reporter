@@ -446,7 +446,7 @@ end
 
 -- Variables
 local GB_String1, GB_LastCheck, GB_LastCheckHP, Under10Pct, Under5Pct, Under3Pct -- Gunship Battle
-local VD_String1, VD_LastCheck, VD_LastCheckHP -- Valithria Dreamwalker
+local VD_String1, VD_LastCheck, VD_LastCheckHP = "" -- Valithria Dreamwalker
 local AR_LastCheck, AR_LastCheckHP -- Anub'arak
 --
 
@@ -684,7 +684,7 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		else
 			String = "|cFF00ff00VD|r: No information"
 		end
-		Text1:SetTExt(String..VD_String1)
+		Text1:SetText(String..VD_String1)
 		
 		local array = {}
 		for i=1,GetNumRaidMembers() do
