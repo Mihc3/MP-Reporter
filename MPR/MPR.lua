@@ -552,7 +552,7 @@ function MPR:LOOT_OPENED()
 		
 		local BossName = not UnitPlayerOrPetInRaid("target") and UnitName("target") or "unknown"
 		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
-		local WorthGold	= Gold >= 0 and "("..Gold.." Gold)" or ""
+		local WorthGold	= Gold > 0 and "("..Gold.." Gold)" or ""
 		local ItemLinks = {}
 		local BoPs = false
 		for i=1,GetNumLootItems() do

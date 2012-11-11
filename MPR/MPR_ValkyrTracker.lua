@@ -1,7 +1,7 @@
 MPR_ValkyrTracker = CreateFrame("Frame", "MPR Val'kyr Tracker")
 MPR_ValkyrTracker.TimeSinceLastUpdate = 0
 MPR_ValkyrTracker.QuakeCount = 0
-MPR_ValkyrTracker.SummonShadowTrapCooldown = 30
+MPR_ValkyrTracker.SummonShadowTrapCooldown = nil
 MPR_ValkyrTracker.SummonValkyrCooldown = nil
 MPR_ValkyrTracker.DefileCooldown = nil
 MPR_ValkyrTracker.HarvestSoulsCooldown = nil
