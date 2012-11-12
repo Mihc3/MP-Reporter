@@ -1,15 +1,16 @@
 MPR_ValkyrTracker = CreateFrame("Frame", "MPR Val'kyr Tracker")
 MPR_ValkyrTracker.TimeSinceLastUpdate = 0
-MPR_ValkyrTracker.LichKingWarnings = { -- Not implented yet
+MPR_ValkyrTracker.LichKingWarnings = {
+-- Will warn: "Warning: The Lich King has {%%}% HP remaining! {Message}"
 --	[%%] = {Warned, Message},
-	[77] = {false, ""},
+	[77] = {false, nil},
 	[74] = {false, "Transition soon!"},
-	[47] = {false, ""},
+	[47] = {false, nil},
 	[44] = {false, "Transition soon!"},
 }
 MPR_ValkyrTracker.QuakeCount = 0
 MPR_ValkyrTracker.DataTimers = {
--- 	{1=> Timer, 2 => Paused,	3 => PauseInFrostmourne}
+-- 	{[1] = Timer, [2] = Paused, [3] = PauseInFrostmourne},
 	{[1] = nil, [2] = nil, [3] = nil}, -- Summon Shadow Trap
 	{[1] = nil,	[2] = nil, [3] = nil}, -- Summon Val'kyr
 	{[1] = nil,	[2] = nil, [3] = true}, -- Defile
@@ -196,6 +197,19 @@ function MPR_ValkyrTracker:Update()
 	local arrayGrabbed = {}
 	local Color = {R = 1, G = 1, B = 1}
 	
+	local LKHealthPct = nil
+	for i=1,GetNumRaidMembers() do
+		local UnitIDTarget = (i > 0 and "raid"..i or "").."target"
+		if UnitName(UnitIDTarget) == "The Lich King" then
+			LKHealthPct = round(100*UnitHealth(UnitIDTarget)/UnitHealthMax(UnitIDTarget),0,true)
+			break
+		end
+	end
+	if LKHealthPct and LKHealthPct > 40 and self.LichKingWarnings[LKHealthPct] and not self.LichKingWarnings[LKHealthPct][1] then
+		self.LichKingWarnings[LKHealthPct][1] = true
+		MPR:RaidReport("Warning: The Lich King has "..LKHealthPct.."% HP remaining! "..(self.LichKingWarnings[LKHealthPct][2] or ""),true)
+	end
+	
 	if self.QuakeCount == 1 then -- During Phase 2 only
 		for i=0,GetNumRaidMembers() do
 			local UnitID = i == 0 and "player" or "raid"..i
@@ -291,12 +305,12 @@ function MPR_ValkyrTracker:Update()
 	self.Label3:SetText("Grabbed players: "..table.concat(arrayGrabbed,", "))
 end
 function MPR_ValkyrTracker:SummonShadowTrap()
-	self.SummonShadowTrapCooldown = 14
+	self.DataTimers[1][1] = 14
 end
 function MPR_ValkyrTracker:SummonValkyr(GUID)
 	self.ValkyrCount = self.ValkyrCount + 1
 	if self.ValkyrCount == 1 then -- First Valkyr
-		self.SummonValkyrCooldown = 45
+		self.DataTimers[2][1] = 45
 	end
 	self.ValkyrTable[GUID] = {}
 	self.ValkyrTable[GUID][1] = self.ValkyrCount
@@ -306,31 +320,31 @@ function MPR_ValkyrTracker:SummonValkyr(GUID)
 end
 function MPR_ValkyrTracker:Defile()
 	local Cooldown = self.QuakeCount == 1 and 32 or 27
-	local activeCooldown = round(self.DefileCooldown,1,true)
+	local activeCooldown = round(self.DataTimers[3][1],1,true)
 	if activeCooldown > 0 then
 		Cooldown = Cooldown - activeCooldown
 		print("|cFFFF0000MP Reporter: New Defile cooldown - "..Cooldown.." seconds! QuakeCount: "..self.QuakeCount.."|r")
 	end
-	self.DefileCooldown = Cooldown
+	self.DataTimers[3][1] = Cooldown
 end
 function MPR_ValkyrTracker:HarvestSouls()
 	if GetInstanceDifficulty() > 2 then -- Heroic
 		MPR_ValkyrTracker.IgnoreSubZoneTimer = 10
 		self.InFrostmourne = true
-		self.HarvestSoulsCooldown = 120
-		self.DefileCooldown = 3
+		self.DataTimers[4][1] = 120
+		self.DataTimers[3][1] = 3
 	end
 end
 function MPR_ValkyrTracker:RemorselessWinter()
-	self.SummonShadowTrapCooldown = nil
-	self.SummonValkyrCooldown = nil
-	self.DefileCooldown = nil
+	self.DataTimers[1][1] = nil
+	self.DataTimers[2][1] = nil
+	self.DataTimers[3][1] = nil
 end
 function MPR_ValkyrTracker:Quake()
 	self.QuakeCount = self.QuakeCount + 1
-	self.SummonValkyrCooldown = self.QuakeCount == 1 and 26 or nil
-	self.DefileCooldown = self.QuakeCount == 1 and 44 or 32
-	self.HarvestSoulsCooldown = self.QuakeCount == 2 and 20 or nil
+	self.DataTimers[2][1] = self.QuakeCount == 1 and 26 or nil
+	self.DataTimers[3][1] = self.QuakeCount == 1 and 44 or 32
+	self.DataTimers[4][1] = self.QuakeCount == 2 and 20 or nil
 	
 	self.Label2:Show() -- Show Defile label
 end
@@ -340,16 +354,16 @@ end
 function MPR_ValkyrTracker:Reset()
 	self.QuakeCount = 0
 	self.ValkyrCount = 0
-	self.SummonShadowTrapCooldown = nil
-	self.SummonValkyrCooldown = nil
-	self.DefileCooldown = nil
-	self.HarvestSoulsCooldown = nil
+	self.DataTimers[1][1] = nil
+	self.DataTimers[2][1] = nil
+	self.DataTimers[3][1] = nil
+	self.DataTimers[4][1] = nil
 end
 function MPR_ValkyrTracker:EncounterStart()
 	self:Reset()
 	if GetInstanceDifficulty() > 2 then -- Heroic
 		self.Label2:Hide() -- Hide Defile label
-		self.SummonShadowTrapCooldown = 32
+		self.DataTimers[1][1] = 32
 	end
 end
 
