@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.50"
+MPR.Version = "v2.51"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -463,8 +463,6 @@ function PrintRaidOptions(Var)
 end
 
 function MPR:ClearCombatLog(bAuto)
-	local f = CreateFrame("frame",nil,UIParent)
-	f:SetScript("OnUpdate",CombatLogClearEntries)
 	CombatLogClearEntries()
 	self:SelfReport("Combat log entries cleared.")
 end
@@ -561,7 +559,7 @@ function MPR:LOOT_OPENED()
 			local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
 			local ItemLink = GetLootSlotLink(i)
 			local ItemBoP = select(5,GetLootRollItemInfo(i-1))
-			if Name and ItemLink and Rarity >= 0 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
+			if Name and ItemLink and Rarity >= 3 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
 				-- make BiS list
 				local bisClasses = {}
 				if self.Settings["REPORT_LOOT_BIS_INFO"] then
@@ -664,7 +662,7 @@ function MPR:StartCombat(ID)
 	DeathData[index].ID = ID
 	DeathData[index].Name = BossData[ID][1]
 	DeathData[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
-	DeathData[index].GameTimeStart = string.format("%2d:%02d:%02d",h,m,s+(BossData[ID][4] or 0))
+	DeathData[index].GameTimeStart = string.format("%i:%02d:%02d",h,m,s+(BossData[ID][4] or 0))
 	DeathData[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
 	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..DeathData[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:ValkyrTracker:nil:nil|h[Val'kyr Tracker]|h|r" or ""))
@@ -677,7 +675,7 @@ function MPR:StopCombat()
 	local index = #DeathData
 	DeathData[index].TimeEnd = GetTime() -- Not used
 	local h,m,s = MPR_GameTime:Get()
-	DeathData[index].GameTimeEnd = string.format("%2d:%02d:%02d",h,m,s)
+	DeathData[index].GameTimeEnd = string.format("%i:%02d:%02d",h,m,s)
 	local numDeaths = #DeathData[index].Deaths
 	local ID = DeathData[index].ID
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
@@ -1365,9 +1363,6 @@ function MPR:ADDON_LOADED(addon)
 		["DKPPENALTIES_AUTO"] = false,
 		["DKPPENALTIES_OUTPUT"] = "RAID",
 	}
-	
-	
-	
 	
 	MPR_Settings["BACKDROP"] = MPR_Settings["BACKDROP"] or {
 		bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
