@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.51"
+MPR.Version = "v2.53b"
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -56,7 +56,7 @@ local ClassBIS = {
 --		["Spec1"] = {ItemName1, ItemName2, ItemName3},
 --		["Spec2"] = {...},
 --		["Spec3"] = {...},
---	}	
+--	},
 	["Paladin"] = {
 		["Retribution"] = {"Penumbra Pendant", "Shadowvault Slayer's Cloak", "Polar Bear Claw Bracers", "Umbrage Armbands", "Fleshrending Gauntlets", "Astrylian's Sutured Cinch", "Apocalypse's Advance", "Signet of Twilight", "Sharpened Twilight Scale", "Tiny Abomination in a Jar", "Oathbinder, Charge of the Ranger-General"},
 		["Holy"] = {"Blood Queen's Crimson Choker", "Cloak of Burning Dusk", "Mail of Crimson Coins", "Bracers of Fiery Night", "Unclean Surgical Gloves", "Split Shape Belt", "Plaguebringer's Stained Pants", "Foreshadow Steps", "Marrowgar's Frigid Eye", "Solace of the Defeated", "Bulwark of Smouldering Steel", "Bloodsurge, Kel'Thuzad's Blade of Agony"},
@@ -294,12 +294,12 @@ function report(TimerName, ...)
 	end
 end
 
-function unit(name)
+function unit(name, class)
 	if name then
-		local class = select(2, UnitClass(name)) or select(6, MPR:GetGuildMemberInfo(name))
+		local class = class or select(2, UnitClass(name)) or select(6, MPR:GetGuildMemberInfo(name))
 		if class then
 			return string.format("|r|cFF%s|Hplayer:%s|h[%s]|h|r|cFF%s",ClassColors[strupper(class)],name,name,MPR.Colors["TEXT"])
-			--return string.format("|Hplayer:%s|h[|r|cFF%s%s|r|cFF%s]|h",name,Class,self.self.Colors[select(2, UnitClass(name))],name,self.Colors["TEXT"])
+			--return string.format("|Hplayer:%s|h[|r|cFF%s%s|r|cFF%s]|h",name,Class,self.Colors[select(2, UnitClass(name))],name,self.Colors["TEXT"])
 		elseif contains(BossNames,name) then
 			return "|r|cFFff8c00"..name.."|r|cFF"..MPR.Colors["TEXT"]
 		else
@@ -483,9 +483,9 @@ function SlashCmdList.MPR(msg, editbox)
 	elseif msg == "vt" then
 		MPR_ValkyrTracker:Toggle()
 	elseif msg == "ai" then
-		MPR:SelfReport("Instance: |r|cff3588ff|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h "..
-											 "|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h "..
-											 "|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h ".."|r")		
+		MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
+								   "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
+								   "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")		
 	elseif msg == "ping check" then
 		table.wipe(DBM_Users)
 		MPR:SelfReport("Reporting DBM (v4) users in 5 seconds ...", true)
@@ -652,34 +652,38 @@ function MPR:ReportDeath(Unformatted, Formatted)
 end
 
 local Combat = false
-local DeathData = {}
 function MPR:StartCombat(ID)
 	if Combat then return end
 	Combat = true
-	local h,m,s = MPR_GameTime:Get()
-	local index = #DeathData+1
-	DeathData[index] = {}
-	DeathData[index].ID = ID
-	DeathData[index].Name = BossData[ID][1]
-	DeathData[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
-	DeathData[index].GameTimeStart = string.format("%i:%02d:%02d",h,m,s+(BossData[ID][4] or 0))
-	DeathData[index].Deaths = {}
+	
+	local index = #self.DataDeaths+1
+	self.DataDeaths[index] = {}
+	self.DataDeaths[index].ID = ID
+	self.DataDeaths[index].Name = BossData[ID][1]
+	local _, month, day, year = CalendarGetDate();
+	local month_names = {[1] = "Jan", [2] = "Feb", [3] = "Mar", [4] = "Apr", [5] = "May", [6] = "Jun", [7] = "Jul", [8] = "Aug", [9] = "Sep", [10] = "Oct", [11] = "Nov", [12] = "Dec"}
+	self.DataDeaths[index].Date = string.format("%s %i, %i",month_names[month],day,year)
+	self.DataDeaths[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
+	local hour, minute, second = MPR_GameTime:Get()
+	self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(BossData[ID][4] or 0))
+	self.DataDeaths[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
-	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..DeathData[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:ValkyrTracker:nil:nil|h[Val'kyr Tracker]|h|r" or ""))
+	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:ValkyrTracker:nil:nil|h[Val'kyr Tracker]|h|r" or ""))
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
 
 function MPR:StopCombat()
 	if not Combat then return end
 	Combat = false
-	local index = #DeathData
-	DeathData[index].TimeEnd = GetTime() -- Not used
+	local index = #self.DataDeaths
+	self.DataDeaths[index].TimeEnd = GetTime() -- Not used
 	local h,m,s = MPR_GameTime:Get()
-	DeathData[index].GameTimeEnd = string.format("%i:%02d:%02d",h,m,s)
-	local numDeaths = #DeathData[index].Deaths
-	local ID = DeathData[index].ID
+	self.DataDeaths[index].GameTimeEnd = string.format("%i:%02d:%02d",h,m,s)
+	local numDeaths = #self.DataDeaths[index].Deaths
+	local ID = self.DataDeaths[index].ID
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
-	self:SelfReport("Encounter |r|cFF"..Color..DeathData[index].Name.."|r|cFFbebebe finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to:|r |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h|cFFbebebe)|r" or ""))
+	self.DataDeaths[index].Color = Color
+	self:SelfReport("Encounter |r|cFF"..Color..self.DataDeaths[index].Name.."|r|cFFbebebe finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to:|r |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h|cFFbebebe)|r" or ""))
 end
 
 local StartChecks = 0
@@ -718,33 +722,51 @@ function WipeCheck()
 end
 
 function MPR:DeathReport(channel, index)
-	index = tonumber(index or #DeathData)
-	local strReportTitle = "Death Report for "..DeathData[index].Name.." ("..DeathData[index].GameTimeStart.." - "..DeathData[index].GameTimeEnd..")"
+	index = tonumber(index or #self.DataDeaths)
+	local strEncounter = channel == "Self" and "|cFF"..(self.DataDeaths[index].Color or "FFFFFF")..self.DataDeaths[index].Name.."|r|cFFBEBEBE" or self.DataDeaths[index].Name
+	local strReportTitle = "Death Report for "..strEncounter.." ("..self.DataDeaths[index].GameTimeStart.." - "..self.DataDeaths[index].GameTimeEnd..")"
 	if channel == "Raid" then
 		self:RaidReport(strReportTitle,true)
 	elseif channel == "Guild" then
 		self:Guild(strReportTitle)
 	elseif channel == "Self" then
 		self:SelfReport(strReportTitle)
-	end	
-	for i=1,#DeathData[index].Deaths do
-		local Player,Time,Source,Ability,Amount,Overkill = unpack(DeathData[index].Deaths[i])
-		local strTime = string.format("%2d:%02d",floor(Time/60),(Time%60))
+	end
+	if #self.DataDeaths[index].Deaths > 0 then
+		for i=1,#self.DataDeaths[index].Deaths do
+			
+			if not self.DataDeaths[index].Deaths[i].Player then
+				local Player,Time,Source,Ability,Amount,Overkill = unpack(self.DataDeaths[index].Deaths[i])
+				local tbl = {Player = Player, Time = Time, Source = Source, Ability = Ability, Amount = Amount, Overkill = Overkill}
+				self.DataDeaths[index].Deaths[i] = tbl
+			end
+			
+			local tbl = self.DataDeaths[index].Deaths[i]
+			local strTime = string.format("%2d:%02d",floor(tbl.Time/60),(tbl.Time%60))
+			if channel == "Raid" then
+				self:RaidReport(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, tbl.Player, tbl.Source, tbl.Ability, numformat(tbl.Amount-tbl.Overkill), tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""),true,true)
+			elseif channel == "Guild" then
+				self:Guild(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, tbl.Player, tbl.Source, tbl.Ability, numformat(tbl.Amount-tbl.Overkill), tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""),true)
+			else
+				self:SelfReport(string.format("%i. %s %s - %s: %s|r|cFFBEBEBE (A: %s%s)", i, strTime, unit(tbl.Player,tbl.Class), tbl.Source, tbl.Ability, numformat(tbl.Amount-tbl.Overkill), tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""))
+			end
+		end
+	else
 		if channel == "Raid" then
-			self:RaidReport(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true,true)
+			self:RaidReport("No death records.",true,true)
 		elseif channel == "Guild" then
-			self:Guild(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, Player, Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""),true)
+			self:Guild("No death records.",true)
 		else
-			self:SelfReport(string.format("%i. %s - %s: %s %s (A: %s%s)", i, strTime, unit(Player), Source, Ability, numformat(Amount-Overkill), Overkill > 0 and " / O: "..numformat(Overkill) or ""))
+			self:SelfReport("No death records.")
 		end
 	end
 end
 
 function MPR:InsertDeath(Player,Source,Ability,Amount,Overkill)
 	if not Combat then return end
-	local Time = math.floor(GetTime()-DeathData[#DeathData].TimeStart)
-	local tbl = {Player,Time,Source,Ability,Amount,Overkill}
-	table.insert(DeathData[#DeathData].Deaths,tbl)
+	local Time = math.floor(GetTime()-self.DataDeaths[#self.DataDeaths].TimeStart)
+	local tbl = {Player = Player, Class = select(2, UnitClass(Player)), Time = Time, Source = Source,Ability = Ability, Amount = Amount, Overkill = Overkill}
+	table.insert(self.DataDeaths[#self.DataDeaths].Deaths,tbl)
 end
 
 local PotencialDeaths = {}
@@ -1373,6 +1395,8 @@ function MPR:ADDON_LOADED(addon)
 	self.Settings = MPR_Settings
 	MPR_Colors = MPR_Colors or {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
 	self.Colors = MPR_Colors
+	MPR_DataDeaths = MPR_DataDeaths or {}
+	self.DataDeaths = MPR_DataDeaths
 	--[[
 	MPR_DKPPenalties = nil or {
 		["Malleable Goo"] = 		{false,1},

@@ -57,35 +57,119 @@ function MPR_Options:Initialize()
 	MPR_Options:NewCB("Mass Dispels",nil,"REPORT_MASSDISPELS",89,-74)	-- [ ] Mass Dispels
 	
 	-- Player Deaths
-	MPR_Options:NewFS("Player Deaths","3CB371",16,-93)
+	MPR_Options:NewFS("Player Deaths","22FF00",16,-93)
 	MPR_Options:NewCB("Self",	"1E90FF",	"PD_SELF",14,-104)		-- [ ] Self
 	MPR_Options:NewCB("Raid",	"EE7600",	"PD_RAID",54,-104)		-- [ ] Raid
 	MPR_Options:NewCB("Whisper","DA70D6",	"PD_WHISPER",100,-104)	-- [ ] Whisper
 	MPR_Options:NewCB("Guild",	"40FF40",	"PD_GUILD",160,-104)	-- [ ] Guild
 	
+	-- Report deaths ...
+	MPR_Options:NewFS("Report deaths ...","FFAA00",16,-123)
+	
+	-- Report!
+	MPR_Options.BTN_REPORT = CreateFrame("button","BtnReport", MPR_Options, "UIPanelButtonTemplate")
+	MPR_Options.BTN_REPORT:SetHeight(18)
+	MPR_Options.BTN_REPORT:SetWidth(58)
+	MPR_Options.BTN_REPORT:SetPoint("TOPLEFT", 150, -159)
+	MPR_Options.BTN_REPORT:SetText("Report!")
+	MPR_Options.BTN_REPORT:SetScript("OnClick", function(self)
+		if MPR.Settings["DEATHREPORT_CHANNEL"] and tonumber(MPR_Options.FS_ID:GetText()) then
+			MPR:DeathReport(MPR.Settings["DEATHREPORT_CHANNEL"], tonumber(MPR_Options.FS_ID:GetText()))
+		end
+	end)
+	
+	MPR_Options.FS_ID = MPR_Options:CreateFontString("FS_ID", "ARTWORK", "GameFontNormal")
+	MPR_Options.FS_ID:SetPoint("TOPLEFT", 116, -123)
+	MPR_Options.FS_ID:SetTextColor(1,1,1) 
+	MPR_Options.FS_ID:SetText(#MPR.DataDeaths)
+	MPR_Options.FS_ID:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	
+	MPR_Options.FS_ID_LESS = CreateFrame("button","FS_ID_LESS", MPR_Options, "UIPanelButtonTemplate")
+	MPR_Options.FS_ID_LESS:SetHeight(14)
+	MPR_Options.FS_ID_LESS:SetWidth(14)
+	MPR_Options.FS_ID_LESS:SetPoint("TOPLEFT", "FS_ID", "TOPRIGHT", 2, 0)
+	MPR_Options.FS_ID_LESS:SetText("-")
+	MPR_Options.FS_ID_LESS:SetScript("OnShow", function(self) MPR_Options:ID_HandleOnShow() end)
+	MPR_Options.FS_ID_LESS:SetScript("OnClick", function(self) MPR_Options:ID_HandleOnClick(-1) end)
+	
+	MPR_Options.FS_ID_MORE = CreateFrame("button","FS_ID_MORE", MPR_Options, "UIPanelButtonTemplate")
+	MPR_Options.FS_ID_MORE:SetHeight(14)
+	MPR_Options.FS_ID_MORE:SetWidth(14)
+	MPR_Options.FS_ID_MORE:SetPoint("TOPLEFT", "FS_ID_LESS", "TOPRIGHT", 1, 0)
+	MPR_Options.FS_ID_MORE:SetText("+")
+	MPR_Options.FS_ID_MORE:SetScript("OnShow", function(self) MPR_Options:ID_HandleOnShow() end)
+	MPR_Options.FS_ID_MORE:SetScript("OnClick", function(self) MPR_Options:ID_HandleOnClick(1) end)
+	
+	MPR_Options.FS_ID_NAME = MPR_Options:CreateFontString("FS_ID_NAME", "ARTWORK", "GameFontNormal")
+	MPR_Options.FS_ID_NAME:SetPoint("TOPLEFT", 16, -137)
+	local Data = MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())]
+	MPR_Options.FS_ID_NAME:SetText(Data and "|cFF"..(Data.Color or "FFFFFF")..Data.Name.."|r|cFFBEBEBE: "..#Data.Deaths.." deaths,|r" or "")
+	MPR_Options.FS_ID_NAME:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+	
+	MPR_Options.FS_ID_TIME = MPR_Options:CreateFontString("FS_ID_TIME", "ARTWORK", "GameFontNormal")
+	MPR_Options.FS_ID_TIME:SetPoint("TOPLEFT", "FS_ID_NAME", "BOTTOMLEFT", 0, -1)
+	MPR_Options.FS_ID_TIME:SetTextColor(1,1,1)
+	MPR_Options.FS_ID_TIME:SetTextColor(190/255,190/255,190/255)
+	MPR_Options.FS_ID_TIME:SetText(MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())] and MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeStart.." - "..MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeEnd or "")
+	MPR_Options.FS_ID_TIME:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+	
+	-- SELF
+	MPR_Options.CB_Self = CreateFrame("CheckButton", "CB_Self", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Self:SetWidth(20)
+	MPR_Options.CB_Self:SetHeight(20)
+	MPR_Options.CB_Self:SetPoint("TOPLEFT", 16, -159)
+	_G["CB_SelfText"]:SetText("|cFF1E90FFSelf|r")
+	MPR_Options.CB_Self:SetScript("OnShow",  function(self) MPR_Options.CB_Self:SetChecked(MPR.Settings["DEATHREPORT_CHANNEL"] == "Self") end)
+	MPR_Options.CB_Self:SetScript("OnClick", function(self) 
+		MPR_Options.CB_Self:SetChecked(true); MPR_Options.CB_Raid:SetChecked(false); MPR_Options.CB_Guild:SetChecked(false);
+		MPR.Settings["DEATHREPORT_CHANNEL"] = "Self"
+	end)
+	-- RAID
+	MPR_Options.CB_Raid = CreateFrame("CheckButton", "CB_Raid", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Raid:SetWidth(20)
+	MPR_Options.CB_Raid:SetHeight(20)
+	MPR_Options.CB_Raid:SetPoint("TOPLEFT", 54, -159)
+	_G["CB_RaidText"]:SetText("|cFFEE7600Raid|r")
+	MPR_Options.CB_Raid:SetScript("OnShow",  function(self) MPR_Options.CB_Raid:SetChecked(MPR.Settings["DEATHREPORT_CHANNEL"] == "Raid") end)
+	MPR_Options.CB_Raid:SetScript("OnClick", function(self) 
+		MPR_Options.CB_Self:SetChecked(false); MPR_Options.CB_Raid:SetChecked(true); MPR_Options.CB_Guild:SetChecked(false);
+		MPR.Settings["DEATHREPORT_CHANNEL"] = "Raid"
+	end)
+	-- GUILD
+	MPR_Options.CB_Guild = CreateFrame("CheckButton", "CB_Guild", MPR_Options, "UICheckButtonTemplate")
+	MPR_Options.CB_Guild:SetWidth(20)
+	MPR_Options.CB_Guild:SetHeight(20)
+	MPR_Options.CB_Guild:SetPoint("TOPLEFT", 100, -159)
+	_G["CB_GuildText"]:SetText("|cFF40FF40Guild|r")
+	MPR_Options.CB_Guild:SetScript("OnShow",  function(self) MPR_Options.CB_Guild:SetChecked(MPR.Settings["DEATHREPORT_CHANNEL"] == "Guild") end)
+	MPR_Options.CB_Guild:SetScript("OnClick", function(self) 
+		MPR_Options.CB_Self:SetChecked(false); MPR_Options.CB_Raid:SetChecked(false); MPR_Options.CB_Guild:SetChecked(true);
+		MPR.Settings["DEATHREPORT_CHANNEL"] = "Guild"
+	end)
+	
 	--[[ Aura Info ]]--
-	MPR_Options:NewFS("Aura Info","00CCFF",16,-135)
+	MPR_Options:NewFS("Aura Info","FF2200",16,-180)
 	local Button = CreateFrame("button","BtnToggleAuraInfo", MPR_Options, "UIPanelButtonTemplate")
 	Button:SetHeight(18)
-	Button:SetWidth(110)
-	Button:SetPoint("TOPLEFT", 14, -149)
-	Button:SetText("Show window")
-	Button:SetScript("OnShow", function(self) Button:SetText(MPR_AuraInfo:IsVisible() and "Hide window" or "Show window") end)
+	Button:SetWidth(60)
+	Button:SetPoint("TOPLEFT", 14, -196)
+	Button:SetText("Show")
+	Button:SetScript("OnShow", function(self) Button:SetText(MPR_AuraInfo:IsVisible() and "Hide" or "Show") end)
 	Button:SetScript("OnClick", function(self)
 		if not MPR_AuraInfo:IsVisible() then 
 			MPR_AuraInfo:UpdateFrame()
-			Button:SetText("Hide window")
+			Button:SetText("Hide")
 		else 
 			MPR_AuraInfo:Hide() 
-			Button:SetText("Show window")
+			Button:SetText("Show")
 		end
 	end)
 	
 	-- Frame Update Period slider --
 	MPR_Slider = CreateFrame("Slider", "MPR_Slider", MPR_Options, "OptionsSliderTemplate")
-	MPR_Slider:SetWidth(160)
+	MPR_Slider:SetWidth(120)
 	MPR_Slider:SetHeight(20)
-	MPR_Slider:SetPoint('TOPLEFT', 20, -181)
+	MPR_Slider:SetPoint('TOPLEFT', 84, -194)
 	MPR_Slider:SetOrientation('HORIZONTAL')
 	
 	MPR_Slider:SetMinMaxValues(0.1, 3)
@@ -246,6 +330,23 @@ function MPR_Options:Initialize()
 		Pack_PosY = Pack_PosY - 14
 	end
 	]]
+end
+
+function MPR_Options:ID_HandleOnShow()
+	local Index = tonumber(MPR_Options.FS_ID:GetText())
+	if MPR.DataDeaths[Index+1] then MPR_Options.FS_ID_MORE:Enable() else MPR_Options.FS_ID_MORE:Disable() end
+	if MPR.DataDeaths[Index-1] then MPR_Options.FS_ID_LESS:Enable() else MPR_Options.FS_ID_LESS:Disable() end
+	if MPR.DataDeaths[Index] then MPR_Options.BTN_REPORT:Enable() else MPR_Options.BTN_REPORT:Disable() end
+end
+
+function MPR_Options:ID_HandleOnClick(num)
+	local Index = tonumber(MPR_Options.FS_ID:GetText())
+	local Data = MPR.DataDeaths[Index+(MPR.DataDeaths[Index+num] and num or 0)] or nil
+	MPR_Options.FS_ID:SetText(Index+(MPR.DataDeaths[Index+num] and num or 0))
+	MPR_Options.FS_ID_NAME:SetText(Data and "|cFF"..(Data.Color or "FFFFFF")..Data.Name.."|r|cFFBEBEBE: "..#Data.Deaths.." deaths,|r" or "")
+	MPR_Options.FS_ID_TIME:SetText(Data and Data.GameTimeStart.." - "..Data.GameTimeEnd..(Data.Date and ", "..Data.Date or ", Nov 14, 2012") or "")
+	if Data then MPR_Options.BTN_REPORT:Enable() else MPR_Options.BTN_REPORT:Disable() end
+	MPR_Options:ID_HandleOnShow()
 end
 
 function MPR_Options:UncheckColors()
