@@ -166,7 +166,8 @@ function MPR_ValkyrTracker:OnUpdate(elapsed)
 	elseif self.DataTimers[4][1] then -- Harvest Souls
 		Seconds = round(self.DataTimers[4][1],0,true)
 		Color = self.DataTimers[4][2] and bWhite and "BEBEBE" or Seconds > 12 and "00FF00" or Seconds > 9 and "FFFF00" or Seconds > 6 and "FFAA00" or Seconds > 3 and "FF7700" or "FF0000"
-		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(74297).." CD: |cFF"..Color..Seconds.." sec|r")
+		local HarvestSoulSpellIDByDiff = {[1] = 68980, [2] = 74325, [3] = 74296, [4] = 74297}
+		MPR_ValkyrTracker.Label1:SetText(HarvestSoulSpellIDByDiff[GetInstanceDifficulty()].." CD: |cFF"..Color..Seconds.." sec|r")
 	elseif self.DataTimers[2][1] then -- Summon Val'kyr timer
 		Seconds = round(self.DataTimers[2][1],0,true)
 		Color = self.DataTimers[2][2] and bWhite and "BEBEBE" or Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
@@ -217,6 +218,7 @@ function MPR_ValkyrTracker:Update()
 			-- Check if grabbed
 			if UnitInVehicle(UnitID) then
 				if not self.GrabbedPlayers[UnitName(UnitID)] then -- Insert grabbed player
+					MPR:ReportValkyrGrab(UnitName(UnitID))
 					self.GrabbedPlayers[UnitName(UnitID)] = {} -- {UnitName => TargetMarker}
 					self.GrabbedPlayers[UnitName(UnitID)].Name = string.format("|cFF%s%s|r",ClassColors[strupper(select(2,UnitClass(UnitID)))],UnitName(UnitID))
 					self.GrabbedPlayers[UnitName(UnitID)].Icon = GetRaidTargetIndex(UnitID)
@@ -363,7 +365,7 @@ function MPR_ValkyrTracker:EncounterStart()
 	self:Reset()
 	if GetInstanceDifficulty() > 2 then -- Heroic
 		self.Label2:Hide() -- Hide Defile label
-		self.DataTimers[1][1] = 32
+		self.DataTimers[1][1] = 30
 	end
 end
 

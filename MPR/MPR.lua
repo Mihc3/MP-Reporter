@@ -1,5 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.53b"
+MPR.Version = "v2.54a"
+MPR.VersionNotes = {"Loot reporting improved", "Val'kyr Tracker updated", "Version notes implented"}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -15,7 +16,7 @@ local BossData = {
 	[6] = {"Rotface",				"Good news, everyone! I've fixed the poison slime pipes!", "Bad news daddy...", -3},
 	[7] = {"Professor Putricide",	"Good news, everyone! I think I perfected a plague that will destroy all life on Azeroth!", "Bad news, everyone! I don't think I'm going to make it."},
 	[8] = {"Blood Prince Council",	"Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!", "...why...?"},
-	[9] = {"Blood Queen Lana'thel",	"You have made an... unwise... decision.", "But... we were getting along... so well..."},
+	[9] = {"Blood Queen Lana'thel",	"Can you handle this?", "But... we were getting along... so well...", -15}, -- "You have made an... unwise... decision." not used on Molten?
 	[10] = {"Valithria Dreamwalker","Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!", nil},
 	[11] = {"Sindragosa",			"You are fools to have come to this place! The icy winds of Northrend will consume your souls!", "Free...at last..."},
 	[12] = {"The Lich King",		"I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image.", nil},
@@ -34,6 +35,20 @@ local BossData = {
 	[23] = {"Halion",				"Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!", "Relish this victory, mortals, for it will be your last. This world will burn with the master's return!"},
 }
 local BossNames = {}
+local ChestLoot = {
+	["Gunship Armory"] = {
+		"Frost Giant's Cleaver", "Midnight Sun", "Muradin's Spyglass", "Neverending Winter", "Pauldrons of Lost Hope", "Bone Drake's Enameled Boots", "Icecrown Rampart Bracers", "Saronite Gargoyle Cloak", "Ice-Reinforced Vrykul Helm", "Bracers of Pale Illumination", "Abomination's Bloody Ring", "Cord of Dark Suffering",
+		"Corpse Tongue Coin", "Ring of Rapid Ascent", "Amulet of the Silent Eulogy", "Althor's Abacus", "Ikfirus' Sack of Wonder", "Gunship Captain's Mittens", "Shadowvault Slayer's Cloak", "Boots of Unnatural Growth", "Scourgeborne Waraxe", "Skeleton Lord's Circle", "Shadowfrost Shard", "Polar Bear Claw Bracers", "Scourge Hunter's Vambraces", "Boneguard Commander's Pauldrons", "Corp'rethar Ceremonial Crown", "Waistband of Righteous Fury",
+	},
+	["Deathbringer's Cache"] = {
+		"Ramaladni's Blade of Culling", "Mag'hari Chieftain's Staff", "Soulcleave Pendant", "Saurfang's Cold-Forged Band", "Icecrown Spire Sandals", "Scourge Stranglers", "Hauberk of a Thousand Cuts", "Blade-Scored Carapace", "Deathforged Legplates", "Leggings of Unrelenting Blood", "Thaumaturge's Crackling Cowl", "Gargoyle Spit Bracers", 
+		"Deathbringer's Will", "Bloodvenom Blade", "Toskk's Maximized Wristguards", "Belt of the Blood Nova", "Greatcloak of the Turned Champion",
+	},
+	["Cache of the Dreamwalker"] = {
+		"Oxheart", "Lich Wrappings", "Sister Svalna's Aether Staff", "Skinned Whelp Shoulders", "Taiga Bindings", "Dreamhunter's Carbine", "Emerald Saint's Spaulders", "Legguards of the Twisted Dream", "Stormbringer Gloves", "Sister Svalna's Spangenhelm", "Leggings of the Refracted Mind", "Ironrope Belt of Ymirjar", 
+		"Frostbinder's Shredded Cape", "Scourge Reaver's Legplates", "Coldwraith Links", "Lungbreaker", "Noose of Malachite", "Frostbrood Sapphire Ring", "Primordial Saronite", "Robe of the Waking Nightmare", "Nightmare Ender", "Snowstorm Helm", "Grinning Skull Greatboots", "Shadowfrost Shard", "Anub'ar Stalker's Gloves", "Devium's Eternally Cold Ring", "Leggings of Dying Candles", "Boots of the Funeral March", "Bracers of Eternal Dreaming", 
+	},
+}
 local EncounterStartYells = {}
 local EncounterDoneYells = {}
 local EncounterNames = {}
@@ -166,8 +181,8 @@ local stackAppliedOnTarget = {"Unstable Ooze", "Cleave Armor"}
 --------------------------------------------
 
 -- Addon Variables --
-local usersAddon = {}
-local reportedNewerVersion = false
+local AddonUsers = {}
+local AskedWhatsNew
 local RaidOptions
 -- Combat Varriables --
 local casterHeroism = {}
@@ -183,8 +198,6 @@ local targetsMassDispel = {}
 local BS_TargetsName = {}
 local BS_TargetsAmount = {}
 --------------------------------------------
-
-local DBM_Users = {}
 
 local Events = {
 	"ZONE_CHANGED_NEW_AREA",
@@ -227,6 +240,20 @@ do
 			MPR:DKPDeductionHandler(arg2,tonumber(arg3),arg4)
 		elseif arg1 == "DeathReport" then
 			MPR:DeathReport(arg2, arg3)
+		elseif arg1 == "VersionNotes" then
+			if arg2 then
+				AskedWhatsNew = true
+				SendAddonMessage("MPR", "versionnotes:ask", "WHISPER", arg2)
+			else
+				if #MPR.VersionNotes > 0 then
+					MPR:SelfReport("|r|cFFFFFFFFUpdate notes for |r|cFF00FF00"..MPR.Version.."|r|cFFFFFFFF:")
+					for _,line in pairs(MPR.VersionNotes) do
+						MPR:SelfReport("- "..line)
+					end
+				else
+					MPR:SelfReport("No version notes given for |r|cFF00FF00"..MPR.Version.."|r|cFFBEBEBE.")
+				end
+			end
 		end
 	end)
 end
@@ -287,8 +314,25 @@ end
 
 function report(TimerName, ...)
 	if TimerName == "Report Users" then
-		MPR:SelfReport(string.format("Online guild members using addon: %s",table.concat(usersAddon, ", ")))
-		table.wipe(usersAddon)
+		local Users = {}
+		local NewestUser = nil
+		local NewestVersion = ""
+		local MyVersion = MPR.Version
+		for User,Version in pairs(AddonUsers) do
+			if Version > MyVersion then
+				if Version > NewestVersion then
+					NewestUser, NewestVersion = User, Version
+				end
+				table.insert(Users,string.format("%s (|r|cFF00FF00%s|r|cFFBEBEBE)",unit(User),Version))
+			else
+				table.insert(Users,string.format("%s (%s)",unit(User),Version))
+			end
+		end
+		table.wipe(AddonUsers)
+		MPR:SelfReport(string.format("Online guild members using addon: %s",table.concat(Users, ", ")))
+		if NewestUser then
+			MPR:SelfReport("|r|cFF00FF00A newer version is available!|r |cFF00CCFF|HMPR:whatsnew:"..NewestUser..":nil|h[Check what's new!]|h")
+		end
 	else
 		MPR:SelfReport(...)
 	end
@@ -486,23 +530,8 @@ function SlashCmdList.MPR(msg, editbox)
 		MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
 								   "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
 								   "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")		
-	elseif msg == "ping check" then
-		table.wipe(DBM_Users)
-		MPR:SelfReport("Reporting DBM (v4) users in 5 seconds ...", true)
-		SendAddonMessage("DBMv4-Ver", "Hi!", "RAID")
-		MPR:ScheduleTimer("Report DBM Users",TimerHandler,5)
 	elseif msg == "ccl" or msg == "clear" then
 		MPR:ClearCombatLog()
-	elseif msg:sub(1,4) == "ping" then
-		msg = msg:sub(6)
-		if msg == "raid" then
-			--SendAddonMessage("DBMv4-Ver", "Hi!", "RAID")
-		elseif UnitInRaid(msg) then
-			PingTarget, PingTime = msg, GetTime()
-			SendAddonMessage("DBMv4-Ver", "Hi!", msg:gsub("^%l", string.upper))
-		else
-			MPR:SelfReport("Player '"..msg.."' is not in your raid.", true)
-		end
 	elseif msg == "print quotes" then
 		for Message,Creature in pairs(MPR.Quotes) do
 			MPR:SelfReport(Creature..": "..Message)
@@ -539,16 +568,28 @@ function MPR:RAID_ROSTER_UPDATE(...)
 	end
 end
 
+function MPR:GetLootName()
+	for i=1,GetNumLootItems() do
+		local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
+		if Name and Rarity == 4 then
+			for CacheName,CacheLoot in pairs(ChestLoot) do
+				if contains(CacheLoot,Name) then return CacheName end
+			end
+		end
+	end
+end
+
 local LootedCreatures = {}
 function MPR:LOOT_OPENED()
 	if not UnitInRaid("player") or not self.Settings["REPORT_LOOT"] then return end
 	local LootMethod, _, MasterLooterRaidID = GetLootMethod()
 	if LootMethod == "master" and MasterLooterRaidID and UnitName("player") == UnitName("raid"..MasterLooterRaidID) then		
-		local BossName = not UnitPlayerOrPetInRaid("target") and UnitName("target") or "unknown"
-		local BossGUID = BossName ~= "unknown" and tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16) or nil
-		if BossGUID then
-			if LootedCreatures[BossGUID] then return end
-			LootedCreatures[BossGUID] = true
+		local LootName = not UnitPlayerOrPetInRaid("target") and UnitName("target") or nil
+		local LootGUID = Name and tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16) or nil
+		LootName = LootName or GetLootName()
+		if LootGUID or LootName then
+			if LootedCreatures[LootGUID or LootName] then return end
+			LootedCreatures[LootGUID or LootName] = true
 		end
 		
 		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
@@ -589,7 +630,7 @@ function MPR:LOOT_OPENED()
 			end
 		end
 		if #ItemLinks > 0 and (BoPs or not self.Settings["REPORT_LOOT_BOP_ONLY"]) then
-			self:RaidReport(string.format("%s - items in loot: %s",BossName,WorthGold),true)
+			self:RaidReport(string.format("%s - items in loot: %s",LootName,WorthGold),true)
 			for _,item in pairs(ItemLinks) do
 				self:RaidReport(item,true,true)
 			end
@@ -666,8 +707,10 @@ function MPR:StartCombat(ID)
 	self.DataDeaths[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
 	local hour, minute, second = MPR_GameTime:Get()
 	self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(BossData[ID][4] or 0))
+	self.DataDeaths[index].GameTimeEnd = "unknown"
 	self.DataDeaths[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
+	self.DataDeaths[index].Color = Color
 	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:ValkyrTracker:nil:nil|h[Val'kyr Tracker]|h|r" or ""))
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
@@ -682,7 +725,6 @@ function MPR:StopCombat()
 	local numDeaths = #self.DataDeaths[index].Deaths
 	local ID = self.DataDeaths[index].ID
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
-	self.DataDeaths[index].Color = Color
 	self:SelfReport("Encounter |r|cFF"..Color..self.DataDeaths[index].Name.."|r|cFFbebebe finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to:|r |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h|cFFbebebe)|r" or ""))
 end
 
@@ -724,7 +766,7 @@ end
 function MPR:DeathReport(channel, index)
 	index = tonumber(index or #self.DataDeaths)
 	local strEncounter = channel == "Self" and "|cFF"..(self.DataDeaths[index].Color or "FFFFFF")..self.DataDeaths[index].Name.."|r|cFFBEBEBE" or self.DataDeaths[index].Name
-	local strReportTitle = "Death Report for "..strEncounter.." ("..self.DataDeaths[index].GameTimeStart.." - "..self.DataDeaths[index].GameTimeEnd..")"
+	local strReportTitle = "Death Report for "..strEncounter.." ("..(self.DataDeaths[index].GameTimeStart or "unknown").." - "..(self.DataDeaths[index].GameTimeEnd or "unknown")..")"
 	if channel == "Raid" then
 		self:RaidReport(strReportTitle,true)
 	elseif channel == "Guild" then
@@ -874,7 +916,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				MPR_ValkyrTracker:Defile()
 			elseif spellId == 73539 then -- Summon Shadow Trap (heroic only)
 				MPR_ValkyrTracker:SummonShadowTrap()
-			elseif spellId == 74297 then -- Harvest Souls (heroic only)
+			elseif spellId == 68980 or spellId == 74325 or spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only) - 10N: 68980; 25N: 74325; 10H: 74296; 25H: 74297;
 				MPR_ValkyrTracker:HarvestSouls()
 			elseif spellId == 72350 then -- Fury of Frostmourne
 				MPR_ValkyrTracker:FuryOfFrostmourne()
@@ -1045,12 +1087,6 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		elseif event == "SPELL_RESURRECT" and spellId == 48477 then -- Rebirth (Druid)
 			self:ReportCombatResurrect(sourceName,spellId,destName)
 		end
-	end
-end
-
-function MPR:UNIT_ENTERING_VEHICLE(UnitID)
-	if GetSubZoneText() == "The Frozen Throne" then
-		self:ReportValkyrGrab(UnitName(UnitID))
 	end
 end
 
@@ -1325,38 +1361,36 @@ function MPR:UpdateBackdrop()
 end
 
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
-	if prefix == "DBMv4-Ver" then
-		if PingTarget == sender then
-			MPR:SelfReport(sender.."'s latency: "..(GetTime()-PingTime).."s", true)
-		else
-			table.insert(DBM_Users,sender)
-			return
-		end
-	end
 	if prefix ~= "MPR" or sender == UnitName("player") then return end
-	if msg == "request-version" then
+	local arg1, arg2, arg3, arg4, arg5, arg6, arg7 = strsplit(":",msg)
+	
+	if arg1 == "request-version" then
 		SendAddonMessage("MPR", "version:"..self.Version, "WHISPER", sender)
-	elseif msg == "OptionCheck:ENABLED" then
+	elseif arg1 == "OptionCheck:ENABLED" then
 		if RaidOptions then
 			table.insert(RaidOptions, sender)
 		end
-	elseif msg:sub(1,12) == "OptionCheck:" then
-		local Var = msg:sub(13)
-		if self.Settings[Var] then
+	elseif arg1 == "OptionCheck" then
+		if self.Settings[arg2] then
 			SendAddonMessage("MPR", "OptionCheck:ENABLED", "WHISPER", sender)
 		end
-	elseif msg:sub(1,8) == "version:" then
-		local sender_version = msg:sub(10, 10)..msg:sub(12, 13)
-		local player_version = self.Version:sub(2,2)..self.Version:sub(4,5)	
-		self:ScheduleTimer("Report Users",report,0.5,true)
-		if player_version >= sender_version then 
-			table.insert(usersAddon, string.format("%s (%s)",unit(sender),msg:sub(9)))
-			return
+	elseif arg1 == "version" then
+		self:ScheduleTimer("Report Users",report,1,true)
+		AddonUsers[sender] = arg2
+	elseif arg1 == "versionnotes" then
+		msg = msg:sub(10)
+		if arg2 == "ask" then
+			SendAddonMessage("MPR", "whatsnew:"..self.Version..":"..table.concat(MPR.VersionNotes,":"), "WHISPER", sender)
+		else
+			if arg3 then
+				self:SelfReport("|r|cFFFFFFFFWhat's new in |r|cFF00FF00"..arg2.."|r|cFFFFFFFF:")
+				for _,line in pairs({arg3,arg4,arg5,arg6,arg7}) do
+					self:SelfReport("- "..line)
+				end
+			else
+				self:SelfReport("No version notes given in |r|cFF00FF00"..arg2.."|r|cFFBEBEBE.")
+			end
 		end
-		table.insert(usersAddon, string.format("%s (|cFF00FF00%s|r)",unit(sender),msg:sub(9)))
-		if reportedNewerVersion then return end
-		reportedNewerVersion = true
-		self:SelfReport(string.format("|cFF00FF00%s|r","A newer version is available!"))
  	end
 end
 
@@ -1397,16 +1431,7 @@ function MPR:ADDON_LOADED(addon)
 	self.Colors = MPR_Colors
 	MPR_DataDeaths = MPR_DataDeaths or {}
 	self.DataDeaths = MPR_DataDeaths
-	--[[
-	MPR_DKPPenalties = nil or {
-		["Malleable Goo"] = 		{false,1},
-		["Choking Gas Explosion"] =	{false,1},
-		["Frost Bomb"] = 			{false,1},
-		["Defile"] = 				{false,1},
-		["Trample"] = 				{false,1},
-	}
-	self.DKPPenalties = MPR_DKPPenalties
-	]]
+	
 	MPR_Options:Initialize()
 	MPR_AuraInfo:Initialize()
 	MPR_ValkyrTracker:Initialize()
@@ -1415,8 +1440,14 @@ function MPR:ADDON_LOADED(addon)
 	local inInstance, instanceType = IsInInstance()
 	local state = inInstance and (instanceType == "raid")
 	self.Settings["SELF"] = state
-	self:SelfReport(string.format("Addon (%s) loaded! Reporting is %s. |r|HMPR:Options:Show:nil|h|cff3588ff[Options]|r|h",self.Version,getStateColor(self.Settings["SELF"])))
-	
+	MPR_Data = MPR_Data or {}
+	self.AddonData = MPR_Data
+	local FirstTimeLoaded
+	if not self.AddonData["LastLoadVersion"] or self.Version > self.AddonData["LastLoadVersion"] then
+		self.AddonData["LastLoadVersion"] = self.Version
+		FirstTimeLoaded = true
+	end
+	self:SelfReport(string.format("Addon (%s) loaded! |r|HMPR:Options:Show:nil|h|cff3588ff[Options]|h%s",self.Version,FirstTimeLoaded and "|r |cFF00FF00|HMPR:VersionNotes|h[Check what's new in "..self.Version.."!]|h" or ""))
 	if self.Settings["CCL_ONLOAD"] then
 		self:ClearCombatLog(true)
 	end

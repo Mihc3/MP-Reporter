@@ -110,7 +110,7 @@ function MPR_Options:Initialize()
 	MPR_Options.FS_ID_TIME:SetPoint("TOPLEFT", "FS_ID_NAME", "BOTTOMLEFT", 0, -1)
 	MPR_Options.FS_ID_TIME:SetTextColor(1,1,1)
 	MPR_Options.FS_ID_TIME:SetTextColor(190/255,190/255,190/255)
-	MPR_Options.FS_ID_TIME:SetText(MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())] and MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeStart.." - "..MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeEnd or "")
+	MPR_Options.FS_ID_TIME:SetText(MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())] and (MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeStart or "unknown").." - "..(MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeEnd or "unknown") or "")
 	MPR_Options.FS_ID_TIME:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
 	
 	-- SELF
@@ -344,7 +344,7 @@ function MPR_Options:ID_HandleOnClick(num)
 	local Data = MPR.DataDeaths[Index+(MPR.DataDeaths[Index+num] and num or 0)] or nil
 	MPR_Options.FS_ID:SetText(Index+(MPR.DataDeaths[Index+num] and num or 0))
 	MPR_Options.FS_ID_NAME:SetText(Data and "|cFF"..(Data.Color or "FFFFFF")..Data.Name.."|r|cFFBEBEBE: "..#Data.Deaths.." deaths,|r" or "")
-	MPR_Options.FS_ID_TIME:SetText(Data and Data.GameTimeStart.." - "..Data.GameTimeEnd..(Data.Date and ", "..Data.Date or ", Nov 14, 2012") or "")
+	MPR_Options.FS_ID_TIME:SetText(Data and Data.GameTimeStart.." - "..Data.GameTimeEnd..", "..Data.Date or "")
 	if Data then MPR_Options.BTN_REPORT:Enable() else MPR_Options.BTN_REPORT:Disable() end
 	MPR_Options:ID_HandleOnShow()
 end

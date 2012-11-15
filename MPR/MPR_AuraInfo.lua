@@ -679,12 +679,12 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 				
 				VD_LastCheckHP = Health
 				VD_LastCheck = 0
-				VD_String1 = string.format("\nDiff/HPS: %s", strHPS)
+				VD_String1 = string.format("Diff/HPS: %s", strHPS)
 			end
 		else
 			String = "|cFF00ff00VD|r: No information"
 		end
-		Text1:SetText(String..VD_String1)
+		Text1:SetText(String.."\n"..VD_String1)
 		
 		local array = {}
 		for i=1,GetNumRaidMembers() do
