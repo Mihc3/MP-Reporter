@@ -661,14 +661,15 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		Text3:SetText(table.concat(array3,", "))
 	elseif MPR_AuraInfo.FrameNumber == 10 then -- ICC: Dreamwalker Valithria
 		local String
-		if UnitName("Boss2") == "Valithria Dreamwalker" then
-			local Health, HealthMax = UnitHealth("Boss2"), UnitHealthMax("Boss2")
+		local UnitID = UnitName("Boss1") == "Valithria Dreamwalker" and "Boss1" or UnitName("Boss2") == "Valithria Dreamwalker" and "Boss2" or "Boss3"
+		if UnitName(UnitID) == "Valithria Dreamwalker" then
+			local Health, HealthMax = UnitHealth(UnitID), UnitHealthMax(UnitID)
 			local HealthPct = math.floor(Health/HealthMax) + (Health == HealthMax and 0 or 1)
 			String = string.format("|cFF00ff00VD|r: %i/%i (%i%%)", Health, HealthMax, HealthPct)
 			
 			VD_LastCheck = (VD_LastCheck or 0) + diff
 			if not VD_LastCheckHP then
-				VD_LastCheckHP = UnitHealth("Boss2")
+				VD_LastCheckHP = Health
 				VD_LastCheck = 0
 				VD_String1 = "Diff/HPS: No information"
 			elseif VD_LastCheck >= 2 then

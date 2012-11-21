@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.54a"
-MPR.VersionNotes = {"Loot reporting improved", "Val'kyr Tracker updated", "Version notes implented"}
+MPR.Version = "v2.54b"
+MPR.VersionNotes = {"Raid members option check corrected"}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -207,8 +207,6 @@ local Events = {
 	"CHAT_MSG_WHISPER",
 	"RAID_ROSTER_UPDATE",
 	"LOOT_OPENED",
-	
-	"UNIT_ENTERING_VEHICLE",
 }
 
 MPR:SetScript("OnEvent", function(self, event, ...)
@@ -503,7 +501,7 @@ function PrintRaidOptions(Var)
 		table.insert(Players,unit(Player))
 	end
 	MPR:SelfReport(string.format("%s %s.%s", OptionName, getStateColor(true), (#Players > 0 and " Raid members having this option enabled: "..table.concat(Players," ") or "")))
-	RaidOptions = nil
+	RaidOptions = {}
 end
 
 function MPR:ClearCombatLog(bAuto)
@@ -517,9 +515,6 @@ function round(num, idp, up)
 	return math.floor(num * mult + (up and 0.99 or 0.5)) / mult
 end
 
-
-local PingTarget, PingTime
-local Pings
 function SlashCmdList.MPR(msg, editbox)
 	msg = strlower(msg)
 	if type(tonumber(msg)) == "number" then
@@ -532,12 +527,6 @@ function SlashCmdList.MPR(msg, editbox)
 								   "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")		
 	elseif msg == "ccl" or msg == "clear" then
 		MPR:ClearCombatLog()
-	elseif msg == "print quotes" then
-		for Message,Creature in pairs(MPR.Quotes) do
-			MPR:SelfReport(Creature..": "..Message)
-		end
-	elseif msg == "clear quotes" then
-		MPR.Quotes = {}
 	elseif msg ~= "" then
 		MPR:SelfReport("Unknown command.")
 	else -- Options
@@ -813,7 +802,7 @@ end
 
 local PotencialDeaths = {}
 function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
-	if not self.Settings["SELF"] then return end 
+	--if not self.Settings["SELF"] then return end 
 	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
 	
 	if event == "UNIT_DIED" and destName == "Rookery Whelp" then
@@ -916,7 +905,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				MPR_ValkyrTracker:Defile()
 			elseif spellId == 73539 then -- Summon Shadow Trap (heroic only)
 				MPR_ValkyrTracker:SummonShadowTrap()
-			elseif spellId == 68980 or spellId == 74325 or spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only) - 10N: 68980; 25N: 74325; 10H: 74296; 25H: 74297;
+			elseif spellId == 68980 or spellId == 74325 then --  Harvest Soul (normal only)
+				MPR_ValkyrTracker:HarvestSoul()
+			elseif spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only)
 				MPR_ValkyrTracker:HarvestSouls()
 			elseif spellId == 72350 then -- Fury of Frostmourne
 				MPR_ValkyrTracker:FuryOfFrostmourne()
@@ -1091,10 +1082,6 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 end
 
 function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
-	if not self.Quotes[Message] then
-		self.Quotes[Message] = Sender
-	end
-	
 	for ID,Data in pairs(BossData) do
 		if Data[3] and Data[3] == Message then
 			self:StopCombat()
@@ -1366,17 +1353,15 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 	
 	if arg1 == "request-version" then
 		SendAddonMessage("MPR", "version:"..self.Version, "WHISPER", sender)
-	elseif arg1 == "OptionCheck:ENABLED" then
-		if RaidOptions then
-			table.insert(RaidOptions, sender)
-		end
-	elseif arg1 == "OptionCheck" then
-		if self.Settings[arg2] then
-			SendAddonMessage("MPR", "OptionCheck:ENABLED", "WHISPER", sender)
-		end
 	elseif arg1 == "version" then
 		self:ScheduleTimer("Report Users",report,1,true)
 		AddonUsers[sender] = arg2
+	elseif arg1 == "OptionCheck" then
+		SendAddonMessage("MPR", "OptionReply:"..arg2..":"..tostring(self.Settings[arg2]), "WHISPER", sender)
+	elseif arg1 == "OptionReply" then
+		if arg3 == "true" then
+			table.insert(RaidOptions, sender)
+		end
 	elseif arg1 == "versionnotes" then
 		msg = msg:sub(10)
 		if arg2 == "ask" then
@@ -1406,8 +1391,6 @@ end
 
 function MPR:ADDON_LOADED(addon)
 	if addon ~= "MPR" then return end
-	MPR_Quotes = MPR_Quotes or {}
-	self.Quotes = MPR_Quotes
 	MPR_Settings = MPR_Settings or {
 		["SELF"] = false, ["RAID"] = false, ["SAY"] = false, ["WHISPER"] = false,
 		["REPORT_DISPELS"] = false,	["REPORT_MASSDISPELS"] = false,
