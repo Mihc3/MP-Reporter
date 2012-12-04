@@ -11,7 +11,7 @@ MPR_AuraInfo.Strings = {
 	[2] = {1, "ICC: Lady Deathwhisper",		GetSpellLink(71289).." on: |cFFbebebe(health)(expiration)|r", 16},
 	[3] = {1, "ICC: Gunship Battle",		"Ships (Hit Points):", 16},
 	[4] = {1, "ICC: Saurfang Deathbringer",	GetSpellLink(72448).." on: |cFFbebebe(expiration)|r", 18},
-	[5] = {2, "ICC: Festergut",				GetSpellLink(72219).." on: |cFFbebebe|r", nil,
+	[5] = {2, "ICC: Festergut",				GetSpellLink(72219).." on: |cFFbebebe|r", 18,
 											GetSpellLink(72103).." (without 3 stacks) on:", nil},
 	[6] = {1, "ICC: Rotface",				GetSpellLink(69674).." on: |cFFbebebe(expiration)|r", 18},
 	[7] = {4, "ICC: Professor Putricide",	GetSpellLink(70853).." on: |cFFbebebe(-200% casting speed)|r", nil,
@@ -485,12 +485,12 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		local String = ""
 		String = String..A_Ship..": "
 		if A_HealthMax > 0 then
-			String = String..string.format("%s / %s (%s%%)\n", math.floor(A_Health*10^-3), math.floor(A_HealthMax*10^-3), round(100*A_Health/A_HealthMax,0,true))
+			String = String..string.format("%sk / %sk (%s%%)\n", math.floor(A_Health*10^-3), math.floor(A_HealthMax*10^-3), round(100*A_Health/A_HealthMax,0,true))
 		else
 			String = String.."No information\n"
 		end
 		String = String..H_Ship..": "
-		if A_HealthMax > 0 then
+		if H_HealthMax > 0 then
 			String = String..string.format("%sk / %sk (%s%%)\n", math.floor(H_Health*10^-3), math.floor(H_HealthMax*10^-3), round(100*H_Health/H_HealthMax,0,true))
 		else
 			String = String.."No information\n"
@@ -501,7 +501,7 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 			if not GB_LastCheckHP then
 				GB_LastCheckHP = H_Health
 				GB_LastCheck = 0
-				GB_String1 = "DPS: nil - Estimated Time Left: nil"
+				GB_String1 = "DPS: nil; - Est. Finish: nil"
 			elseif GB_LastCheck >= 5 then
 				local HealthDiff = GB_LastCheckHP - H_Health
 				local DPS = HealthDiff/GB_LastCheck
@@ -512,7 +512,7 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 				GB_String1 = string.format("DPS: %s; Est. Finish: %s sec", round(DPS,-2,true), round(TimeLeft,0,true))
 			end
 		else
-			GB_String1 = "DPS: nil - Est. Finish: nil"
+			GB_String1 = "DPS: nil; - Est. Finish: nil"
 		end
 		
 		Text1:SetText(String..GB_String1)

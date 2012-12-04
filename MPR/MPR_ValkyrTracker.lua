@@ -17,7 +17,7 @@ MPR_ValkyrTracker.DataTimers = {
 	{[1] = nil,	[2] = nil, [3] = nil}, -- Harvest Soul/Harvest Souls
 }
 MPR_ValkyrTracker.TimerWarns = {
-	[1] = {[10] = {false, 8}, [5] = {false, 8}},
+	[1] = {[5] = {false, 8}, [3] = {false, 8}},
 	[2] = {[10] = {false, 4}, [5] = {false, 4}},
 	[3] = {[10] = {false, 7}, [5] = {false, 7}},
 	[4] = {[10] = {false, 6}, [5] = {false, 6}},
@@ -168,32 +168,32 @@ function MPR_ValkyrTracker:OnUpdate(elapsed)
 		
 	if self.DataTimers[1][1] then -- Summon Shadow Trap
 		Seconds = round(self.DataTimers[1][1],0,true)
-		if TimerWarns[1][Seconds] and not TimerWarns[1][Seconds][1] then
-			TimerWarns[1][Seconds][1] = true
-			MPR:HandleReport((TimerWarns[1][Seconds][2] and "{rt"..TimerWarns[1][Seconds][2].."} " or "")..GetSpellLink(73539).." CD: "..Seconds.." sec"..(TimerWarns[1][Seconds][2] and " {rt"..TimerWarns[1][Seconds][2].."}" or ""))
-		elseif TimerWarns[1][Seconds+1] and TimerWarns[1][Seconds+1][1] then
-			TimerWarns[1][Seconds+1][1] = false
+		if self.TimerWarns[1][Seconds] and not self.TimerWarns[1][Seconds][1] then
+			self.TimerWarns[1][Seconds][1] = true
+			MPR:HandleReport((self.TimerWarns[1][Seconds][2] and "{rt"..self.TimerWarns[1][Seconds][2].."} " or "")..GetSpellLink(73539).." CD: "..Seconds.." sec"..(self.TimerWarns[1][Seconds][2] and " {rt"..self.TimerWarns[1][Seconds][2].."}" or ""))
+		elseif self.TimerWarns[1][Seconds+1] and self.TimerWarns[1][Seconds+1][1] then
+			self.TimerWarns[1][Seconds+1][1] = false
 		end
 		Color = self.DataTimers[1][2] and bWhite and "BEBEBE" or Seconds > 12 and "00FF00" or Seconds > 9 and "FFFF00" or Seconds > 6 and "FFAA00" or Seconds > 3 and "FF7700" or "FF0000"
 		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(73539).." CD: |cFF"..Color..Seconds.." sec|r")
 	elseif self.DataTimers[4][1] then -- Harvest Souls
 		Seconds = round(self.DataTimers[4][1],0,true)
 		local HarvestSoulSpellIDByDiff = {[1] = 68980, [2] = 74325, [3] = 74296, [4] = 74297}
-		if TimerWarns[4][Seconds] and not TimerWarns[4][Seconds][1] then
-			TimerWarns[4][Seconds][1] = true
-			MPR:HandleReport((TimerWarns[4][Seconds][2] and "{rt"..TimerWarns[4][Seconds][2].."} " or "")..GetSpellLink(HarvestSoulSpellIDByDiff[GetInstanceDifficulty()]).." CD: "..Seconds.." sec"..(TimerWarns[4][Seconds][2] and " {rt"..TimerWarns[4][Seconds][2].."}" or ""))
-		elseif TimerWarns[4][Seconds+1] and TimerWarns[4][Seconds+1][1] then
-			TimerWarns[4][Seconds+1][1] = false
+		if self.TimerWarns[4][Seconds] and not self.TimerWarns[4][Seconds][1] then
+			self.TimerWarns[4][Seconds][1] = true
+			MPR:HandleReport((self.TimerWarns[4][Seconds][2] and "{rt"..self.TimerWarns[4][Seconds][2].."} " or "")..GetSpellLink(HarvestSoulSpellIDByDiff[GetInstanceDifficulty()]).." CD: "..Seconds.." sec"..(self.TimerWarns[4][Seconds][2] and " {rt"..self.TimerWarns[4][Seconds][2].."}" or ""))
+		elseif self.TimerWarns[4][Seconds+1] and self.TimerWarns[4][Seconds+1][1] then
+			self.TimerWarns[4][Seconds+1][1] = false
 		end
 		Color = self.DataTimers[4][2] and bWhite and "BEBEBE" or Seconds > 12 and "00FF00" or Seconds > 9 and "FFFF00" or Seconds > 6 and "FFAA00" or Seconds > 3 and "FF7700" or "FF0000"
 		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(HarvestSoulSpellIDByDiff[GetInstanceDifficulty()]).." CD: |cFF"..Color..Seconds.." sec|r")
 	elseif self.DataTimers[2][1] then -- Summon Val'kyr timer
 		Seconds = round(self.DataTimers[2][1],0,true)
-		if TimerWarns[2][Seconds] and not TimerWarns[2][Seconds][1] then
-			TimerWarns[2][Seconds][1] = true
-			MPR:HandleReport((TimerWarns[2][Seconds][2] and "{rt"..TimerWarns[2][Seconds][2].."} " or "")..GetSpellLink(69037)..": "..Seconds.." sec"..(TimerWarns[2][Seconds][2] and " {rt"..TimerWarns[2][Seconds][2].."}" or ""))
-		elseif TimerWarns[2][Seconds+1] and TimerWarns[2][Seconds+1][1] then
-			TimerWarns[2][Seconds+1][1] = false
+		if self.TimerWarns[2][Seconds] and not self.TimerWarns[2][Seconds][1] then
+			self.TimerWarns[2][Seconds][1] = true
+			MPR:HandleReport((self.TimerWarns[2][Seconds][2] and "{rt"..self.TimerWarns[2][Seconds][2].."} " or "")..GetSpellLink(69037)..": "..Seconds.." sec"..(self.TimerWarns[2][Seconds][2] and " {rt"..self.TimerWarns[2][Seconds][2].."}" or ""))
+		elseif self.TimerWarns[2][Seconds+1] and self.TimerWarns[2][Seconds+1][1] then
+			self.TimerWarns[2][Seconds+1][1] = false
 		end
 		Color = self.DataTimers[2][2] and bWhite and "BEBEBE" or Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
 		MPR_ValkyrTracker.Label1:SetText(GetSpellLink(69037)..": |cFF"..Color..Seconds.." sec|r")
@@ -203,11 +203,11 @@ function MPR_ValkyrTracker:OnUpdate(elapsed)
 	-- Defile CD timer
 	if self.DataTimers[3][1] then
 		Seconds = round(self.DataTimers[3][1],0,true)
-		if TimerWarns[3][Seconds] and not TimerWarns[3][Seconds][1] then
-			TimerWarns[3][Seconds][1] = true
-			MPR:HandleReport((TimerWarns[3][Seconds][2] and "{rt"..TimerWarns[3][Seconds][2].."} " or "")..GetSpellLink(72762).." CD: "..Seconds.." sec"..(TimerWarns[3][Seconds][2] and " {rt"..TimerWarns[3][Seconds][2].."}" or ""))
-		elseif TimerWarns[3][Seconds+1] and TimerWarns[3][Seconds+1][1] then
-			TimerWarns[3][Seconds+1][1] = false
+		if self.TimerWarns[3][Seconds] and not self.TimerWarns[3][Seconds][1] then
+			self.TimerWarns[3][Seconds][1] = true
+			MPR:HandleReport((self.TimerWarns[3][Seconds][2] and "{rt"..self.TimerWarns[3][Seconds][2].."} " or "")..GetSpellLink(72762).." CD: "..Seconds.." sec"..(self.TimerWarns[3][Seconds][2] and " {rt"..self.TimerWarns[3][Seconds][2].."}" or ""))
+		elseif self.TimerWarns[3][Seconds+1] and self.TimerWarns[3][Seconds+1][1] then
+			self.TimerWarns[3][Seconds+1][1] = false
 		end
 		Color = self.DataTimers[3][2] and bWhite and "BEBEBE" or Seconds > 20 and "00FF00" or Seconds > 15 and "FFFF00" or Seconds > 10 and "FFAA00" or Seconds > 5 and "FF7700" or "FF0000"
 		MPR_ValkyrTracker.Label2:SetText(GetSpellLink(72762).." CD: |cFF"..Color..Seconds.." sec|r")

@@ -188,7 +188,7 @@ function MPR_Options:Initialize()
 	
 	--[[ Miscellaneous ]]--
 	MPR_Options:NewFS("Miscellaneous","00CCFF",216,-30)
-	MPR_Options:NewCB("Clear combat entries on load",nil,"CCL_ONLOAD",214,-44)	-- [ ] ClearEntriesOnLoad
+	MPR_Options:NewCB("Automatic combat log clear",nil,"CCL_ONLOAD",214,-44)	-- [ ] ClearEntriesOnLoad
   	MPR_Options:NewCB("Spell Icons (|r\124T"..select(3, GetSpellInfo(33054))..":12:12:0:0:64:64:5:59:5:59\124t "..GetSpellLink(33054)..")",nil,"ICONS",214,-58) -- [ ] Spell Icons
 	
 	-- Masterloot

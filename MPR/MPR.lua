@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.54b"
+MPR.Version = "v2.56"
 MPR.VersionNotes = {"Raid members option check corrected"}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
@@ -932,7 +932,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			elseif spellName == "Swarming Shadows" then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Run along walls!!")
 			elseif spellId == 74502 then
-				self:Whisper(destName, GetSpellLink(spellId).." on you! Run awayy!!")
+				self:Whisper(destName, GetSpellLink(spellId).." on you! Run away!!")
 			end
 		elseif event == "SPELL_CREATE" then
 			if contains(spellsCreate,destName,true) then
@@ -1022,7 +1022,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			
 			if spellName == "Frost Beacon" then
 				self:Whisper(destName, GetSpellLink(70126).." on you! Run away from others!!")
-			elseif spellName == "Gaseous Bloat" then
+			elseif spellName == "Gaseous Bloat" and UnitIsPlayer(destName) then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Kite it!!")
 			elseif spellId == 33786 then
 				self:ReportCastOnTarget(sourceName,destName,spellId)
@@ -1175,7 +1175,11 @@ end
 -- Formatted (string) - string supporting colors and images
 function MPR:HandleReport(Unformatted, Formatted, IgnoreRaidSettings, WithoutChannelPrefix)
 	if Unformatted and (self.Settings["RAID"] or IgnoreRaidSettings) then
-		self:RaidReport(Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
+		if GetNumRaidMembers() > 0 then
+			self:RaidReport(Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
+		elseif GetNumPartyMembers() > 0 then
+			self:PartyReport(Unformatted)
+		end
 	elseif Formatted and self.Settings["SELF"] then
 		self:SelfReport(Formatted)
 	end
@@ -1385,6 +1389,9 @@ function MPR:ZONE_CHANGED_NEW_AREA()
 	if self.Settings["SELF"] ~= state then
 		self.Settings["SELF"] = state
 		self:SelfReport((state and "Instance detected." or "Player not in instance.").." Reporting has been "..getStateColor(self.Settings["SELF"])..".")
+		if self.Settings["CCL_ONLOAD"] then
+			self:ClearCombatLog(true)
+		end
 	end
 	--if MPR_AuraInfo.Loaded then	Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
