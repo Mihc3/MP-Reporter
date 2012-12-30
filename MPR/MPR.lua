@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.56"
+MPR.Version = "v2.57"
 MPR.VersionNotes = {"Raid members option check corrected"}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
@@ -574,7 +574,7 @@ function MPR:LOOT_OPENED()
 	local LootMethod, _, MasterLooterRaidID = GetLootMethod()
 	if LootMethod == "master" and MasterLooterRaidID and UnitName("player") == UnitName("raid"..MasterLooterRaidID) then		
 		local LootName = not UnitPlayerOrPetInRaid("target") and UnitName("target") or nil
-		local LootGUID = Name and tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16) or nil
+		local LootGUID = LootName and tonumber(string.sub(UnitGUID("target"),9,12),16).."-"..tonumber(string.sub(UnitGUID("target"),13),16) or nil
 		LootName = LootName or GetLootName()
 		if LootGUID or LootName then
 			if LootedCreatures[LootGUID or LootName] then return end
@@ -589,7 +589,7 @@ function MPR:LOOT_OPENED()
 			local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
 			local ItemLink = GetLootSlotLink(i)
 			local ItemBoP = select(5,GetLootRollItemInfo(i-1))
-			if Name and ItemLink and Rarity >= 3 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
+			if Name and ItemLink and Rarity >= 0 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
 				-- make BiS list
 				local bisClasses = {}
 				if self.Settings["REPORT_LOOT_BIS_INFO"] then
