@@ -37,7 +37,7 @@ function MPR_ValkyrTracker:Initialize()
 	MPR_ValkyrTracker:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
 	MPR_ValkyrTracker:SetPoint("CENTER",UIParent)
 	MPR_ValkyrTracker:SetWidth(250)
-	MPR_ValkyrTracker:SetHeight(83)
+	MPR_ValkyrTracker:SetHeight(56)
 	MPR_ValkyrTracker:EnableMouse(true)
 	MPR_ValkyrTracker:SetMovable(true)
 	MPR_ValkyrTracker:RegisterForDrag("LeftButton")
@@ -77,6 +77,7 @@ function MPR_ValkyrTracker:Initialize()
 	MPR_ValkyrTracker.Label3:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
 	MPR_ValkyrTracker.Label3:SetText("Grabbed players: ")
 	
+	--[[
 	local ValkyrIcon = select(3,GetSpellInfo(71843))
 	MPR_ValkyrTracker.Texture1 = MPR_ValkyrTracker:CreateTexture("$parentTexture")
 	MPR_ValkyrTracker.Texture1:SetPoint('TOPLEFT', 8, -50)
@@ -153,6 +154,7 @@ function MPR_ValkyrTracker:Initialize()
 	self.ValkyrObjects[3][1] = self.Texture3
 	self.ValkyrObjects[3][2] = self.T3Label1
 	self.ValkyrObjects[3][3] = self.T3Label2
+	]]
 end
 function MPR_ValkyrTracker:Toggle()
 	if MPR_ValkyrTracker:IsVisible() then
@@ -260,6 +262,7 @@ function MPR_ValkyrTracker:Update()
 				self.GrabbedPlayers[UnitName(UnitID)] = nil
 			end
 			
+			--[[
 			-- Check if targeting Valkyr and get data
 			if UnitName(UnitID.."target") == "Val'kyr Shadowguard" then
 				local RaidMarker = GetRaidTargetIndex(UnitID.."target")
@@ -278,6 +281,7 @@ function MPR_ValkyrTracker:Update()
 				end
 			end
 		end
+		]]
 			
 		-- Print grabbed players
 		for _,Unit in pairs(self.GrabbedPlayers) do
@@ -290,6 +294,8 @@ function MPR_ValkyrTracker:Update()
 			end
 		end
 		
+		self:SetHeight(56)
+		--[[
 		-- Print Valky data
 		for GUID,Data in pairs(self.ValkyrTable) do
 			if self.ValkyrUpdated[GUID] then
@@ -319,19 +325,22 @@ function MPR_ValkyrTracker:Update()
 				end
 			end
 		end
+		]]
 	else
 		self.GrabbedPlayers = {}
 		self.ValkyrTable = {}
 		
+		self:SetHeight(43)
+		--[[
 		if self.ValkyrObjects[1][1]:IsVisible() then
 			MPR_ValkyrTracker.Label3:Hide()
-			self:SetHeight(43)
 			for i=1,3 do
 				for o=1,3 do
 					self.ValkyrObjects[i][o]:Hide()
 				end
 			end
 		end
+		]]
 	end
 	
 	self.Label3:SetTextColor(Color.R, Color.G, Color.B)
@@ -345,8 +354,8 @@ function MPR_ValkyrTracker:SummonValkyr(GUID)
 	if self.ValkyrCount == 1 then -- First Valkyr
 		self.DataTimers[2][1] = 45
 	end
-	self.ValkyrTable[GUID] = {}
-	self.ValkyrTable[GUID][1] = self.ValkyrCount
+	--self.ValkyrTable[GUID] = {}
+	--self.ValkyrTable[GUID][1] = self.ValkyrCount
 	if self.ValkyrCount == (GetInstanceDifficulty()%2 == 1 and 1 or 3) then -- Last Valkyr
 		self.ValkyrCount = 0
 	end

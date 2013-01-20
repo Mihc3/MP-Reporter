@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.57"
-MPR.VersionNotes = {"Raid members option check corrected"}
+MPR.Version = "v2.58"
+MPR.VersionNotes = {"Option to clear death log added"}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -232,6 +232,8 @@ do
 			end
 		elseif arg1 == "ValkyrTracker" then
 			MPR_ValkyrTracker:Toggle()
+		elseif arg1 == "ClearDeathLog" then
+			MPR:ClearDeathLog(true)
 		elseif arg1 == "DeductDKP" then
 			arg2 = {strsplit("-",arg2)}
 			arg4 = arg4:gsub("{(.-)}", function(a) return GetSpellLink(tonumber(a)) end)
@@ -509,6 +511,22 @@ function MPR:ClearCombatLog(bAuto)
 	self:SelfReport("Combat log entries cleared.")
 end
 
+function MPR:ClearDeathLog(bConfirmed)
+	if not bConfirmed then
+		MPR:SelfReport("|r|cFFFF0000You are about to clear death log ("..#self.DataDeaths.." records)! Data cannot be recovered afterwards. |r|cFFFFFFFF|HMPR:ClearDeathLog|h[Clear death logs!]|h|r|cFFbebebe")
+	else
+		for i,_ in pairs(self.DataDeaths) do
+			self.DataDeaths[i] = nil
+		end
+		MPR:SelfReport("|r|cFFFFFFFF Death log cleared.|r|cFFbebebe")
+		-- Reload MPR_Options if it's vissible
+		if MPR_Options:IsVisible() then
+			MPR_Options:Hide()
+			MPR_Options:Show()
+		end 			
+	end
+end
+
 function round(num, idp, up)
 	if not num then return 0 end
 	local mult = 10^(idp or 0)
@@ -527,6 +545,8 @@ function SlashCmdList.MPR(msg, editbox)
 								   "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")		
 	elseif msg == "ccl" or msg == "clear" then
 		MPR:ClearCombatLog()
+	elseif msg == "cdl" then
+		MPR:ClearDeathLog()
 	elseif msg ~= "" then
 		MPR:SelfReport("Unknown command.")
 	else -- Options

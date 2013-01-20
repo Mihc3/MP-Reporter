@@ -64,7 +64,7 @@ function MPR_Options:Initialize()
 	MPR_Options:NewCB("Guild",	"40FF40",	"PD_GUILD",160,-104)	-- [ ] Guild
 	
 	-- Report deaths ...
-	MPR_Options:NewFS("Report deaths ...","FFAA00",16,-123)
+	MPR_Options:NewFS("Report deaths","FFAA00",16,-123)
 	
 	-- Report!
 	MPR_Options.BTN_REPORT = CreateFrame("button","BtnReport", MPR_Options, "UIPanelButtonTemplate")
@@ -79,26 +79,40 @@ function MPR_Options:Initialize()
 	end)
 	
 	MPR_Options.FS_ID = MPR_Options:CreateFontString("FS_ID", "ARTWORK", "GameFontNormal")
-	MPR_Options.FS_ID:SetPoint("TOPLEFT", 116, -123)
+	MPR_Options.FS_ID:SetPoint("TOPLEFT", 102, -123)
 	MPR_Options.FS_ID:SetTextColor(1,1,1) 
 	MPR_Options.FS_ID:SetText(#MPR.DataDeaths)
 	MPR_Options.FS_ID:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 	
-	MPR_Options.FS_ID_LESS = CreateFrame("button","FS_ID_LESS", MPR_Options, "UIPanelButtonTemplate")
-	MPR_Options.FS_ID_LESS:SetHeight(14)
-	MPR_Options.FS_ID_LESS:SetWidth(14)
-	MPR_Options.FS_ID_LESS:SetPoint("TOPLEFT", "FS_ID", "TOPRIGHT", 2, 0)
-	MPR_Options.FS_ID_LESS:SetText("-")
-	MPR_Options.FS_ID_LESS:SetScript("OnShow", function(self) MPR_Options:ID_HandleOnShow() end)
-	MPR_Options.FS_ID_LESS:SetScript("OnClick", function(self) MPR_Options:ID_HandleOnClick(-1) end)
+	MPR_Options:SetScript("OnShow", function(self) 
+		MPR_Options.FS_ID:SetText(#MPR.DataDeaths)
+		local Data = MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())]
+		MPR_Options.FS_ID_NAME:SetText(Data and "|cFF"..(Data.Color or "FFFFFF")..Data.Name.."|r|cFFBEBEBE: "..#Data.Deaths.." deaths,|r" or "")
+		MPR_Options.FS_ID_TIME:SetText(MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())] and (MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeStart or "unknown").." - "..(MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())].GameTimeEnd or "unknown") or "")
+	end)
 	
-	MPR_Options.FS_ID_MORE = CreateFrame("button","FS_ID_MORE", MPR_Options, "UIPanelButtonTemplate")
-	MPR_Options.FS_ID_MORE:SetHeight(14)
-	MPR_Options.FS_ID_MORE:SetWidth(14)
-	MPR_Options.FS_ID_MORE:SetPoint("TOPLEFT", "FS_ID_LESS", "TOPRIGHT", 1, 0)
-	MPR_Options.FS_ID_MORE:SetText("+")
-	MPR_Options.FS_ID_MORE:SetScript("OnShow", function(self) MPR_Options:ID_HandleOnShow() end)
-	MPR_Options.FS_ID_MORE:SetScript("OnClick", function(self) MPR_Options:ID_HandleOnClick(1) end)
+	MPR_Options.BTN_ID_LESS = CreateFrame("button","BTN_ID_LESS", MPR_Options, "UIPanelButtonTemplate")
+	MPR_Options.BTN_ID_LESS:SetHeight(14)
+	MPR_Options.BTN_ID_LESS:SetWidth(14)
+	MPR_Options.BTN_ID_LESS:SetPoint("TOPLEFT", "FS_ID", "TOPRIGHT", 2, 0)
+	MPR_Options.BTN_ID_LESS:SetText("-")
+	MPR_Options.BTN_ID_LESS:SetScript("OnShow", function(self) MPR_Options:ID_HandleOnShow() end)
+	MPR_Options.BTN_ID_LESS:SetScript("OnClick", function(self) MPR_Options:ID_HandleOnClick(-1) end)
+	
+	MPR_Options.BTN_ID_MORE = CreateFrame("button","BTN_ID_MORE", MPR_Options, "UIPanelButtonTemplate")
+	MPR_Options.BTN_ID_MORE:SetHeight(14)
+	MPR_Options.BTN_ID_MORE:SetWidth(14)
+	MPR_Options.BTN_ID_MORE:SetPoint("TOPLEFT", "BTN_ID_LESS", "TOPRIGHT", 1, 0)
+	MPR_Options.BTN_ID_MORE:SetText("+")
+	MPR_Options.BTN_ID_MORE:SetScript("OnShow", function(self) MPR_Options:ID_HandleOnShow() end)
+	MPR_Options.BTN_ID_MORE:SetScript("OnClick", function(self) MPR_Options:ID_HandleOnClick(1) end)
+	
+	MPR_Options.BTN_CLEAR_DEATHLOG = CreateFrame("button","BTN_CLEAR_DEATHLOG", MPR_Options, "UIPanelButtonTemplate")
+	MPR_Options.BTN_CLEAR_DEATHLOG:SetHeight(14)
+	MPR_Options.BTN_CLEAR_DEATHLOG:SetWidth(44)
+	MPR_Options.BTN_CLEAR_DEATHLOG:SetPoint("TOPLEFT", "BTN_ID_MORE", "TOPRIGHT", 8, 0)
+	MPR_Options.BTN_CLEAR_DEATHLOG:SetText("Reset")
+	MPR_Options.BTN_CLEAR_DEATHLOG:SetScript("OnClick", function(self) MPR:ClearDeathLog() end)
 	
 	MPR_Options.FS_ID_NAME = MPR_Options:CreateFontString("FS_ID_NAME", "ARTWORK", "GameFontNormal")
 	MPR_Options.FS_ID_NAME:SetPoint("TOPLEFT", 16, -137)
@@ -334,8 +348,8 @@ end
 
 function MPR_Options:ID_HandleOnShow()
 	local Index = tonumber(MPR_Options.FS_ID:GetText())
-	if MPR.DataDeaths[Index+1] then MPR_Options.FS_ID_MORE:Enable() else MPR_Options.FS_ID_MORE:Disable() end
-	if MPR.DataDeaths[Index-1] then MPR_Options.FS_ID_LESS:Enable() else MPR_Options.FS_ID_LESS:Disable() end
+	if MPR.DataDeaths[Index+1] then MPR_Options.BTN_ID_MORE:Enable() else MPR_Options.BTN_ID_MORE:Disable() end
+	if MPR.DataDeaths[Index-1] then MPR_Options.BTN_ID_LESS:Enable() else MPR_Options.BTN_ID_LESS:Disable() end
 	if MPR.DataDeaths[Index] then MPR_Options.BTN_REPORT:Enable() else MPR_Options.BTN_REPORT:Disable() end
 end
 
