@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.58"
+MPR.Version = "v2.58-2"
 MPR.VersionNotes = {"Option to clear death log added"}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",

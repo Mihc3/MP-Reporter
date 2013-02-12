@@ -280,8 +280,9 @@ function MPR_ValkyrTracker:Update()
 					end
 				end
 			end
+			]]
 		end
-		]]
+		
 			
 		-- Print grabbed players
 		for _,Unit in pairs(self.GrabbedPlayers) do
