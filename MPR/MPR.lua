@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.58-2"
-MPR.VersionNotes = {"Option to clear death log added"}
+MPR.Version = "v2.59"
+MPR.VersionNotes = {"Fixed LK Timers frame (old Val'kyr Tracker) not showing Val'kyr grabs.", " Corrected Defile timers for The Lich King."}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -230,8 +230,8 @@ do
 			else -- arg2 is ICC, TOC or RS
 				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
 			end
-		elseif arg1 == "ValkyrTracker" then
-			MPR_ValkyrTracker:Toggle()
+		elseif arg1 == "LKTimers" then
+			MPR_LKTimers:Toggle()
 		elseif arg1 == "ClearDeathLog" then
 			MPR:ClearDeathLog(true)
 		elseif arg1 == "DeductDKP" then
@@ -537,8 +537,8 @@ function SlashCmdList.MPR(msg, editbox)
 	msg = strlower(msg)
 	if type(tonumber(msg)) == "number" then
 		MPR_AuraInfo:UpdateFrame(tonumber(msg))
-	elseif msg == "vt" then
-		MPR_ValkyrTracker:Toggle()
+	elseif msg == "lkt" or msg == "lktimers" then
+		MPR_LKTimers:Toggle()
 	elseif msg == "ai" then
 		MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
 								   "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
@@ -720,7 +720,7 @@ function MPR:StartCombat(ID)
 	self.DataDeaths[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
 	self.DataDeaths[index].Color = Color
-	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:ValkyrTracker:nil:nil|h[Val'kyr Tracker]|h|r" or ""))
+	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:LKTimers:nil:nil|h[Timers]|h|r" or ""))
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
 end
 
@@ -785,7 +785,6 @@ function MPR:DeathReport(channel, index)
 	end
 	if #self.DataDeaths[index].Deaths > 0 then
 		for i=1,#self.DataDeaths[index].Deaths do
-			
 			if not self.DataDeaths[index].Deaths[i].Player then
 				local Player,Time,Source,Ability,Amount,Overkill = unpack(self.DataDeaths[index].Deaths[i])
 				local tbl = {Player = Player, Time = Time, Source = Source, Ability = Ability, Amount = Amount, Overkill = Overkill}
@@ -795,11 +794,11 @@ function MPR:DeathReport(channel, index)
 			local tbl = self.DataDeaths[index].Deaths[i]
 			local strTime = string.format("%2d:%02d",floor(tbl.Time/60),(tbl.Time%60))
 			if channel == "Raid" then
-				self:RaidReport(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, tbl.Player, tbl.Source, tbl.Ability, numformat(tbl.Amount-tbl.Overkill), tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""),true,true)
+				self:RaidReport(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, tbl.Player, tbl.Source, tbl.Ability, tbl.Amount and numformat(tbl.Amount-tbl.Overkill) or "?", tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""),true,true)
 			elseif channel == "Guild" then
-				self:Guild(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, tbl.Player, tbl.Source, tbl.Ability, numformat(tbl.Amount-tbl.Overkill), tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""),true)
+				self:Guild(string.format("%i. %s %s - %s: %s (A: %s%s)", i, strTime, tbl.Player, tbl.Source, tbl.Ability, tbl.Amount and numformat(tbl.Amount-tbl.Overkill) or "?", tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""),true)
 			else
-				self:SelfReport(string.format("%i. %s %s - %s: %s|r|cFFBEBEBE (A: %s%s)", i, strTime, unit(tbl.Player,tbl.Class), tbl.Source, tbl.Ability, numformat(tbl.Amount-tbl.Overkill), tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""))
+				self:SelfReport(string.format("%i. %s %s - %s: %s|r|cFFBEBEBE (A: %s%s)", i, strTime, unit(tbl.Player,tbl.Class), tbl.Source, tbl.Ability, tbl.Amount and numformat(tbl.Amount-tbl.Overkill) or "?", tbl.Overkill > 0 and " / O: "..numformat(tbl.Overkill) or ""))
 			end
 		end
 	else
@@ -824,12 +823,7 @@ local PotencialDeaths = {}
 function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	--if not self.Settings["SELF"] then return end 
 	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
-	
-	if event == "UNIT_DIED" and destName == "Rookery Whelp" then
-		MPR_ValkyrTracker:KillCredit()
-		return
-	end
-	
+		
 	if UnitIsPlayer(destName) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
 		if event == "SWING_DAMAGE" then
 			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
@@ -918,19 +912,19 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		
 		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
 			if spellId == 68981 or spellId == 74270 or spellId == 74271 or spellId == 74272 then -- Remorseless Winter
-				MPR_ValkyrTracker:RemorselessWinter()
+				MPR_LKTimers:RemorselessWinter()
 			elseif spellId == 72262 then -- Quake
-				MPR_ValkyrTracker:Quake()
+				MPR_LKTimers:Quake()
 			elseif spellId == 72762 then -- Defile
-				MPR_ValkyrTracker:Defile()
+				MPR_LKTimers:Defile()
 			elseif spellId == 73539 then -- Summon Shadow Trap (heroic only)
-				MPR_ValkyrTracker:SummonShadowTrap()
+				MPR_LKTimers:SummonShadowTrap()
 			elseif spellId == 68980 or spellId == 74325 then --  Harvest Soul (normal only)
-				MPR_ValkyrTracker:HarvestSoul()
+				MPR_LKTimers:HarvestSoul()
 			elseif spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only)
-				MPR_ValkyrTracker:HarvestSouls()
+				MPR_LKTimers:HarvestSouls()
 			elseif spellId == 72350 then -- Fury of Frostmourne
-				MPR_ValkyrTracker:FuryOfFrostmourne()
+				MPR_LKTimers:FuryOfFrostmourne()
 			end
 		
 			if spellName == "Heroism" and UnitInRaid(sourceName) then
@@ -948,7 +942,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			if spellName == "Necrotic Plague" then
 				--self:Whisper(destName, GetSpellLink(spellId).." on you! Run to a Shambling Horror!!")
 			elseif sourceName == "Shadow Trap" and spellName == "Shadow Trap" then
-				self:RaidReport(GetSpellLink(spellId))
+				self:RaidReport(GetSpellLink(spellId)) --self:RaidReport("{rt8}{rt8}{rt8} "..GetSpellLink(spellId).." summoned! {rt8}{rt8}{rt8}")
 			elseif spellName == "Swarming Shadows" then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Run along walls!!")
 			elseif spellId == 74502 then
@@ -962,7 +956,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 		elseif event == "SPELL_SUMMON" then
 			if spellId == 69037 then -- Summon Val'kyr
-				MPR_ValkyrTracker:SummonValkyr(tonumber(string.sub(destGUID,9,12),16).."-"..tonumber(string.sub(destGUID,13),16))
+				MPR_LKTimers:SummonValkyr(tonumber(string.sub(destGUID,9,12),16).."-"..tonumber(string.sub(destGUID,13),16))
 			end
 			
 			if contains(npcsSpellSumon,destName) then
@@ -1112,7 +1106,7 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 			StartChecks = 60
 			StartCheck("nil", ID)
 			if ID == 12 then -- The Lich King encounter
-				MPR_ValkyrTracker:EncounterStart()
+				MPR_LKTimers:EncounterStart()
 			end
 			break
 		end
@@ -1364,11 +1358,11 @@ function MPR:UpdateBackdrop()
 	MPR_AuraInfo:SetBackdrop(Backdrop)
 	MPR_AuraInfo:SetBackdropColor(unpack(BackdropColor))
 	MPR_AuraInfo:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
-	-- MPR Val'kyr Tracker
-	MPR_ValkyrTracker.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - Val'kyr Tracker")
-	MPR_ValkyrTracker:SetBackdrop(Backdrop)
-	MPR_ValkyrTracker:SetBackdropColor(unpack(BackdropColor))
-	MPR_ValkyrTracker:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+	-- MPR LK Timers (Val'kyr Tracker before)
+	MPR_LKTimers.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - LK Timers")
+	MPR_LKTimers:SetBackdrop(Backdrop)
+	MPR_LKTimers:SetBackdropColor(unpack(BackdropColor))
+	MPR_LKTimers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 end
 
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
@@ -1444,7 +1438,7 @@ function MPR:ADDON_LOADED(addon)
 	
 	MPR_Options:Initialize()
 	MPR_AuraInfo:Initialize()
-	MPR_ValkyrTracker:Initialize()
+	MPR_LKTimers:Initialize()
 	SLASH_MPR1 = '/mpr';
 	
 	local inInstance, instanceType = IsInInstance()
