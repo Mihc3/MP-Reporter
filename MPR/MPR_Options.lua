@@ -208,7 +208,7 @@ function MPR_Options:Initialize()
 	-- Masterloot
 	MPR_Options:NewFS("Masterloot","3CB371",216,-77)
 	MPR_Options:NewCB("Report items in loot",nil,"REPORT_LOOT", 214, -88)	-- [ ] ReportLoot
-	MPR_Options:NewCB("Only when BoP in loot",nil,"REPORT_LOOT_BOP_ONLY", 234, -102) -- [ ] ReportOnlyWhenBOP
+	MPR_Options:NewCB("Only when BoP in loot",nil,"nil", 234, -102) -- [ ] ReportOnlyWhenBOP	REPORT_LOOT_BOP_ONLY
 	MPR_Options:NewCB("Add BiS information",nil,"REPORT_LOOT_BIS_INFO", 234, -116) -- [ ] AddClassBISinfo
 	
 	-- Window Style
@@ -423,13 +423,18 @@ function MPR_Options:NewCB(Text,Color,Var,LocX,LocY) -- Creates a checkbox
 	CheckBox:SetHeight(20)
 	CheckBox:SetPoint("TOPLEFT", LocX, LocY)
 	if type(Color) ~= "string" then Color = "FFFFFF" end
+	if Var == "nil" then Color = "BEBEBE" end
 	_G["CheckBox"..GetCurrentID().."Text"]:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255)
 	_G["CheckBox"..GetCurrentID().."Text"]:SetText(Text)
-	CheckBox:SetScript("OnShow",  function(self) CheckBox:SetChecked(MPR.Settings[Var]) end)
-	CheckBox:SetScript("OnClick", function(self)
-		MPR.Settings[Var] = not MPR.Settings[Var]
-		if MPR.Settings[Var] and (Var == "RAID" or Var == "SAY" or Var == "WHISPER" or Var == "PD_RAID" or Var == "PD_WHISPER" or Var == "PD_GUILD") then
-			CheckRaidOptions(Var)
-		end
-	end)
+	if Var ~= "nil" then
+		CheckBox:SetScript("OnShow",  function(self) CheckBox:SetChecked(MPR.Settings[Var]) end)
+		CheckBox:SetScript("OnClick", function(self)
+			MPR.Settings[Var] = not MPR.Settings[Var]
+			if MPR.Settings[Var] and (Var == "RAID" or Var == "SAY" or Var == "WHISPER" or Var == "PD_RAID" or Var == "PD_WHISPER" or Var == "PD_GUILD") then
+				CheckRaidOptions(Var)
+			end
+		end)
+	else
+		CheckBox:Disable()
+	end
 end

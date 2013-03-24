@@ -1,4 +1,4 @@
-MPR_AuraInfo = CreateFrame("Frame", "MPR Aura Info")
+MPR_AuraInfo = CreateFrame("Frame", "MPR Aura Info", UIParent)
 MPR_AuraInfo.Loaded = false
 MPR_AuraInfo.TimeSinceLastUpdate = 0
 MPR_AuraInfo.FrameNumber = nil
@@ -23,8 +23,8 @@ MPR_AuraInfo.Strings = {
 	[9] = {3, "ICC: Blood-Queen Lana'thel",	GetSpellLink(71473).." on: |cFFbebebe(biten)|r", nil,
 											GetSpellLink(70877).." on: |cFFbebebe(must bite)|r", nil,
 											GetSpellLink(70923).." on: |cFFbebebe(bite failed)|r", nil},
-	[10] = {2, "ICC: Dreamwalker Valithria",GetSpellLink(70873).." or "..GetSpellLink(71941).." on:", 16,
-											"Boss Health, HPS:", 16},
+	[10] = {2, "ICC: Dreamwalker Valithria","Boss Health, HPS:", 16,
+											GetSpellLink(70873).." or "..GetSpellLink(71941).." on:", 16},
 	[11] = {3, "ICC: Sindragosa",			GetSpellLink(72530).." on: |cFFbebebe(stacks)|r (Phase 3)", nil,
 											GetSpellLink(69766).." on: |cFFbebebe(stacks)(expiration)|r", nil,
 											GetSpellLink(70106).." on: |cFFbebebe(stacks)(expiration)|r", nil},
@@ -664,15 +664,15 @@ function MPR_AuraInfo:UpdateFrameData(diff)
 		local UnitID = UnitName("Boss1") == "Valithria Dreamwalker" and "Boss1" or UnitName("Boss2") == "Valithria Dreamwalker" and "Boss2" or "Boss3"
 		if UnitName(UnitID) == "Valithria Dreamwalker" then
 			local Health, HealthMax = UnitHealth(UnitID), UnitHealthMax(UnitID)
-			local HealthPct = math.floor(Health/HealthMax) + (Health == HealthMax and 0 or 1)
-			String = string.format("|cFF00ff00VD|r: %i/%i (%i%%)", Health, HealthMax, HealthPct)
+			local HealthPct = math.floor(Health*100/HealthMax) + (Health == HealthMax and 0 or 1)
+			String = string.format("|cFF00ff00VD|r: %.1fM/%.1fM (%i%%)", round(Health/1000000,1,true), round(HealthMax/1000000,1,true), HealthPct)
 			
 			VD_LastCheck = (VD_LastCheck or 0) + diff
 			if not VD_LastCheckHP then
 				VD_LastCheckHP = Health
 				VD_LastCheck = 0
 				VD_String1 = "Diff/HPS: No information"
-			elseif VD_LastCheck >= 2 then
+			elseif VD_LastCheck >= 5 then
 				local HealthDiff = VD_LastCheckHP - Health
 				local HPS = HealthDiff/VD_LastCheck
 				local strHPS = ""

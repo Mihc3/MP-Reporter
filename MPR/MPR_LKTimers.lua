@@ -1,4 +1,4 @@
-MPR_LKTimers = CreateFrame("Frame", "MPR LK Timers")
+MPR_LKTimers = CreateFrame("Frame", "MPR LK Timers", UIParent)
 MPR_LKTimers.TimeSinceLastUpdate = 0
 MPR_LKTimers.LichKingWarnings = {
 -- Will warn: "Warning: The Lich King has {%%}% HP remaining! {Message}"
@@ -65,6 +65,7 @@ function MPR_LKTimers:Initialize()
 	MPR_LKTimers.CloseButton:SetPoint("TOPRIGHT", -24, -8)
 	MPR_LKTimers.CloseButton:SetText("o")
 	MPR_LKTimers.CloseButton:SetScript("OnClick", function(self) MPR_LKTimers_Options:Show() end)
+	MPR_LKTimers.CloseButton:Disable()
 	
 	-- Timer Label - Left
 	MPR_LKTimers.Label1 = MPR_LKTimers:CreateFontString("Label3", "OVERLAY", "GameTooltipText")
@@ -384,7 +385,7 @@ function MPR_LKTimers:HarvestSoul()
 	self.DataTimers[4][1] = 75
 end
 function MPR_LKTimers:HarvestSouls()
-	MPR_LKTimers.IgnoreSubZoneTimer = 10
+	MPR_LKTimers.IgnoreSubZoneTimer = 52 --10 -- temp. fix for Molten LK
 	self.InFrostmourne = true
 	self.DataTimers[4][1] = 120
 	self.DataTimers[3][1] = 3
@@ -421,7 +422,7 @@ function MPR_LKTimers:EncounterStart()
 	end
 end
 
-MPR_LKTimers_Updater = CreateFrame("frame", "MPR LK Timers (Updater)",UIParent)
+MPR_LKTimers_Updater = CreateFrame("frame", "MPR LK Timers (Updater)", UIParent)
 MPR_LKTimers_Updater.Interval = 0.1
 MPR_LKTimers_Updater.LastUpdate = 0
 MPR_LKTimers_Updater:SetScript("OnUpdate", function(self, elapsed)
@@ -490,7 +491,6 @@ function MPR_LKTimers_Options:Initialize()
 	MPR_LKTimers_Options.CloseButton:SetPoint("TOPRIGHT", -8, -8)
 	MPR_LKTimers_Options.CloseButton:SetText("x")
 	MPR_LKTimers_Options.CloseButton:SetScript("OnClick", function(self) MPR_LKTimers_Options:Hide() end)
-	MPR_LKTimers_Options.CloseButton:Disable()
 	
 	-- ...
 end

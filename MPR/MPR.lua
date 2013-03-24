@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.59"
-MPR.VersionNotes = {"Fixed LK Timers frame (old Val'kyr Tracker) not showing Val'kyr grabs.", " Corrected Defile timers for The Lich King."}
+MPR.Version = "v2.59-2"
+MPR.VersionNotes = {"Fixed LK Timers frame (old Val'kyr Tracker) not showing Val'kyr grabs.", "Corrected Defile timers for The Lich King.", "Loot report will print items of quality rare or better."}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
@@ -539,6 +539,9 @@ function SlashCmdList.MPR(msg, editbox)
 		MPR_AuraInfo:UpdateFrame(tonumber(msg))
 	elseif msg == "lkt" or msg == "lktimers" then
 		MPR_LKTimers:Toggle()
+	elseif msg == "vt" then
+		MPR:SelfReport("Command |r|cFFFF0000/MPR VT|r|cFFBEBEBE is deprecated. Val'kyr Tracker has been renamed to LKTimers, please start using |r|cFF00FF00/MPR LKTimers|r|cFFBEBEBE or |r|cFF00FF00/MPR LKT|r|cFFBEBEBE.")
+		MPR_LKTimers:Toggle()
 	elseif msg == "ai" then
 		MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
 								   "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
@@ -604,11 +607,11 @@ function MPR:LOOT_OPENED()
 		local Gold = GetGold(select(2,GetLootSlotInfo(1)))
 		local WorthGold	= Gold > 0 and "("..Gold.." Gold)" or ""
 		local ItemLinks = {}
-		local BoPs = false
+		--local BoPs = false
 		for i=1,GetNumLootItems() do
 			local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
 			local ItemLink = GetLootSlotLink(i)
-			local ItemBoP = select(5,GetLootRollItemInfo(i-1))
+			--local ItemBoP = select(5,GetLootRollItemInfo(i-1))
 			if Name and ItemLink and Rarity >= 0 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
 				-- make BiS list
 				local bisClasses = {}
@@ -624,11 +627,11 @@ function MPR:LOOT_OPENED()
 					end
 				end
 				table.insert(ItemLinks, ItemLink..(#bisClasses > 0 and " BiS: "..table.concat(bisClasses," ") or ""))
-				if ItemBoP and not BoPs then BoPs = true end
+				--if ItemBoP and not BoPs then BoPs = true end
 			end
 		end
 		local NotEligible = {}
-		if BoPs then -- Check who is not eligible to loot BoP items.
+		if #ItemLinks > 0 then -- Check who is not eligible to loot items.
 			local Eligible = {}
 			for i=1,40 do
 				if GetMasterLootCandidate(i) then table.insert(Eligible, GetMasterLootCandidate(i)) end
@@ -638,7 +641,7 @@ function MPR:LOOT_OPENED()
 				if not contains(Eligible,Member) then table.insert(NotEligible,Member) end
 			end
 		end
-		if #ItemLinks > 0 and (BoPs or not self.Settings["REPORT_LOOT_BOP_ONLY"]) then
+		if #ItemLinks > 0 then
 			self:RaidReport(string.format("%s - items in loot: %s",LootName,WorthGold),true)
 			for _,item in pairs(ItemLinks) do
 				self:RaidReport(item,true,true)
