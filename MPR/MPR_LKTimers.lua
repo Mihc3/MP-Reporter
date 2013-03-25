@@ -9,15 +9,21 @@ MPR_LKTimers.LichKingWarnings = {
 	[44] = {false, "Transition soon!"},
 }
 MPR_LKTimers.QuakeCount = 0
+MPR_LKTimers.InfoTimers = {
+	[1] = {['name'] = "Summon Shadow Trap"},
+	[2] = {['name'] = "Summon Val'kyr"},
+	[3] = {['name'] = "Defile"},
+	[4] = {['name'] = "Harvest Soul/Harvest Souls"},
+}
 MPR_LKTimers.DataTimers = {
 -- 	{[1] = Timer, [2] = Paused, [3] = PauseInFrostmourne},
-	{[1] = nil, [2] = nil, [3] = nil}, -- Summon Shadow Trap
-	{[1] = nil,	[2] = nil, [3] = nil}, -- Summon Val'kyr
-	{[1] = nil,	[2] = nil, [3] = true}, -- Defile
-	{[1] = nil,	[2] = nil, [3] = nil}, -- Harvest Soul/Harvest Souls
+	[1] = {[1] = nil, [2] = nil, [3] = nil}, -- Summon Shadow Trap
+	[2] = {[1] = nil, [2] = nil, [3] = nil}, -- Summon Val'kyr
+	[3] = {[1] = nil, [2] = nil, [3] = true}, -- Defile
+	[4] = {[1] = nil, [2] = nil, [3] = nil}, -- Harvest Soul/Harvest Souls
 }
 MPR_LKTimers.TimerWarns = {
-	[1] = {[5] = {false, 8}, [3] = {false, 8}},
+	[1] = {[3] = {false, 8}, [2] = {false, 8}, [1] = {false, 8}},
 	[2] = {[10] = {false, 4}, [5] = {false, 4}},
 	[3] = {[10] = {false, 7}, [5] = {false, 7}},
 	[4] = {[10] = {false, 6}, [5] = {false, 6}},

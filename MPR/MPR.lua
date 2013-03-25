@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.59-2"
+MPR.Version = "v2.59-3"
 MPR.VersionNotes = {"Fixed LK Timers frame (old Val'kyr Tracker) not showing Val'kyr grabs.", "Corrected Defile timers for The Lich King.", "Loot report will print items of quality rare or better."}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
@@ -241,9 +241,9 @@ do
 		elseif arg1 == "DeathReport" then
 			MPR:DeathReport(arg2, arg3)
 		elseif arg1 == "VersionNotes" then
-			if arg2 then
+			if arg2 == "get" then
 				AskedWhatsNew = true
-				SendAddonMessage("MPR", "versionnotes:ask", "WHISPER", arg2)
+				SendAddonMessage("MPR", "VersionNotes:get", "WHISPER", arg3)
 			else
 				if #MPR.VersionNotes > 0 then
 					MPR:SelfReport("|r|cFFFFFFFFUpdate notes for |r|cFF00FF00"..MPR.Version.."|r|cFFFFFFFF:")
@@ -331,7 +331,7 @@ function report(TimerName, ...)
 		table.wipe(AddonUsers)
 		MPR:SelfReport(string.format("Online guild members using addon: %s",table.concat(Users, ", ")))
 		if NewestUser then
-			MPR:SelfReport("|r|cFF00FF00A newer version is available!|r |cFF00CCFF|HMPR:whatsnew:"..NewestUser..":nil|h[Check what's new!]|h")
+			MPR:SelfReport("|r|cFF00FF00A newer version is available!|r |cFF00CCFF|HMPR:VersionNotes:get:"..NewestUser.."|h[Check what's new!]|h")
 		end
 	else
 		MPR:SelfReport(...)
@@ -1375,27 +1375,29 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 	if arg1 == "request-version" then
 		SendAddonMessage("MPR", "version:"..self.Version, "WHISPER", sender)
 	elseif arg1 == "version" then
-		self:ScheduleTimer("Report Users",report,1,true)
 		AddonUsers[sender] = arg2
+		self:ScheduleTimer("Report Users",report,3,true)
 	elseif arg1 == "OptionCheck" then
 		SendAddonMessage("MPR", "OptionReply:"..arg2..":"..tostring(self.Settings[arg2]), "WHISPER", sender)
 	elseif arg1 == "OptionReply" then
 		if arg3 == "true" then
 			table.insert(RaidOptions, sender)
 		end
-	elseif arg1 == "versionnotes" then
+	elseif arg1 == "VersionNotes" then
 		msg = msg:sub(10)
-		if arg2 == "ask" then
-			SendAddonMessage("MPR", "whatsnew:"..self.Version..":"..table.concat(MPR.VersionNotes,":"), "WHISPER", sender)
+		if arg2 == "get" then
+			SendAddonMessage("MPR", "VersionNotes:"..self.Version..":"..table.concat(MPR.VersionNotes,":"), "WHISPER", sender)
 		else
 			if arg3 then
 				self:SelfReport("|r|cFFFFFFFFWhat's new in |r|cFF00FF00"..arg2.."|r|cFFFFFFFF:")
 				for _,line in pairs({arg3,arg4,arg5,arg6,arg7}) do
 					self:SelfReport("- "..line)
 				end
+				
 			else
 				self:SelfReport("No version notes given in |r|cFF00FF00"..arg2.."|r|cFFBEBEBE.")
 			end
+			self:SelfReport("|r|cFFFFFF00|HMPR:CopyUrl:https://github.com/Mihapro/MP-Reporter|h[Click here to get the latest version!]|h|r|cFFBEBEBE")
 		end
  	end
 end
@@ -1459,7 +1461,41 @@ function MPR:ADDON_LOADED(addon)
 		self:ClearCombatLog(true)
 	end
 	self:RegisterEvents()
+	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+end
+
+function MPR:PLAYER_ENTERING_WORLD()
+	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	SendAddonMessage("MPR", "request-version", "GUILD")
 end
 
 MPR:RegisterEvent("ADDON_LOADED")
+
+MPR_CopyURL = CreateFrame("frame", "MPR_CopyURL", UIParent)
+function MPR:MPR_CopyURL_Initialize()
+	MPR_CopyURL:Hide()
+	
+	MPR_CopyURL:SetBackdrop(MPR.Settings["BACKDROP"])
+	MPR_CopyURL:SetBackdropColor(unpack(MPR.Settings["BACKDROPCOLOR"]))
+	MPR_CopyURL:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
+	
+	MPR_CopyURL:SetPoint("CENTER",UIParent)
+	MPR_CopyURL:SetWidth(500)
+	MPR_CopyURL:SetHeight(80)
+	MPR_CopyURL:SetFrameStrata("FULLSCREEN_DIALOG")
+	
+	MPR_CopyURL.Title = MPR_CopyURL:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
+	MPR_CopyURL.Title:SetPoint("TOP", 0, -12)
+	if type(Color) ~= "string" then Color = "FFFFFF" end
+	MPR_CopyURL.Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
+	MPR_CopyURL.Title:SetText("|cFF"..MPR.Colors["TITLE"].."MP Reporter|r ("..MPR.Version..") - Copy URL")
+	MPR_CopyURL.Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	MPR_CopyURL.Title:SetShadowOffset(1, -1)
+	
+	MPR_CopyURL_BtnClose = CreateFrame("button","MPR_CopyURL_BtnClose", MPR_CopyURL, "UIPanelButtonTemplate")
+	MPR_CopyURL_BtnClose:SetHeight(14)
+	MPR_CopyURL_BtnClose:SetWidth(50)
+	MPR_CopyURL_BtnClose:SetPoint("TOPRIGHT", -12, -11)
+	MPR_CopyURL_BtnClose:SetText("Close")
+	MPR_CopyURL_BtnClose:SetScript("OnClick", function(self) MPR_CopyURL:Hide() end)
+end
