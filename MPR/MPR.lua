@@ -1,13 +1,14 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.59-3"
-MPR.VersionNotes = {"Fixed LK Timers frame (old Val'kyr Tracker) not showing Val'kyr grabs.", "Corrected Defile timers for The Lich King.", "Loot report will print items of quality rare or better."}
+MPR.Version = "v2.60B"
+MPR.VersionNotes = {"Timer system upgrade to support all ICC bosses.","Raging Spirit CD and Quake timers added for the LK."}
 local MPR_ChannelPrefix = "<MPR> "
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
 					["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9",	["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC",["Vault of Archavon"] = "VOA",["Trial of the Crusader"] = "TOC",["Naxxramas"] = "NAXX",["Ruby Sanctum"] = "RS"}
-local BossData = {
+MPR.BossData = {
 --	[AuraInfoNum] = {"Encounter", "Start Message", "Finish Message" [, StartDelay]},
 	-- Icecrown Citadel
+	[0] = {"N/a"},
 	[1] = {"Lord Marrowgar",		"The Scourge will wash over this world as a swarm of death and destruction!", "I see... only darkness..."},
 	[2] = {"Lady Deathwhisper",		"What is this disturbance?! You dare trespass upon this hallowed ground? This shall be your final resting place.", "All part of the masters plan! Your end is... inevitable!"},
 	[3] = {"Gunship Battle",		"Fire up the engines! We got a meetin' with destiny, lads!", "Damage control! Put those fires out! You haven't seen the last of the Horde!"},
@@ -54,7 +55,8 @@ local EncounterDoneYells = {}
 local EncounterNames = {}
 local BossYells = {
 	["Watch as the world around you collapses!"]				= "Quake! Run inside!!",
-	["The heavens burn!"]										= "Meteor impact in 7 sec. Run to other side!!",
+	["The heavens burn!"]										= "Meteor Strike in 7 sec. Run to the other side!",
+	["Beware the shadow!"]										= "Twilight Cutter in 5 sec. Watch orbs!",
 	["I think I made an angry poo-poo. It gonna blow!"]			= "OOZE EXPLOSION! Run away!!",
 	["We're taking hull damage, get a battle-mage out here to shut down those cannons!"] = "MAGE SPAWNED!!",
 	["We're taking hull damage, get a sorcerer out here to shut down those cannons!"] = "MAGE SPAWNED!!",
@@ -207,6 +209,8 @@ local Events = {
 	"CHAT_MSG_WHISPER",
 	"RAID_ROSTER_UPDATE",
 	"LOOT_OPENED",
+	
+	"CHAT_MSG_RAID_BOSS_EMOTE",
 }
 
 MPR:SetScript("OnEvent", function(self, event, ...)
@@ -230,8 +234,8 @@ do
 			else -- arg2 is ICC, TOC or RS
 				MPR_AuraInfo:UpdateFrame(tonumber(arg3))
 			end
-		elseif arg1 == "LKTimers" then
-			MPR_LKTimers:Toggle()
+		elseif arg1 == "Timers" then
+			MPR_Timers:Toggle()
 		elseif arg1 == "ClearDeathLog" then
 			MPR:ClearDeathLog(true)
 		elseif arg1 == "DeductDKP" then
@@ -254,6 +258,9 @@ do
 					MPR:SelfReport("No version notes given for |r|cFF00FF00"..MPR.Version.."|r|cFFBEBEBE.")
 				end
 			end
+		elseif arg1 == "CopyUrl" then
+			MPR_CopyURL.Address = arg2..":"..arg3
+			MPR_CopyURL:Show()
 		end
 	end)
 end
@@ -490,6 +497,13 @@ function MPR:RegisterEvents()
 	end
 end
 
+function MPR:CHAT_MSG_RAID_BOSS_EMOTE(message,npc)
+	if npc == "Professor Putricide" and message:find("Malleable Goo") then
+		print(message)
+		MPR_Timers:MalleableGoo()
+	end
+end
+
 function CheckRaidOptions(Var)
 	RaidOptions = {}
 	SendAddonMessage("MPR", "OptionCheck:"..Var, "RAID")
@@ -537,11 +551,11 @@ function SlashCmdList.MPR(msg, editbox)
 	msg = strlower(msg)
 	if type(tonumber(msg)) == "number" then
 		MPR_AuraInfo:UpdateFrame(tonumber(msg))
-	elseif msg == "lkt" or msg == "lktimers" then
-		MPR_LKTimers:Toggle()
-	elseif msg == "vt" then
-		MPR:SelfReport("Command |r|cFFFF0000/MPR VT|r|cFFBEBEBE is deprecated. Val'kyr Tracker has been renamed to LKTimers, please start using |r|cFF00FF00/MPR LKTimers|r|cFFBEBEBE or |r|cFF00FF00/MPR LKT|r|cFFBEBEBE.")
-		MPR_LKTimers:Toggle()
+	elseif msg == "t" or msg == "timers" then
+		MPR_Timers:Toggle()
+	elseif msg == "vt" or msg == "lkt" or msg == "lktimers" then
+		MPR:SelfReport("Commands |r|cFFFF0000/MPR VT|r|cFFBEBEBE and |r|cFFFF0000/MPR LKT|r|cFFBEBEBE are deprecated. Please start using |r|cFF00FF00/MPR Timers|r|cFFBEBEBE or |r|cFF00FF00/MPR T|r|cFFBEBEBE.")
+		MPR_Timers:Toggle()
 	elseif msg == "ai" then
 		MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
 								   "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
@@ -712,19 +726,19 @@ function MPR:StartCombat(ID)
 	local index = #self.DataDeaths+1
 	self.DataDeaths[index] = {}
 	self.DataDeaths[index].ID = ID
-	self.DataDeaths[index].Name = BossData[ID][1]
+	self.DataDeaths[index].Name = self.BossData[ID][1]
 	local _, month, day, year = CalendarGetDate();
 	local month_names = {[1] = "Jan", [2] = "Feb", [3] = "Mar", [4] = "Apr", [5] = "May", [6] = "Jun", [7] = "Jul", [8] = "Aug", [9] = "Sep", [10] = "Oct", [11] = "Nov", [12] = "Dec"}
 	self.DataDeaths[index].Date = string.format("%s %i, %i",month_names[month],day,year)
-	self.DataDeaths[index].TimeStart = GetTime() + (BossData[ID][4] or 0)
+	self.DataDeaths[index].TimeStart = GetTime() + (self.BossData[ID][4] or 0)
 	local hour, minute, second = MPR_GameTime:Get()
-	self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(BossData[ID][4] or 0))
+	self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(self.BossData[ID][4] or 0))
 	self.DataDeaths[index].GameTimeEnd = "unknown"
 	self.DataDeaths[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
 	self.DataDeaths[index].Color = Color
 	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:LKTimers:nil:nil|h[Timers]|h|r" or ""))
-	MPR:ScheduleTimer("Wipe Check", WipeCheck, 10)
+	MPR:ScheduleTimer("Wipe Check", WipeCheck, 5)
 end
 
 function MPR:StopCombat()
@@ -826,7 +840,7 @@ local PotencialDeaths = {}
 function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	--if not self.Settings["SELF"] then return end 
 	local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
-		
+	
 	if UnitIsPlayer(destName) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
 		if event == "SWING_DAMAGE" then
 			if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
@@ -883,6 +897,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		]]
 	end
 	
+	-- Check if Blood-Queen Lana'thel encounter started ...
+	if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
+		MPR:StartCombat(8)
+	end
+	
 	-- taken from Blizzard_CombatLog.lua
 	if event == "SWING_DAMAGE" then
 		local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
@@ -913,21 +932,98 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	elseif event:sub(1, 5) == "SPELL" then
 		local spellId, spellName, spellSchool = select(9, ...)
 		
-		if event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
-			if spellId == 68981 or spellId == 74270 or spellId == 74271 or spellId == 74272 then -- Remorseless Winter
-				MPR_LKTimers:RemorselessWinter()
-			elseif spellId == 72262 then -- Quake
-				MPR_LKTimers:Quake()
-			elseif spellId == 72762 then -- Defile
-				MPR_LKTimers:Defile()
-			elseif spellId == 73539 then -- Summon Shadow Trap (heroic only)
-				MPR_LKTimers:SummonShadowTrap()
-			elseif spellId == 68980 or spellId == 74325 then --  Harvest Soul (normal only)
-				MPR_LKTimers:HarvestSoul()
-			elseif spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only)
-				MPR_LKTimers:HarvestSouls()
-			elseif spellId == 72350 then -- Fury of Frostmourne
-				MPR_LKTimers:FuryOfFrostmourne()
+		if event == "SPELL_AURA_REMOVED" then
+			if sourceName == "Lady Deathwhisper" then
+				if spellName == "Mana Barrier" then
+					MPR_Timers:ManaBarrierRemoved()
+				end
+			end
+		elseif event == "SPELL_CAST_START" or event == "SPELL_CAST_SUCCESS" then
+			-- 1: Lord Marrowgar timers
+			if sourceName == "Lord Marrowgar" then
+				if spellName == "Bone Spike Graveyard" then
+					MPR_Timers:BoneSpikeGraveyard()
+				elseif spellName == "Bone Storm" then
+					MPR_Timers:BoneStorm()
+				end
+			-- 2: Lady Deathwhisper timers
+			-- 3: Gunship Battle timers
+			elseif sourceName == "Kor'kron Battle-Mage" or sourceName == "Skybreaker Sorcerer" then
+				if spellName == "Below Zero" then --69705
+					MPR_Timers:BelowZero()
+				end
+			-- 4: Deathbringer Saurfang timers
+			elseif sourceName == "Deathbringer Saurfang" then
+				if spellName == "Rune of Blood" then --72410
+					MPR_Timers:RuneOfBlood()
+				end
+			-- 5: Festergut timers
+			-- 6: Rotface timers
+			elseif sourceName == "Rotface" then
+				if spellName == "Slime Spray" then
+					MPR_Timers:SlimeSpray()
+				elseif spellName == "Choking Gas Bomb" then
+					MPR_Timers:ChokingGasBomb()
+				end
+			-- 7: Professor Putricide timers
+			elseif sourceName == "Professor Putricide" then
+				if spellName == "Tear Gas" then
+					MPR_Timers:TearGas()
+				elseif spellName == "Unstable Experiment" then
+					MPR_Timers:UnstableExperiment()
+				elseif spellName == "Choking Gas Bomb" then
+					MPR_Timers:ChokingGasBomb()
+				end
+			-- 8: Blood Prince Council
+			elseif sourceName == "Prince Keleseth" then
+				if spellName == "Shadow Resonance" then
+					MPR_Timers:ShadowResonance()
+				end
+			elseif sourceName == "Prince Valanar" then
+				if spellName == "Empowered Shock Vortex" then
+					MPR_Timers:ShadowResonance()
+				end
+			-- 9: Blood-Queen Lana'thel
+			elseif sourceName == "Blood-Queen Lana'thel" then
+				if spellName == "Incite Terror" then
+					MPR_Timers:AirPhase()
+				elseif spellName == "Swarming Shadows" then
+					MPR_Timers:SwarmingShadows()
+				end
+				
+			--[[
+			-- 10: Valithria Dreamwalker timers
+			elseif sourceName == "Valithria Dreamwalker" then
+				if spellName == "Summon Dream Portal" or spellName == "Summon Nightmare Portal" then
+					MPR_Timers:SummonPortal()
+				end
+			]]
+			-- 11: Sindragosa
+			elseif sourceName == "Sindragosa" then
+				if spellName == "Icy Grip" then
+					MPR_Timers:BlisteringCold()
+				elseif spellName == "Frost Beacon" then
+					MPR_Timers:FrostBeacon()
+				end
+			-- 12: The Lich King timers
+			elseif sourceName == "The Lich King" then
+				if spellId == 68981 or spellId == 74270 or spellId == 74271 or spellId == 74272 then -- Remorseless Winter
+					MPR_Timers:RemorselessWinter()
+				elseif spellId == 69200 then -- Raging Spirit
+					MPR_Timers:RagingSpiritSummoned()
+				elseif spellId == 72262 then -- Quake
+					MPR_Timers:Quake()
+				elseif spellId == 72762 then -- Defile
+					MPR_Timers:Defile()
+				elseif spellId == 73539 then -- Summon Shadow Trap (heroic only)
+					MPR_Timers:SummonShadowTrap()
+				elseif spellId == 68980 or spellId == 74325 then --  Harvest Soul (normal only)
+					MPR_Timers:HarvestSoul()
+				elseif spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only)
+					MPR_Timers:HarvestSouls()
+				elseif spellId == 72350 then -- Fury of Frostmourne
+					MPR_Timers:FuryOfFrostmourne()
+				end
 			end
 		
 			if spellName == "Heroism" and UnitInRaid(sourceName) then
@@ -943,7 +1039,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 			
 			if spellName == "Necrotic Plague" then
-				--self:Whisper(destName, GetSpellLink(spellId).." on you! Run to a Shambling Horror!!")
+				self:Whisper(destName, GetSpellLink(spellId).." on you! Run to a Shambling Horror!!")
 			elseif sourceName == "Shadow Trap" and spellName == "Shadow Trap" then
 				self:RaidReport(GetSpellLink(spellId)) --self:RaidReport("{rt8}{rt8}{rt8} "..GetSpellLink(spellId).." summoned! {rt8}{rt8}{rt8}")
 			elseif spellName == "Swarming Shadows" then
@@ -959,7 +1055,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			end
 		elseif event == "SPELL_SUMMON" then
 			if spellId == 69037 then -- Summon Val'kyr
-				MPR_LKTimers:SummonValkyr(tonumber(string.sub(destGUID,9,12),16).."-"..tonumber(string.sub(destGUID,13),16))
+				MPR_Timers:SummonValkyr(tonumber(string.sub(destGUID,9,12),16).."-"..tonumber(string.sub(destGUID,13),16))
+			elseif sourceName == "Lady Deathwhisper" and spellName == "Summon Spirit" then
+				MPR_Timers:SummonVengefulShade()
 			end
 			
 			if contains(npcsSpellSumon,destName) then
@@ -991,9 +1089,6 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			--	end
 			--	table.insert(BS_TargetsName,destName)
 			--	table.insert(BS_TargetsAmount,amount)
-			elseif spellId == 69770 and amount > 20000 and GetRaidDifficulty() < 3 then -- Sindragosa: Backlash
-				self:ReportSpellDamage(spellId,destName,amount,critical)
-			--elseif spellId == 71044 or spellId == 71045 or spellId == 71046 then -- Sindragosa: Backlash (hc)
 			end
 		elseif event == "SPELL_HEAL" then
 			local amount, overheal, absorbed, critical = select(12, ...)
@@ -1037,7 +1132,22 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 		elseif event == "SPELL_AURA_APPLIED" then
 			local auraType = select(12, ...)
 			
+			if spellName == "Gas Spore" then
+					MPR_Timers:GasSpore()
+			elseif spellName == "Gastric Bloat" then
+					MPR_Timers:GastricBloat()
+			elseif sourceName == "Professor Putricide" then
+				if spellName == "Vile Gas" then
+					MPR_Timers:VileGas()
+				end
+			elseif spellName == "Mutated Infection" then
+				MPR_Timers:MutatedInfection()
+			elseif spellname == "Invocation of Blood" then
+				MPR_Timers:InvocationOfBlood(destName)
+			end
+			
 			if spellName == "Frost Beacon" then
+				MPR_Timers:FrostBeacon()
 				self:Whisper(destName, GetSpellLink(70126).." on you! Run away from others!!")
 			elseif spellName == "Gaseous Bloat" and UnitIsPlayer(destName) then
 				self:Whisper(destName, GetSpellLink(spellId).." on you! Kite it!!")
@@ -1099,18 +1209,17 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 end
 
 function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
-	for ID,Data in pairs(BossData) do
+	for ID,Data in pairs(self.BossData) do
 		if Data[3] and Data[3] == Message then
 			self:StopCombat()
+			MPR_Timers:EncounterEnd(ID)
 			-- No break, some Trial of the Crusader quotes end and start encounters at same time (Northrend Beasts)
 		end
 		if Data[2] and Data[2] == Message then
 			local EncounterName = Data[1]
 			StartChecks = 60
 			StartCheck("nil", ID)
-			if ID == 12 then -- The Lich King encounter
-				MPR_LKTimers:EncounterStart()
-			end
+			MPR_Timers:EncounterStart(ID)
 			break
 		end
 	end	
@@ -1121,6 +1230,16 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 	
 	if BossYells[Message] then
 		self:Say(BossYells[Message])
+	end
+	
+	if Sender == "Valithria Dreamwalker" and Message == "I have opened a portal into the Emerald Dream. Your salvation lies within, heroes." then
+		MPR_Timers:SummonPortal()
+	elseif Sender == "Sindragosa" then
+		if Message == "Your incursion ends here! None shall survive!" then
+			MPR_Timers:AirPhase()
+		elseif Message == "Now feel my master's limitless power and despair!" then
+			MPR_Timers:SecondPhase()
+		end
 	end
 end
 
@@ -1362,10 +1481,10 @@ function MPR:UpdateBackdrop()
 	MPR_AuraInfo:SetBackdropColor(unpack(BackdropColor))
 	MPR_AuraInfo:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 	-- MPR LK Timers (Val'kyr Tracker before)
-	MPR_LKTimers.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - LK Timers")
-	MPR_LKTimers:SetBackdrop(Backdrop)
-	MPR_LKTimers:SetBackdropColor(unpack(BackdropColor))
-	MPR_LKTimers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+	MPR_Timers.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - LK Timers")
+	MPR_Timers:SetBackdrop(Backdrop)
+	MPR_Timers:SetBackdropColor(unpack(BackdropColor))
+	MPR_Timers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 end
 
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
@@ -1403,15 +1522,17 @@ function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
 end
 
 function MPR:ZONE_CHANGED_NEW_AREA()
+	if self.Settings["CCL_ONLOAD"] then
+		self:ClearCombatLog(true)
+	end
+	--[[
 	local inInstance, instanceType = IsInInstance()
 	local state = inInstance and (instanceType == "party" or instanceType == "raid")
-	if self.Settings["SELF"] ~= state then
+	if self.Settings["SELF"] ~= state then		
 		self.Settings["SELF"] = state
 		self:SelfReport((state and "Instance detected." or "Player not in instance.").." Reporting has been "..getStateColor(self.Settings["SELF"])..".")
-		if self.Settings["CCL_ONLOAD"] then
-			self:ClearCombatLog(true)
-		end
 	end
+	]]
 	--if MPR_AuraInfo.Loaded then	Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
 
@@ -1443,7 +1564,8 @@ function MPR:ADDON_LOADED(addon)
 	
 	MPR_Options:Initialize()
 	MPR_AuraInfo:Initialize()
-	MPR_LKTimers:Initialize()
+	MPR_Timers:Initialize()
+	self:MPR_CopyURL_Initialize()
 	SLASH_MPR1 = '/mpr';
 	
 	local inInstance, instanceType = IsInInstance()
@@ -1471,7 +1593,7 @@ end
 
 MPR:RegisterEvent("ADDON_LOADED")
 
-MPR_CopyURL = CreateFrame("frame", "MPR_CopyURL", UIParent)
+MPR_CopyURL = CreateFrame("frame", "MPR_CopyURL", UIParent) 
 function MPR:MPR_CopyURL_Initialize()
 	MPR_CopyURL:Hide()
 	
@@ -1480,15 +1602,14 @@ function MPR:MPR_CopyURL_Initialize()
 	MPR_CopyURL:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
 	
 	MPR_CopyURL:SetPoint("CENTER",UIParent)
-	MPR_CopyURL:SetWidth(500)
-	MPR_CopyURL:SetHeight(80)
+	MPR_CopyURL:SetWidth(450)
+	MPR_CopyURL:SetHeight(60)
 	MPR_CopyURL:SetFrameStrata("FULLSCREEN_DIALOG")
 	
 	MPR_CopyURL.Title = MPR_CopyURL:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
 	MPR_CopyURL.Title:SetPoint("TOP", 0, -12)
-	if type(Color) ~= "string" then Color = "FFFFFF" end
-	MPR_CopyURL.Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
-	MPR_CopyURL.Title:SetText("|cFF"..MPR.Colors["TITLE"].."MP Reporter|r ("..MPR.Version..") - Copy URL")
+	MPR_CopyURL.Title:SetTextColor(1,1,1) 
+	MPR_CopyURL.Title:SetText("|cFF"..MPR.Colors["TITLE"].."MP Reporter|r - Copy URL |cFFBEBEBE(Ctrl + C to copy address)|r")
 	MPR_CopyURL.Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 	MPR_CopyURL.Title:SetShadowOffset(1, -1)
 	
@@ -1497,5 +1618,17 @@ function MPR:MPR_CopyURL_Initialize()
 	MPR_CopyURL_BtnClose:SetWidth(50)
 	MPR_CopyURL_BtnClose:SetPoint("TOPRIGHT", -12, -11)
 	MPR_CopyURL_BtnClose:SetText("Close")
-	MPR_CopyURL_BtnClose:SetScript("OnClick", function(self) MPR_CopyURL:Hide() end)
+	MPR_CopyURL_BtnClose:SetScript("OnClick", function(self) self:GetParent():Hide() end)
+	
+	MPR_CopyURL.EditBox = CreateFrame("EditBox","MPR_CopyURL_EditBox", MPR_CopyURL, "InputBoxTemplate")
+	MPR_CopyURL.EditBox:SetHeight(20)
+	MPR_CopyURL.EditBox:SetWidth(420)
+	MPR_CopyURL.EditBox:SetPoint("TOP", 0, -30)
+	MPR_CopyURL.EditBox:SetTextColor(1,1,1) 
+	MPR_CopyURL.EditBox:SetText("")
+	MPR_CopyURL.EditBox:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		
+	MPR_CopyURL:SetScript("OnShow", function(self) self.EditBox:SetText(self.Address); self.EditBox:HighlightText() end)
+	MPR_CopyURL.EditBox:SetScript("OnEscapePressed", function(self) self:GetParent():Hide() end)
+	tinsert(UISpecialFrames, "MPR_CopyURL")
 end
