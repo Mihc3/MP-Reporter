@@ -739,6 +739,8 @@ function MPR:StartCombat(ID)
 	self.DataDeaths[index].Color = Color
 	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:LKTimers:nil:nil|h[Timers]|h|r" or ""))
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 5)
+	
+	MPR_Timers:EncounterStart(ID)
 end
 
 function MPR:StopCombat()
@@ -752,6 +754,8 @@ function MPR:StopCombat()
 	local ID = self.DataDeaths[index].ID
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
 	self:SelfReport("Encounter |r|cFF"..Color..self.DataDeaths[index].Name.."|r|cFFbebebe finished."..(numDeaths > 0 and " ("..numDeaths.." deaths. Report to:|r |HMPR:DeathReport:Self:"..index..":nil|h|cff1E90FF[Self]|r|h |HMPR:DeathReport:Raid:"..index..":nil|h|cffEE7600[Raid]|r|h |HMPR:DeathReport:Guild:"..index..":nil|h|cff40FF40[Guild]|r|h|cFFbebebe)|r" or ""))
+	
+	MPR_Timers:EncounterEnd(ID)
 end
 
 local StartChecks = 0
@@ -899,7 +903,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 	
 	-- Check if Blood-Queen Lana'thel encounter started ...
 	if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
-		MPR:StartCombat(8)
+		MPR:StartCombat(9)
 	end
 	
 	-- taken from Blizzard_CombatLog.lua
@@ -981,7 +985,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 				end
 			elseif sourceName == "Prince Valanar" then
 				if spellName == "Empowered Shock Vortex" then
-					MPR_Timers:ShadowResonance()
+					MPR_Timers:EmpoweredShockVortex()
 				end
 			-- 9: Blood-Queen Lana'thel
 			elseif sourceName == "Blood-Queen Lana'thel" then
@@ -1212,14 +1216,12 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
 	for ID,Data in pairs(self.BossData) do
 		if Data[3] and Data[3] == Message then
 			self:StopCombat()
-			MPR_Timers:EncounterEnd(ID)
 			-- No break, some Trial of the Crusader quotes end and start encounters at same time (Northrend Beasts)
 		end
 		if Data[2] and Data[2] == Message then
 			local EncounterName = Data[1]
 			StartChecks = 60
 			StartCheck("nil", ID)
-			MPR_Timers:EncounterStart(ID)
 			break
 		end
 	end	

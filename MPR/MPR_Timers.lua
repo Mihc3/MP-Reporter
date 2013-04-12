@@ -67,6 +67,11 @@ MPR_Timers.InfoTimers = {
 }
 MPR_Timers.DataTimers = {[1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {}, [8] = {}, [9] = {}, [10] = {}, [11] = {}, [12] = {}} -- structure generated as timers are set
 MPR_Timers.TimerWarns = {
+	[9] = {
+		[1] = {[10] = {false, 3}, [5] = {false, 3}}, -- Incite Terror: 10s,5s
+		[2] = {[3] = {false, 7}, [2] = {false, 7}, [1] = {false, 7}}, -- Swarming Shadows: 3s,2s,1s
+		[3] = {[30] = {false, 8}, [20] = {false, 8}, [10] = {false, 8}, [5] = {false, 7}}, -- Berserk: 30s,20s,10s,5s
+	},
 	[12] = {
 		[1] = {[3] = {false, 8}, [2] = {false, 8}, [1] = {false, 8}},
 		[2] = {[10] = {false, 4}, [5] = {false, 4}},
@@ -235,7 +240,7 @@ function MPR_Timers:OnUpdate(elapsed)
 					self.Label2:SetText(String)
 					self.Label2:Show()
 					Label2HasText = true
-				else
+				elseif info['label'] == 3 then
 					self.Label3:SetText(String)
 					self.Label3:Show()
 					Label3HasText = true
@@ -245,8 +250,9 @@ function MPR_Timers:OnUpdate(elapsed)
 				if warns then
 					if warns[Seconds] and not warns[Seconds][1] then
 						warns[Seconds][1] = true
-						local unformattted = (warns[Seconds][2] and "{rt"..warns[Seconds][2].."} " or "")..String:gsub("|cFF"..Color,""):gsub("|r","")..(warns[Seconds][2] and " {rt"..warns[Seconds][2].."}" or "")
 						local formatted = (warns[Seconds][2] and "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_"..warns[Seconds][2].."|t " or "")..String..(warns[Seconds][2] and " |TInterface\\TargetingFrame\\UI-RaidTargetingIcon_"..warns[Seconds][2].."|t" or "")
+						String = info['format']:gsub("{SpellLink}",GetSpellLink(self:GetSpellID(info['name']) or 0)):gsub("{Name}",info['name']):gsub("{Time}",Seconds.." sec")
+						local unformattted = (warns[Seconds][2] and "{rt"..warns[Seconds][2].."} " or "")..String..(warns[Seconds][2] and " {rt"..warns[Seconds][2].."}" or "")
 						MPR:HandleReport(unformattted,formatted)
 					elseif warns[Seconds+1] and warns[Seconds+1][1] then
 						warns[Seconds+1][1] = false
@@ -265,12 +271,12 @@ function MPR_Timers:OnUpdate(elapsed)
 			if not Label1HasText then 
 				self.Label1:SetText("No timers active.")
 			end
-			self:SetHeight(30)
-		else
 			self:SetHeight(43)
+		else
+			self:SetHeight(56)
 		end
 	else
-		self:SetHeight(56)
+		self:SetHeight(69)
 	end	
 	
 	if e == 12 then -- LK only
@@ -347,6 +353,12 @@ function MPR_Timers:Update()
 	self.Label3:SetText("Grabbed players: "..table.concat(arrayGrabbed,", "))
 end
 
+function MPR_Timers:NewTimer(ability,cd_left,special)
+	local TimeInCB = math.floor(GetTime()-MPR.DataDeaths[#MPR.DataDeaths].TimeStart)
+	TimeInCB = string.format("%2d:%02d",floor(TimeInCB/60),(TimeInCB%60))
+	self:SelfReport("|r|cFFFF0000New cooldown! Ability: |r|cFFFFFFFF"..ability.."|r|cFFFF0000; CD Left: |r|cFFFFFFFF"..cd_left.."|r|cFFFF0000 s; Encounter Time: |r|cFFFFFFFF"..TimeInCB.."; Instance Diff.: |r|cFFFFFFFF"..GetInstanceDifficulty().."|r|cFFFF0000"..(special and "; |r|cFFFFFFFF"..special.."|r|cFFFF0000" or "").."). |r|cFFFFFF00|HMPR:CopyUrl:https://github.com/Mihapro/MP-Reporter/issues?labels=timer|h[Open an issue on GitHub!]|h|r|cFFBEBEBE")
+end
+
 function MPR_Timers:EncounterStart(ID)
 	self:Reset()
 	self.DataTimers[ID] = {}
@@ -394,14 +406,18 @@ function MPR_Timers:EncounterStart(ID)
 		return
 	end
 	self.BossNum = ID
-	self.Title:SetText("|cff"..MPR.Colors["TITLE"].."MPR|r Timers: |cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
+	self.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
 end
 
 -- 1: Lord Marrowgar
 function MPR_Timers:BoneSpikeGraveyard()
+	local cd = round(self.DataTimers[1][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Bone Spike Graveyard")),cd,nil) end
 	self.DataTimers[1][1] = 15
 end
 function MPR_Timers:BoneStorm()
+	local cd = round(self.DataTimers[1][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Bone Storm")),cd,nil) end
 	if self:IsNormal() then  
 		self.DataTimers[1][1] = self:Is10Man() and 35 or 45
 	end
@@ -418,31 +434,47 @@ function MPR_Timers:ManaBarrierRemoved()
 	self.DataTimers[2][2] = 12
 end
 function MPR_Timers:SummonVengefulShade()
+	local cd = round(self.DataTimers[2][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Summon Vengeful Shade")),cd,nil) end
 	self.DataTimers[2][2] = 18
 end
 -- 3: Gunship Battle
 function MPR_Timers:BelowZero()
+	local cd = round(self.DataTimers[3][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Below Zero")),cd,nil) end
 	self.DataTimers[3][1] = 60
 end
 -- 4: Deathbringer Saurfang
 function MPR_Timers:RuneOfBlood()
+	local cd = round(self.DataTimers[4][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Rune of Blood")),cd,nil) end
 	self.DataTimers[4][1] = 18
 end
 -- 5: Festergut
 function MPR_Timers:GasSpore()
+	local cd = round(self.DataTimers[5][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Gas Spore")),cd,nil) end
 	self.DataTimers[5][1] = 40
 end
 function MPR_Timers:GastricBloat()
+	local cd = round(self.DataTimers[5][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Gastric Bloat")),cd,nil) end
 	self.DataTimers[5][2] = 15
 end
 -- 6: Rotface
 function MPR_Timers:SlimeSpray()
-	self.DataTimers[6][1] = 29
+	local cd = round(self.DataTimers[6][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Slime Spray")),cd,nil) end
+	self.DataTimers[6][1] = 20
 end
 function MPR_Timers:MutatedInfection()
+	local cd = round(self.DataTimers[6][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Mutated Infection")),cd,nil) end
 	self.DataTimers[6][2] = 14
 end
 function MPR_Timers:VileGas()
+	local cd = round(self.DataTimers[6][3],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Vile Gas")),cd,nil) end
 	self.DataTimers[6][3] = 15
 end
 -- 7: Professor Putricide
@@ -454,44 +486,66 @@ function MPR_Timers:TearGas()
 	self.DataTimers[7][3] = self.PP_Phase == 2 and 35 or (self.DataTimers[7][3] + 30)
 end
 function MPR_Timers:UnstableExperiment()
+	local cd = round(self.DataTimers[7][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Unstable Experiment")),cd,nil) end
 	self.DataTimers[7][1] = 30
 end
 function MPR_Timers:MalleableGoo()
+	local cd = round(self.DataTimers[7][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Malleable Goo")),cd,nil) end
 	self.DataTimers[7][2] = 25
 end
 function MPR_Timers:ChokingGasBomb()
-	self.DataTimers[7][1] = 35
+	local cd = round(self.DataTimers[7][3],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Choking Gas Bomb")),cd,nil) end
+	self.DataTimers[7][3] = 35
 end
 -- 8: Blood Prince Council
 function MPR_Timers:InvocationOfBlood(Prince)
+	local cd = round(self.DataTimers[8][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Invocation Of Blood")),cd,nil) end
 	self.DataTimers[8][1] = 46.5
 	self.DataTimers[8][2] = nil
 end
 function MPR_Timers:EmpoweredShockVortex()
+	local cd = round(self.DataTimers[8][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Empowered Shock Vortex")),cd,nil) end
 	self.DataTimers[8][2] = 15
 end
 function MPR_Timers:ShadowResonance()
+	local cd = round(self.DataTimers[8][3],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Shadow Resonance")),cd,nil) end
 	self.DataTimers[8][3] = 15
 end
 -- 9: Blood-Queen Lana'thel
 function MPR_Timers:InciteTerror()
+	local cd = round(self.DataTimers[9][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Incite Terror")),cd,nil) end
 	self.DataTimers[9][1] = 100 + self:Is25Man() and 0 or 20
 	self.DataTimers[9][2] = 30.5
 end
 function MPR_Timers:SwarmingShadows()
+	local cd = round(self.DataTimers[9][2],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Swarming Shadows")),cd,nil) end
 	self.DataTimers[9][2] = 30.5
 end
 -- 10: Valithria Dreamwalker
 function MPR_Timers:SummonPortal()
+	local cd = round(self.DataTimers[10][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Summon Portal")),cd,nil) end
 	self.DataTimers[10][1] = 45
 end
 -- 11: Sindragosa
 MPR_Timers.SindragosaPhase = 1
 function MPR_Timers:BlisteringCold()
+	local cd = round(self.DataTimers[11][1],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Blistering Cold")),cd,"Phase "..self.SindragosaPhase) end
 	--if self.SindragosaPhase ~= 2 then return end
 	self.DataTimers[11][1] = 33
 end
 function MPR_Timers:AirPhase()
+	local cd = round(self.DataTimers[11][2],1,true)
+	if cd > 0 then self:NewTimer("Air Phase",cd,nil) end
 	self.DataTimers[11][1] = 60
 	self.DataTimers[11][2] = 108
 end
@@ -503,6 +557,8 @@ function MPR_Timers:SecondPhase()
 end
 function MPR_Timers:FrostBeacon()
 	if self.SindragosaPhase ~= 2 then return end
+	local cd = round(self.DataTimers[11][3],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Frost Beacon")),cd,nil) end
 	self.DataTimers[11][3] = 16
 end
 -- 12: The Lich King 
@@ -544,6 +600,8 @@ function MPR_Timers:RagingSpiritSummoned()
 	self.DataTimers[12][5] = self.RagingSpiritCount < 3 and 22 or nil
 end
 function MPR_Timers:Quake()
+	local cd = round(self.DataTimers[12][5],1,true)
+	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Quake")),cd,"Quake #"..(self.QuakeCount+1)) end
 	self.DataTimers[12][5] = nil
 	
 	self.QuakeCount = self.QuakeCount + 1
@@ -563,7 +621,7 @@ end
 
 function MPR_Timers:Reset()
 	self.BossNum = nil
-	MPR_Timers.Title:SetText("|cff"..MPR.Colors["TITLE"].."MPR|r Timers: |cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
+	MPR_Timers.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
 	
 	for e,_ in pairs(MPR_Timers.DataTimers) do
 		for i,_ in pairs(MPR_Timers.DataTimers[e]) do
@@ -583,7 +641,7 @@ MPR_Timers_Updater:SetScript("OnUpdate", function(self, elapsed)
 		MPR_Timers.Label2:SetText("")
 		MPR_Timers.Label2:Hide()
 		MPR_Timers.Label1:SetText("No timers active.")
-		MPR_Timers:SetHeight(30)
+		MPR_Timers:SetHeight(43)
 		return
 	end
 	
