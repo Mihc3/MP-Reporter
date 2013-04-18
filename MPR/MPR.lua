@@ -744,6 +744,7 @@ function MPR:StartCombat(ID)
 end
 
 function MPR:StopCombat()
+	MPR:CancelTimer("Wipe Check")
 	if not Combat then return end
 	Combat = false
 	local index = #self.DataDeaths
