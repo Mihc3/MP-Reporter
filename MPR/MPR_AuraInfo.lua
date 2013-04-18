@@ -32,7 +32,8 @@ MPR_AuraInfo.Strings = {
 											GetSpellLink(70541).." on: |cFFbebebe(health)|r", nil,
 											GetSpellLink(72133).." on: |cFFbebebe(5 stacks)|r", nil},
 	[13] = {1, "TOC: Gormok the Impaler",	GetSpellLink(66331).." on: |cFFbebebe(stacks)(expiration)|r", 14},					
-	[14] = {1, "TOC: Acidmaw & Dreadscale",	GetSpellLink(67619).." on: |cFFbebebe(health)(expiration)|r", 14},					
+	[14] = {1, "TOC: Acidmaw & Dreadscale",	GetSpellLink(67619).." on: |cFFbebebe(health)(expiration)|r", 14},
+	
 	[16] = {2, "TOC: Lord Jaraxxus",		GetSpellLink(66209).." on: |cFFbebebe(must run away)|r", 18,
 											GetSpellLink(66211).." on: |cFFbebebe(must be dispeled)|r", nil},
 	[18] = {1, "TOC: Twin Valkyr",			"Without "..GetSpellLink(65684).." or "..GetSpellLink(65686)..":", nil},

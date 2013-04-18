@@ -14,7 +14,7 @@ MPR.BossData = {
 	[3] = {"Gunship Battle",		"Fire up the engines! We got a meetin' with destiny, lads!", "Damage control! Put those fires out! You haven't seen the last of the Horde!"},
 	[4] = {"Deathbringer Saurfang",	"BY THE MIGHT OF THE LICH KING!", "I... Am... Released."},
 	[5] = {"Festergut",				"Fun time!", "Da ... Ddy..."},
-	[6] = {"Rotface",				"Good news, everyone! I've fixed the poison slime pipes!", "Bad news daddy...", -3},
+	[6] = {"Rotface",				"Great news, everyone! The slime is flowing again!", "Bad news daddy...", -3},
 	[7] = {"Professor Putricide",	"Good news, everyone! I think I perfected a plague that will destroy all life on Azeroth!", "Bad news, everyone! I don't think I'm going to make it."},
 	[8] = {"Blood Prince Council",	"Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!", "...why...?"},
 	[9] = {"Blood Queen Lana'thel",	"Can you handle this?", "But... we were getting along... so well...", -15}, -- "You have made an... unwise... decision." not used on Molten?
@@ -737,7 +737,7 @@ function MPR:StartCombat(ID)
 	self.DataDeaths[index].Deaths = {}
 	local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
 	self.DataDeaths[index].Color = Color
-	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started."..(ID == 12 and " |cFF00CCFF|HMPR:LKTimers:nil:nil|h[Timers]|h|r" or ""))
+	self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started. |cFF00CCFF|HMPR:Timers:nil:nil|h[Timers]|h|r")
 	MPR:ScheduleTimer("Wipe Check", WipeCheck, 5)
 	
 	MPR_Timers:EncounterStart(ID)
