@@ -991,7 +991,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
 			-- 9: Blood-Queen Lana'thel
 			elseif sourceName == "Blood-Queen Lana'thel" then
 				if spellName == "Incite Terror" then
-					MPR_Timers:AirPhase()
+					MPR_Timers:InciteTerror()
 				elseif spellName == "Swarming Shadows" then
 					MPR_Timers:SwarmingShadows()
 				end

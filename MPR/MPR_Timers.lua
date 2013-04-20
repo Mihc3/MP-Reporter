@@ -68,6 +68,10 @@ MPR_Timers.InfoTimers = {
 MPR_Timers.DataTimers = {[1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {}, [8] = {}, [9] = {}, [10] = {}, [11] = {}, [12] = {}} -- structure generated as timers are set
 -- you can add custom warnings
 MPR_Timers.TimerWarns = {
+-- EXAMPLE:
+--	[EncounterID] = {
+--		[AbilityID] = {[Second] = {false, IconID}, [Second2] = {false, IconID}},
+--	},
 	[7] = { -- PP
 		[2] = {[3] = {false, 6}, [2] = {false, 6}, [1] = {false, 6}},
 	},
@@ -505,8 +509,6 @@ function MPR_Timers:ChokingGasBomb()
 end
 -- 8: Blood Prince Council
 function MPR_Timers:InvocationOfBlood(Prince)
-	local cd = round(self.DataTimers[8][1],1,true)
-	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Invocation Of Blood")),cd,nil) end
 	self.DataTimers[8][1] = 46.5
 	self.DataTimers[8][2] = nil
 end
@@ -528,8 +530,6 @@ function MPR_Timers:InciteTerror()
 	self.DataTimers[9][2] = 30
 end
 function MPR_Timers:SwarmingShadows()
-	local cd = round(self.DataTimers[9][2],1,true)
-	if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Swarming Shadows")),cd,nil) end
 	self.DataTimers[9][2] = 30.5
 end
 -- 10: Valithria Dreamwalker
