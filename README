@@ -1,2 +1,92 @@
 < MP Reporter (https://github.com/Mihapro/MP-Reporter) >
-An addon for World of Warcraft: Wrath of the Lich King (3.3.5a 12340) that reports special events from combat log to your chat frame and raid channel.
+An addon for World of Warcraft: Wrath of the Lich King (3.3.5a 12340) that announces special events/boss acitons to your chat frame and raid channel.
+
+Complete list of commands:
+ • MPR Options - /MPR
+ • MPR Aura Info - /MPR AI, /MPR AI <bossnum>
+ • MPR Timers - /MPR T, /MPR TIMERS
+ • Clear combat log entries - /MPR CCL, /MPR CLEAR
+ • Clear death log entries - /MPR CDL
+ 
+MPR Aura Info (command /MPR AI or /MPR <bossnum>) lets you track active auras (buffs and debuffs) on your raid members.
+Here's a complete list of auras that can be tracked during encounters:
+ • ICECROWN CITADEL •
+    1) Lord Marrowgar:
+        • Impaled (% of members health is also shown)
+    2) Lady Deathwhisper:
+        • Mind Controlled (percentage of members health and aura time left are also shown)
+    3) Gunship Battle:
+        No auras, but shows some informations about ships (hitpoints, est. time left)
+    4) Deathbringer Saurfang:
+        • Rune of Blood (aura time left)
+    5) Festergut:
+        • Gastric Bloat (stack count is also shown)
+        • Inoculated (displays members that don't have 3 stacks)
+    6) Rotface:
+        • Mutated Infection (time left is also shown)
+    7) Professor Putricide:
+        • Malleable Goo (time left is also shown) - debuff from Malleable Goo if you get hit by it
+        • Choking Gas Bomb (time left is also shown) - debuff from Choking Gas Bombs if you get hit by them
+        • Mutated Plague (stack count and time left are also shown)
+        • Unbound Plague (time left is also shown) - heroic mode
+    8) Blood Prince Council:
+        • Shadow Resonance (stack count is also shown)
+        • Shadow Prison (stack count is also shown) - heroic mode
+    9) Blood-Queen Lana'thel:
+        • Essence of the Blood Queen (time left is also shown) - members with bite
+        • Frenzied Bloodthirst (time left is also shown) - members that have to bite
+        • Uncontrollable Frenzy (percentage of members health is also shown) - members that failed to bite
+   10) Valithria Dreamwalker:
+        Shows some informations about the boss (hitpoints, est. time left)
+        • Emerald Vigor (stack count and time left are also shown)
+   11) Sindragosa:
+        • Mystic Buffet (stack count is also shown) - phase 3 debuff
+        • Instability (stack count and time left are also shown) - caster debuff from Unchained Magic
+        • Chilled to the Bone (stack count and time left are also shown) - melee debuff
+   12) The Lich King:
+        • Necrotic Plague (time left is also shown) - useful for dispeling!
+        • Infest (percentage of members health is also shown)
+        • Pain and Suffering (displays members that have 5 stacks) - transition stacking debuff
+ • TRIAL OF THE CRUSADER •
+   13) Gormok the Impaler:
+        • Impale (stack count and time left are also shown)
+   14) Acidmaw and Dreadscale:
+        • Paralytic Toxin (percentage of members health and time left are also shown)
+   16) Lord Jaraxxus:
+        • Touch of Jaraxxus (time left is also shown) - deadly debuff, member with it must spread
+   18) Twin Valkyr:
+        • Light Essence/Dark Essence (displays members without essence aura)
+   19) Anub'arak:
+        Some information about DPS on boss and est. time left
+ • RUBY SANCTUM •
+   20) Savianna Ragefire:
+        • Enrage (time left is also shown) - enrage debuff that must be dispelled
+   21) Baltharus the Warborn:
+        • Enervating Brand (stack count is also shown)
+   22) General Zarithrian:
+        • Cleave Armor (stack count and time left are also shown)
+   23) Halion:
+        • Combustion/Consumption (stack count is also shown) - more stacks, bigger circle.
+        • Corporeality - during phase 3 some informations about Halion are shown
+
+MPR Timers (command /MPR T or /MPR TIMERS) tracks boss ability cooldowns and prints time left warnings to raid chat if configured so. It is designed to match timers from Molten-WoW (molten-wow.com).
+Here's a complete list of abilities tracked by the addon:
+ • ICECROWN CITADEL •
+    • Lord Marrowgar: Bone Spike Graveyard, Bone Storm
+    • Lady Deathwhisper: Summon Adds, Summon Vengeful Shade
+    • Gunship Battle: Below Zero
+    • Deathbringer Saurfang: Rune of Blood
+    • Festergut: Gas Spore, Gastric Bloat
+    • Rotface: Slime Spray, Mutated Infection, Vile Gas
+    • Professor Putricide: Unstable Experiment, Malleable Goo, Choking Gas Bomb
+    • Blood Prince Council: Target Switch, Empowered Shock Vortex, Shadow Resonance
+    • Blood-Queen Lana'thel: Incite Terror, Swarming Shadows, Berserk
+    • Valithria Dreamwalker: Summon Portal
+    • Sindragosa: Blistering Cold, Air Phase, Frost Beacon
+    • The Lich King: Summon Shadow Trap, Summon Val'kyr, Defile, Harvest Soul(s), Raging Spirit, Quake
+
+MPR Death Report (configured in options, command /MPR) is a system announcing player deaths. It also logs them, joins by encounters and sorts by time, so encounter deaths can be easily checked again after raids or any other time in future.
+
+Another useful thing from the addon users, if you whisper them "raidlocks" or "raid locks", the addon will automatically whisper back list of instances and modes you are locked to.
+
+To see more features the addon offers, see the options frame ingame.
