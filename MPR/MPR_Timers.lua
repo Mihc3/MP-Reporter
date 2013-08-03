@@ -415,13 +415,13 @@ end
 
 -- 1: Lord Marrowgar
 function MPR_Timers:BoneSpikeGraveyard()
-    local cd = round(self.DataTimers[1][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Bone Spike Graveyard")),cd,nil) end
+    --local cd = round(self.DataTimers[1][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Bone Spike Graveyard")),cd,nil) end
     self.DataTimers[1][1] = 15
 end
 function MPR_Timers:BoneStorm()
-    local cd = round(self.DataTimers[1][2],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Bone Storm")),cd,nil) end
+    --local cd = round(self.DataTimers[1][2],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Bone Storm")),cd,nil) end
     if self:IsNormal() then  
         self.DataTimers[1][1] = self:Is10Man() and 35 or 45
     end
@@ -429,7 +429,7 @@ function MPR_Timers:BoneStorm()
 end
 -- 2: Lady Deathwhisper
 function MPR_Timers:WaveSummoned()
-    self.DataTimers[2][1] = self:IsNormal() and 60 or 45
+    self.DataTimers[2][1] = 60
 end
 function MPR_Timers:ManaBarrierRemoved()
     if self:IsNormal() then
@@ -438,42 +438,42 @@ function MPR_Timers:ManaBarrierRemoved()
     self.DataTimers[2][2] = 12
 end
 function MPR_Timers:SummonVengefulShade()
-    local cd = round(self.DataTimers[2][2],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Summon Vengeful Shade")),cd,nil) end
+    --local cd = round(self.DataTimers[2][2],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Summon Vengeful Shade")),cd,nil) end
     self.DataTimers[2][2] = 18
 end
 -- 3: Gunship Battle
 function MPR_Timers:BelowZero()
-    local cd = round(self.DataTimers[3][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Below Zero")),cd,nil) end
+    --local cd = round(self.DataTimers[3][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Below Zero")),cd,nil) end
     self.DataTimers[3][1] = 60
 end
 -- 4: Deathbringer Saurfang
 function MPR_Timers:RuneOfBlood()
-    local cd = round(self.DataTimers[4][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Rune of Blood")),cd,nil) end
+    --local cd = round(self.DataTimers[4][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Rune of Blood")),cd,nil) end
     self.DataTimers[4][1] = 18
 end
 -- 5: Festergut
 function MPR_Timers:GasSpore()
-    local cd = round(self.DataTimers[5][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Gas Spore")),cd,nil) end
+    --local cd = round(self.DataTimers[5][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Gas Spore")),cd,nil) end
     self.DataTimers[5][1] = 40
 end
 function MPR_Timers:GastricBloat()
-    local cd = round(self.DataTimers[5][2],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Gastric Bloat")),cd,nil) end
+    --local cd = round(self.DataTimers[5][2],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Gastric Bloat")),cd,nil) end
     self.DataTimers[5][2] = 15
 end
 -- 6: Rotface
 function MPR_Timers:SlimeSpray()
-    local cd = round(self.DataTimers[6][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Slime Spray")),cd,nil) end
+    --local cd = round(self.DataTimers[6][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Slime Spray")),cd,nil) end
     self.DataTimers[6][1] = 20
 end
 function MPR_Timers:MutatedInfection()
-    local cd = round(self.DataTimers[6][2],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Mutated Infection")),cd,nil) end
+    --local cd = round(self.DataTimers[6][2],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Mutated Infection")),cd,nil) end
     self.DataTimers[6][2] = 14
 end
 function MPR_Timers:VileGas()
@@ -488,18 +488,18 @@ function MPR_Timers:TearGas()
     self.DataTimers[7][3] = self.PP_Phase == 1 and (self.DataTimers[7][3] + 30) or 35
 end
 function MPR_Timers:UnstableExperiment()
-    local cd = round(self.DataTimers[7][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Unstable Experiment")),cd,nil) end
+    --local cd = round(self.DataTimers[7][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Unstable Experiment")),cd,nil) end
     self.DataTimers[7][1] = 35
 end
 function MPR_Timers:MalleableGoo()
-    local cd = round(self.DataTimers[7][2],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Malleable Goo")),cd,nil) end
+    --local cd = round(self.DataTimers[7][2],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Malleable Goo")),cd,nil) end
     self.DataTimers[7][2] = 25
 end
 function MPR_Timers:ChokingGasBomb()
-    local cd = round(self.DataTimers[7][3],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Choking Gas Bomb")),cd,nil) end
+    --local cd = round(self.DataTimers[7][3],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Choking Gas Bomb")),cd,nil) end
     self.DataTimers[7][3] = 35
 end
 -- 8: Blood Prince Council
@@ -508,20 +508,20 @@ function MPR_Timers:InvocationOfBlood(Prince)
     self.DataTimers[8][2] = nil
 end
 function MPR_Timers:EmpoweredShockVortex()
-    local cd = round(self.DataTimers[8][2],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Empowered Shock Vortex")),cd,nil) end
+    --local cd = round(self.DataTimers[8][2],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Empowered Shock Vortex")),cd,nil) end
     self.DataTimers[8][2] = 15
 end
 function MPR_Timers:ShadowResonance()
-    local cd = round(self.DataTimers[8][3],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Shadow Resonance")),cd,nil) end
-    self.DataTimers[8][3] = 12
+    --local cd = round(self.DataTimers[8][3],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Shadow Resonance")),cd,nil) end
+    self.DataTimers[8][3] = 11
 end
 -- 9: Blood-Queen Lana'thel
 function MPR_Timers:InciteTerror()
-    local cd = round(self.DataTimers[9][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Incite Terror")),cd,nil) end
-    self.DataTimers[9][1] = 100 + self:Is25Man() and 0 or 20
+    --local cd = round(self.DataTimers[9][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Incite Terror")),cd,nil) end
+    self.DataTimers[9][1] = 100 + (self:Is25Man() and 0 or 20)
     self.DataTimers[9][2] = 30
 end
 function MPR_Timers:SwarmingShadows()
@@ -529,22 +529,21 @@ function MPR_Timers:SwarmingShadows()
 end
 -- 10: Valithria Dreamwalker
 function MPR_Timers:SummonPortal()
-    local cd = round(self.DataTimers[10][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Summon Portal")),cd,nil) end
+    --local cd = round(self.DataTimers[10][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Summon Portal")),cd,nil) end
     self.DataTimers[10][1] = 45
 end
 -- 11: Sindragosa
 MPR_Timers.SindragosaPhase = 1
 function MPR_Timers:BlisteringCold()
-    local cd = round(self.DataTimers[11][1],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Blistering Cold")),cd,"Phase "..self.SindragosaPhase) end
-    --if self.SindragosaPhase ~= 2 then return end
-    self.DataTimers[11][1] = 31
+    --local cd = round(self.DataTimers[11][1],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Blistering Cold")),cd,"Phase "..self.SindragosaPhase) end
+    self.DataTimers[11][1] = SindragosaPhase == 2 and 31 or nil
 end
 function MPR_Timers:AirPhase()
-    local cd = round(self.DataTimers[11][2],1,true)
-    if cd > 0 then self:NewTimer("Air Phase",cd,nil) end
-    self.DataTimers[11][1] = 60
+    --local cd = round(self.DataTimers[11][2],1,true)
+    --if cd > 0 then self:NewTimer("Air Phase",cd,nil) end
+    self.DataTimers[11][1] = 57
     self.DataTimers[11][2] = 108
 end
 function MPR_Timers:SecondPhase()
@@ -555,8 +554,8 @@ function MPR_Timers:SecondPhase()
 end
 function MPR_Timers:FrostBeacon()
     if self.SindragosaPhase ~= 2 then return end
-    local cd = round(self.DataTimers[11][3],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Frost Beacon")),cd,nil) end
+    --local cd = round(self.DataTimers[11][3],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Frost Beacon")),cd,nil) end
     self.DataTimers[11][3] = 16
 end
 -- 12: The Lich King 
