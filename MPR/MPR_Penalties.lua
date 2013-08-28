@@ -151,8 +151,8 @@ function MPR_Penalties:RefreshList()
 				MPR_Penalties.Rows[n]["Player"]:Show()
 				local SpellText = "|cFFCCCCCC[Unknown]|r"
 				for SpellName,Data in pairs(MPR_Penalties.PenaltySpells) do
-					if Data[0] == Penalty.Spell then
-						SpellText = "|cFF"..MPR_Penalties.PenaltySpells[Penalty.Spell][1].."["..SpellName.."]|r"
+					if Data[1] == Penalty.Spell then
+						SpellText = "|cFF"..Data[2].."["..SpellName.."]|r"
 						break
 					end
 				end
@@ -334,7 +334,7 @@ end
 
 function MPR_Penalties:LogHit(Player,Spell,Amount,Overkill,Status,DKP)
     local tbl = {Player = Player, Class = select(2, UnitClass(Player)), Time = time(), Spell = Spell, Amount = Amount, Overkill = Overkill, Status = Status, DKP = DKP}
-    table.insert(self.DataPenalties[#self.DataPenalties],tbl)
+    table.insert(self.DataPenalties,tbl)
 end
 
 function MPR_Penalties:GetMain(Name)
@@ -383,8 +383,8 @@ function MPR_Penalties:AnnounceDeduction(Name,Amount,NewNet,Spell)
 	-- Announce	
 	local Reason, Reason_F = "[Unknown]", "|cFFCCCCCC[Unknown]|r"
 	for SpellName,Data in pairs(MPR_Penalties.PenaltySpells) do
-		if Data[0] == Spell then
-			Reason, Reason_F = "["..SpellName.."]", "|cFF"..Data[1].."["..SpellName.."]|r"
+		if Data[1] == Spell then
+			Reason, Reason_F = "["..SpellName.."]", "|cFF"..Data[2].."["..SpellName.."]|r"
 			break
 		end
 	end

@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.70B-3"
+MPR.Version = "v2.71B"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -486,7 +486,6 @@ end
 
 function MPR:CHAT_MSG_RAID_BOSS_EMOTE(message,npc)
     if npc == "Professor Putricide" and message:find("Malleable Goo") then
-        print(message)
         MPR_Timers:MalleableGoo()
     end
 end
