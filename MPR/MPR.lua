@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.61"
-MPR.VersionNotes = {"BQL Incite Terror error fixed","Corrections to some timers"}
+MPR.Version = "v2.70B"
+MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -412,34 +412,23 @@ local function TimerHandler(name, ...)
     if name == "Spell AOE Damage" then
         local SPELL = ...
         local SpellName = GetSpellInfo(SPELL)
-                
-        local Targets = {}
+
         local arraySelf = {}
         local arrayRaid = {}
         
-        for Target,Amount in pairs(targetsSpellAOEDamage) do
-            table.insert(Targets,Target)
-            table.insert(arraySelf,unit(Target).." ("..numformat(Amount)..")")
-            table.insert(arrayRaid,Target.." ("..numformat(Amount)..")")
+        for Target,Data in pairs(targetsSpellAOEDamage) do
+            table.insert(arraySelf,unit(Target).." ("..numformat(Data.Amount)..")")
+            table.insert(arrayRaid,Target.." ("..numformat(Data.Overkill)..")")
         end
         nameSpellAOEDamage = nil
         table.wipe(targetsSpellAOEDamage)
         
-        --[[
-        local DKPPenaltyData = MPR.DKPPenalties[SpellName] or nil
-        local DKPPenaltyLink = ""
-        
-        
-        if CanEditOfficerNote() and DKPPenaltyData and DKPPenaltyData[1] and DKPPenaltyData[2] > 0 then 
-            if MPR.Settings["DKPPENALTIES_AUTO"] then
-                MPR:DKPDeductionHandler(Targets,DKPPenaltyData[2],"Hit by "..GetSpellLink(SPELL))
-            else
-                DKPPenaltyLink = MPR:DeductDKPLink(Targets, DKPPenaltyData[2], "Hit by {"..SPELL.."}")
-            end
-        end
-        ]]
-        
-        MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
+		MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
+		
+		local a = {["Vengeful Blast"] = "VB",["Choking Gas Explosion"] = "CGB",["Malleable Goo"] = "MG",["Blistering Cold"] = "BC",["Frost Bomb"] = "FB",["Shadow Trap"] = "ST"}
+		if a[SpellName] then
+			MPR_Penalties:HandleHits(targetsSpellAOEDamage,Spell)
+		end
     elseif name == "Aura Targets" then
         local SPELL = ...
         local array = {}
@@ -558,7 +547,9 @@ function SlashCmdList.MPR(msg, editbox)
     elseif msg == "ai" then
         MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
                                    "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
-                                   "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")        
+                                   "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")
+	elseif msg == "dkp" or msg == "penalties" then
+		MPR_Penalties:Toggle()
     elseif msg == "ccl" or msg == "clear" then
         MPR:ClearCombatLog()
     elseif msg == "cdl" then
@@ -1084,7 +1075,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 self:CancelTimer("Spell AOE Damage")
                 self:ScheduleTimer("Spell AOE Damage", TimerHandler, 0.5, spellId)
                 
-                targetsSpellAOEDamage[destName] = amount
+                targetsSpellAOEDamage[destName] = {Amount = amount, Overkill = overkill}
             elseif contains(reportDamageOnTarget,destName) then
                 self:ReportDamageOnTarget(sourceName,destName,spellId)
             --elseif spellId == 71447 or spellId == 71481 then -- Blood-Queen Lana'thel: Bloodbolt Splash
@@ -1411,65 +1402,6 @@ function MPR:GetGuildMemberInfo(Name)
     end
 end
 
---[[
-function MPR:DeductDKPLink(Targets, Amount, Reason)
-    return "|r|HMPR:DeductDKP:"..table.concat(Targets,"-")..":"..Amount..":"..Reason.."|h|cFF"..self.Colors["DKPDEDUCTION_LINK"].."[Deduct "..Amount.." DKP]|r|h|cFF"..self.Colors["TEXT"]
-end
-
-function MPR:DKPDeductionHandler(Targets,Amount,Reason)
-    local Channel = self.Settings["DKPPENALTIES_OUTPUT"]
-    local DeductedTargets = {}
-    for _, Target in pairs(Targets) do
-        local TargetNewNet = self:DeductDKP(Target, Amount)
-        if TargetNewNet then
-            if Channel == "WHISPER"    then
-                SendChatMessage("<MPR> Deducted "..Amount.." DKP (New NET: "..TargetNewNet.." DKP). Reason: "..(Reason or "no reason given"), "WHISPER", nil, Target)
-            else
-                DeductedTargets[#DeductedTargets+1] = Target
-            end
-        end
-    end
-    
-    if Channel == "RAID" or Channel == "GUILD" then
-        SendChatMessage("<MPR> Deducted "..Amount.." DKP from: "..table.concat(DeductedTargets,", ")..". Reason: "..(Reason or "no reason given"), Channel)
-    end
-end
-
-function MPR:DeductDKP(Name, Amount)
-    if not (Name and Amount) then return end
-    if not CanEditOfficerNote() then
-        print("MPR: No permission to edit officer notes.")
-        return
-    end
-    local Index, Member, _, _, _, _, _, _, OfficerNote = self:GetGuildMemberInfo(Name)
-    if Member then -- Is a guild member?
-        if OfficerNote == "" then
-            GuildRosterSetOfficerNote(Index, "Net:0 Tot:0 Hrs:0")
-        end
-        local DeductedMember_Name, DeductedMember_OfficerNote
-        if not self:IsDKPFormat(OfficerNote) then -- Is not a main character?
-            OfficerNote = select(9,self:GetGuildMemberInfo(OfficerNote)) or nil
-            if not OfficerNote or not self:IsDKPFormat(OfficerNote) then 
-                return
-            end
-        end
-        
-        local Net, Tot, Hrs = strsplit(" ", OfficerNote)
-        local NetNum = select(2, strsplit(":", Net))
-        NetNum = tonumber(NetNum) - Amount
-        
-        GuildRosterSetOfficerNote(Index, "Net:"..NetNum.." "..Tot.." "..Hrs)
-        return NetNum
-    end
-end
-
-function MPR:IsDKPFormat(Note)
-    if Note:sub(1,4) == "Net:" and Note:find("Tot:") and Note:find("Hrs:") then 
-        return true
-    end
-end
-]]
-
 function MPR:UpdateBackdrop()
     local Backdrop, BackdropColor, BackdropBorderColor = MPR.Settings["BACKDROP"], MPR.Settings["BACKDROPCOLOR"], MPR.Settings["BACKDROPBORDERCOLOR"]
     -- MPR Options
@@ -1538,20 +1470,53 @@ function MPR:ZONE_CHANGED_NEW_AREA()
     --if MPR_AuraInfo.Loaded then    Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
 
+function MPR:DefineSetting(name,default)
+	if MPR_Settings[name] == nil then
+		MPR_Settings[name] = default
+	end
+end
+
 function MPR:ADDON_LOADED(addon)
     if addon ~= "MPR" then return end
-    MPR_Settings = MPR_Settings or {
-        ["SELF"] = false, ["RAID"] = false, ["SAY"] = false, ["WHISPER"] = false,
-        ["REPORT_DISPELS"] = false,    ["REPORT_MASSDISPELS"] = false,
-        ["PD_SELF"] = true, ["PD_RAID"] = false, ["PD_WHISPER"] = false, ["PD_WHISPER"] = false,
-        ["UPDATEFREQUENCY"] = 0.1,
-        ["CCL_ONLOAD"] = true,
-        ["ICONS"] = false,
-        ["REPORT_LOOT"] = false, ["REPORT_LOOT_BOP_ONLY"] = false,
-        ["DKPPENALTIES_AUTO"] = false,
-        ["DKPPENALTIES_OUTPUT"] = "RAID",
-    }
-    
+	-- define settings if not set
+    MPR_Settings = MPR_Settings or {}
+	self:DefineSetting("SELF", false)
+	self:DefineSetting("SELF", false)
+	self:DefineSetting("RAID", false)
+	self:DefineSetting("SAY", false)
+	self:DefineSetting("WHISPER", false)
+    self:DefineSetting("REPORT_DISPELS", false)
+	self:DefineSetting("REPORT_MASSDISPELS", false)
+	self:DefineSetting("PD_SELF", true)
+	self:DefineSetting("PD_RAID", false)
+	self:DefineSetting("PD_GUILD", false)
+	self:DefineSetting("PD_WHISPER", false)
+	self:DefineSetting("UPDATEFREQUENCY", 0.1)
+	self:DefineSetting("CCL_ONLOAD", true)
+	self:DefineSetting("ICONS", false)
+	self:DefineSetting("REPORT_LOOT", false)
+	self:DefineSetting("REPORT_LOOT_BOP_ONLY", false)
+	self:DefineSetting("PENALTIES_SELF", false)
+	self:DefineSetting("PENALTIES_WHISPER", true)
+	self:DefineSetting("PENALTIES_RAID", false)
+	self:DefineSetting("PENALTIES_GUILD", false)
+	local tmp = {"VB","CGB","MG","BC","FB","ST"}
+	for _,SP in pairs(tmp) do
+		self:DefineSetting("PENALTIES_"..SP.."_LIST", true)
+		self:DefineSetting("PENALTIES_"..SP.."_AUTO", false)
+		self:DefineSetting("PENALTIES_"..SP.."_AMOUNT", 20)
+	end
+	local tmp = {"RL","RA","MT","MA"}
+	for _,ROLE in pairs(tmp) do
+		self:DefineSetting("PENALTIES_IGNORE_"..ROLE, false)
+	end
+	self:DefineSetting("PENALTIES_LIST_SHOWMAIN", true)
+	self:DefineSetting("PENALTIES_LIST_SHOWAMOUNTOVERKILL", true)
+	self:DefineSetting("PENALTIES_LIST_SHOWDEDUCTED", false)
+	self:DefineSetting("PENALTIES_LIST_SHOWPENDING", true)
+	self:DefineSetting("PENALTIES_LIST_SHOWSKIPPED", false)
+	self:DefineSetting("PENALTIES_LIST_SHOWIGNORED", false)
+	
     MPR_Settings["BACKDROP"] = MPR_Settings["BACKDROP"] or {
         bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
@@ -1563,10 +1528,13 @@ function MPR:ADDON_LOADED(addon)
     self.Colors = MPR_Colors
     MPR_DataDeaths = MPR_DataDeaths or {}
     self.DataDeaths = MPR_DataDeaths
+	MPR_DataPenalties = MPR_DataPenalties or {}
+	self.DataPenalties = MPR_DataPenalties
     
     MPR_Options:Initialize()
     MPR_AuraInfo:Initialize()
     MPR_Timers:Initialize()
+	MPR_Penalties:Initialize()
     self:MPR_CopyURL_Initialize()
     SLASH_MPR1 = '/mpr';
     

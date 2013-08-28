@@ -157,6 +157,7 @@ function MPR_Timers:Initialize()
     
     MPR_Timers_Options:Initialize()
 end
+
 function MPR_Timers:Toggle()
     if MPR_Timers:IsVisible() then
         MPR_Timers:Hide()

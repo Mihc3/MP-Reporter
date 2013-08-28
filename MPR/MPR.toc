@@ -2,10 +2,11 @@
 ## Title: MP Reporter
 ## Notes: Reports special events to your chat frame and raid channel
 ## Author: Miha Penger
-## SavedVariables: MPR_Data, MPR_Settings, MPR_DKPPenalties, MPR_Colors, MPR_DataDeaths
+## SavedVariables: MPR_Data, MPR_Settings, MPR_DataPenalties, MPR_Colors, MPR_DataDeaths
 
 Dongle.lua
 MPR.lua
 MPR_Options.lua
 MPR_AuraInfo.lua
 MPR_Timers.lua
+MPR_Penalties.lua
