@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.70B-2"
+MPR.Version = "v2.70B-3"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -423,11 +423,11 @@ local function TimerHandler(name, ...)
         nameSpellAOEDamage = nil
         table.wipe(targetsSpellAOEDamage)
         
-		MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
-		
-		if MPR_Penalties.PenaltySpells[SpellName] then
-			MPR_Penalties:HandleHits(targetsSpellAOEDamage,MPR_Penalties.PenaltySpells[SpellName][0])
-		end
+        MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
+        
+        if MPR_Penalties.PenaltySpells[SpellName] then
+            MPR_Penalties:HandleHits(targetsSpellAOEDamage,MPR_Penalties.PenaltySpells[SpellName][0])
+        end
     elseif name == "Aura Targets" then
         local SPELL = ...
         local array = {}
@@ -547,8 +547,8 @@ function SlashCmdList.MPR(msg, editbox)
         MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
                                    "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
                                    "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")
-	elseif msg == "dkp" or msg == "penalties" then
-		MPR_Penalties:Toggle()
+    elseif msg == "dkp" or msg == "penalties" then
+        MPR_Penalties:Toggle()
     elseif msg == "ccl" or msg == "clear" then
         MPR:ClearCombatLog()
     elseif msg == "cdl" then
@@ -1299,7 +1299,7 @@ function MPR:ReportValkyrGrab(UNIT) -- X Unit grabbed! X
 end
 
 function MPR:CanReportToRaid()
-	return true
+    return true
 end
 
 -- REPORT HANDLER
@@ -1307,7 +1307,7 @@ end
 -- Formatted (string) - string supporting colors and images
 function MPR:HandleReport(Unformatted, Formatted, IgnoreRaidSettings, WithoutChannelPrefix)
     if Unformatted and (self.Settings["RAID"] or IgnoreRaidSettings) then
-		if not self:CanReportToRaid() then return end
+        if not self:CanReportToRaid() then return end
         if GetNumRaidMembers() > 0 then
             self:RaidReport(Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
         elseif GetNumPartyMembers() > 0 then
@@ -1423,7 +1423,7 @@ function MPR:UpdateBackdrop()
     MPR_Timers:SetBackdrop(Backdrop)
     MPR_Timers:SetBackdropColor(unpack(BackdropColor))
     MPR_Timers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
-	-- MPR DKP Penalties
+    -- MPR DKP Penalties
     MPR_Penalties.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - DKP Penalties")
     MPR_Penalties:SetBackdrop(Backdrop)
     MPR_Penalties:SetBackdropColor(unpack(BackdropColor))
@@ -1480,52 +1480,52 @@ function MPR:ZONE_CHANGED_NEW_AREA()
 end
 
 function MPR:DefineSetting(name,default)
-	if MPR_Settings[name] == nil then
-		MPR_Settings[name] = default
-	end
+    if MPR_Settings[name] == nil then
+        MPR_Settings[name] = default
+    end
 end
 
 function MPR:ADDON_LOADED(addon)
     if addon ~= "MPR" then return end
-	-- define settings if not set
+    -- define settings if not set
     MPR_Settings = MPR_Settings or {}
-	self:DefineSetting("SELF", false)
-	self:DefineSetting("SELF", false)
-	self:DefineSetting("RAID", false)
-	self:DefineSetting("SAY", false)
-	self:DefineSetting("WHISPER", false)
+    self:DefineSetting("SELF", false)
+    self:DefineSetting("SELF", false)
+    self:DefineSetting("RAID", false)
+    self:DefineSetting("SAY", false)
+    self:DefineSetting("WHISPER", false)
     self:DefineSetting("REPORT_DISPELS", false)
-	self:DefineSetting("REPORT_MASSDISPELS", false)
-	self:DefineSetting("PD_SELF", true)
-	self:DefineSetting("PD_RAID", false)
-	self:DefineSetting("PD_GUILD", false)
-	self:DefineSetting("PD_WHISPER", false)
-	self:DefineSetting("UPDATEFREQUENCY", 0.1)
-	self:DefineSetting("CCL_ONLOAD", true)
-	self:DefineSetting("ICONS", false)
-	self:DefineSetting("REPORT_LOOT", false)
-	self:DefineSetting("REPORT_LOOT_BOP_ONLY", false)
-	self:DefineSetting("PENALTIES_SELF", false)
-	self:DefineSetting("PENALTIES_WHISPER", true)
-	self:DefineSetting("PENALTIES_RAID", false)
-	self:DefineSetting("PENALTIES_GUILD", false)
-	local tmp = {"VB","CGB","MG","BC","FB","ST"}
-	for _,SP in pairs(tmp) do
-		self:DefineSetting("PENALTIES_"..SP.."_LIST", true)
-		self:DefineSetting("PENALTIES_"..SP.."_AUTO", false)
-		self:DefineSetting("PENALTIES_"..SP.."_AMOUNT", 20)
-	end
-	local tmp = {"RL","RA","MT","MA"}
-	for _,ROLE in pairs(tmp) do
-		self:DefineSetting("PENALTIES_IGNORE_"..ROLE, false)
-	end
-	self:DefineSetting("PENALTIES_LIST_SHOWMAIN", true)
-	self:DefineSetting("PENALTIES_LIST_SHOWAMOUNTOVERKILL", true)
-	self:DefineSetting("PENALTIES_LIST_SHOWDEDUCTED", false)
-	self:DefineSetting("PENALTIES_LIST_SHOWPENDING", true)
-	self:DefineSetting("PENALTIES_LIST_SHOWSKIPPED", false)
-	self:DefineSetting("PENALTIES_LIST_SHOWIGNORED", false)
-	
+    self:DefineSetting("REPORT_MASSDISPELS", false)
+    self:DefineSetting("PD_SELF", true)
+    self:DefineSetting("PD_RAID", false)
+    self:DefineSetting("PD_GUILD", false)
+    self:DefineSetting("PD_WHISPER", false)
+    self:DefineSetting("UPDATEFREQUENCY", 0.1)
+    self:DefineSetting("CCL_ONLOAD", true)
+    self:DefineSetting("ICONS", false)
+    self:DefineSetting("REPORT_LOOT", false)
+    self:DefineSetting("REPORT_LOOT_BOP_ONLY", false)
+    self:DefineSetting("PENALTIES_SELF", false)
+    self:DefineSetting("PENALTIES_WHISPER", true)
+    self:DefineSetting("PENALTIES_RAID", false)
+    self:DefineSetting("PENALTIES_GUILD", false)
+    local tmp = {"VB","CGB","MG","BC","FB","ST"}
+    for _,SP in pairs(tmp) do
+        self:DefineSetting("PENALTIES_"..SP.."_LIST", true)
+        self:DefineSetting("PENALTIES_"..SP.."_AUTO", false)
+        self:DefineSetting("PENALTIES_"..SP.."_AMOUNT", 20)
+    end
+    local tmp = {"RL","RA","MT","MA"}
+    for _,ROLE in pairs(tmp) do
+        self:DefineSetting("PENALTIES_IGNORE_"..ROLE, false)
+    end
+    self:DefineSetting("PENALTIES_LIST_SHOWMAIN", true)
+    self:DefineSetting("PENALTIES_LIST_SHOWAMOUNTOVERKILL", true)
+    self:DefineSetting("PENALTIES_LIST_SHOWDEDUCTED", false)
+    self:DefineSetting("PENALTIES_LIST_SHOWPENDING", true)
+    self:DefineSetting("PENALTIES_LIST_SHOWSKIPPED", false)
+    self:DefineSetting("PENALTIES_LIST_SHOWIGNORED", false)
+    
     MPR_Settings["BACKDROP"] = MPR_Settings["BACKDROP"] or {
         bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
@@ -1537,13 +1537,13 @@ function MPR:ADDON_LOADED(addon)
     self.Colors = MPR_Colors
     MPR_DataDeaths = MPR_DataDeaths or {}
     self.DataDeaths = MPR_DataDeaths
-	MPR_DataPenalties = MPR_DataPenalties or {}
-	self.DataPenalties = MPR_DataPenalties
+    MPR_DataPenalties = MPR_DataPenalties or {}
+    self.DataPenalties = MPR_DataPenalties
     
     MPR_Options:Initialize()
     MPR_AuraInfo:Initialize()
     MPR_Timers:Initialize()
-	MPR_Penalties:Initialize()
+    MPR_Penalties:Initialize()
     self:MPR_CopyURL_Initialize()
     SLASH_MPR1 = '/mpr';
     

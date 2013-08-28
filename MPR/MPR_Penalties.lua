@@ -39,11 +39,11 @@ function MPR_Penalties:Initialize()
 	MPR_Penalties:SetFrameStrata("FULLSCREEN_DIALOG")
 
 	--[[ MP Reporter - Options ]]--
-	local Title = MPR_Penalties:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
-	Title:SetPoint("TOP", 0, -12)
+	MPR_Penalties.Title = MPR_Penalties:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
+	MPR_Penalties.Title:SetPoint("TOP", 0, -12)
 	if type(Color) ~= "string" then Color = "FFFFFF" end
-	Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
-	Title:SetText("|cFF1E90FFMP Reporter|r - DKP Penalties")
+	MPR_Penalties.Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
+	MPR_Penalties.Title:SetText("|cFF1E90FFMP Reporter|r - DKP Penalties")
 	
 	MPR_Penalties_BtnClose = CreateFrame("button","MPR_Penalties_BtnClose", MPR_Penalties, "UIPanelButtonTemplate")
     MPR_Penalties_BtnClose:SetHeight(14)
@@ -149,7 +149,14 @@ function MPR_Penalties:RefreshList()
 				end
 				MPR_Penalties.Rows[n]["Player"]:SetText(PlayerText)
 				MPR_Penalties.Rows[n]["Player"]:Show()
-				local SpellText = MPR_Penalties.PenaltySpells[Penalty.Spell] and "|cFF"..MPR_Penalties.PenaltySpells[Penalty.Spell][1].."["..MPR_Penalties.PenaltySpells[Penalty.Spell][0].."]|r" or "|cFFCCCCCC[Unknown]|r"
+				local SpellText = "|cFFCCCCCC[Unknown]|r"
+				for SpellName,Data in pairs(MPR_Penalties.PenaltySpells) do
+					if Data[0] == Penalty.Spell then
+						SpellText = "|cFF"..MPR_Penalties.PenaltySpells[Penalty.Spell][1].."["..SpellName.."]|r"
+						break
+					end
+				end
+				
 				local AOText = Penalty.Overkill and Penalty.Overkill > 0 and "|cFFFF0000(Died!)|r" or ""
 				if MPR.Settings["PENALTIES_LIST_SHOWAMOUNTOVERKILL"] then
 					local A,O = Penalty.Amount, Penalty.Overkill and Penalty.Overkill > 0 and Penalty.Overkill or nil
