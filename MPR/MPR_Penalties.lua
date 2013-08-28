@@ -2,6 +2,14 @@ MPR_Penalties = CreateFrame("Frame", "MPR Penalties", UIParent)
 MPR_Penalties.Frames = {} -- we will store numeric field frames here
 MPR_Penalties.Rows = {} -- contains arrays of object for each row
 MPR_Penalties.LastUpdate = 0
+MPR_Penalties.PenaltySpells = {
+	["Vengeful Blast"] =	{"VB", "9370DB"},
+	["Choking Gas Bomb"] =	{"CGB","00C957"},
+	["Malleable Goo"] =		{"MG", "00C957"},
+	["Blistering Cold"] =	{"BC", "1C86EE"},
+	["Frost Bomb"] =		{"FB", "1C86EE"},
+	["Shadow Trap"] =		{"ST", "FFC125"},
+}
 
 function MPR_Penalties:Toggle()
     if MPR_Penalties:IsVisible() then
@@ -141,7 +149,7 @@ function MPR_Penalties:RefreshList()
 				end
 				MPR_Penalties.Rows[n]["Player"]:SetText(PlayerText)
 				MPR_Penalties.Rows[n]["Player"]:Show()
-				local SpellText = Penalty.Spell == "VB" and "|cFF9370DB[Vengeful Blast]|r" or Penalty.Spell == "CGB" and "|cFF00C957[Choking Gas Explosion]|r" or Penalty.Spell == "MG" and "|cFF00C957[Malleable Goo]|r" or Penalty.Spell == "BC" and "|cFF1C86EE[Blistering Cold]|r" or Penalty.Spell == "FB" and "|cFF1C86EE[Frost Bomb]|r" or Penalty.Spell == "ST" and "|cFFFFC125[Shadow Trap]|r" or "|cFFCCCCCC[Unknown]|r"
+				local SpellText = MPR_Penalties.PenaltySpells[Penalty.Spell] and "|cFF"..MPR_Penalties.PenaltySpells[Penalty.Spell][1].."["..MPR_Penalties.PenaltySpells[Penalty.Spell][0].."]|r" or "|cFFCCCCCC[Unknown]|r"
 				local AOText = Penalty.Overkill and Penalty.Overkill > 0 and "|cFFFF0000(Died!)|r" or ""
 				if MPR.Settings["PENALTIES_LIST_SHOWAMOUNTOVERKILL"] then
 					local A,O = Penalty.Amount, Penalty.Overkill and Penalty.Overkill > 0 and Penalty.Overkill or nil
@@ -303,7 +311,7 @@ function MPR_Penalties:HandleHits(Targets,Spell)
 	if not list and not auto or not dkp then return end
 	for Target,Data in pairs(Targets) do
 		local Amount, Data = unpack(Data)
-		local Status = 0 -- pending
+		local Status = list and 0 or 2 -- pending or skipped
 		if UnitIsGroupLeader(Target) and MPR.Settings["PENALTIES_IGNORE_RL"] or UnitIsRaidOfficer(Target) and MPR.Settings["PENALTIES_IGNORE_RA"] or GetPartyAssignment("MAINTANK",Target) and MPR.Settings["PENALTIES_IGNORE_MT"] or GetPartyAssignment("MAINASSIST",Target) and MPR.Settings["PENALTIES_IGNORE_MA"] then
 			Status = 3 -- ignored
 		elseif auto then
@@ -313,7 +321,7 @@ function MPR_Penalties:HandleHits(Targets,Spell)
 				MPR_Penalties:AnnounceDeduction(Target,dkp,NewNet,Spell)
 			end
 		end
-		MPR_Penalties:LogHit(Target,Spell,Data.Amount,Data.Overkill,Status,not list,auto and DKP or nil)
+		MPR_Penalties:LogHit(Target,Spell,Data.Amount,Data.Overkill,Status,auto and dkp or nil)
 	end
 end
 
@@ -365,9 +373,15 @@ function MPR_Penalties:DeductDKP(Name, Amount)
 end
 
 function MPR_Penalties:AnnounceDeduction(Name,Amount,NewNet,Spell)
-	-- Announce
-	local Reason_F = "Hit by "..(Spell == "VB" and "|cFF9370DB[Vengeful Blast]|r" or Spell == "CGB" and "|cFF00C957[Choking Gas Explosion]|r" or Spell == "MG" and "|cFF00C957[Malleable Goo]|r" or Spell == "BC" and "|cFF1C86EE[Blistering Cold]|r" or Spell == "FB" and "|cFF1C86EE[Frost Bomb]|r" or Spell == "ST" and "|cFFFFC125[Shadow Trap]|r" or "|cFFCCCCCC[Unknown]|r")
-	local Reason = "Hit by "..(Spell == "VB" and "[Vengeful Blast]" or Spell == "CGB" and "[Choking Gas Explosion]" or Spell == "MG" and "[Malleable Goo]" or Spell == "BC" and "[Blistering Cold]" or Spell == "FB" and "[Frost Bomb]" or Spell == "ST" and "[Shadow Trap]" or "[Unknown]")
+	-- Announce	
+	local Reason, Reason_F = "[Unknown]", "|cFFCCCCCC[Unknown]|r"
+	for SpellName,Data in pairs(MPR_Penalties.PenaltySpells) do
+		if Data[0] == Spell then
+			Reason, Reason_F = "["..SpellName.."]", "|cFF"..Data[1].."["..SpellName.."]|r"
+			break
+		end
+	end
+	
 	if MPR.Settings["PENALTIES_SELF"] then
 		MPR:SelfReport(string.format("Deducted %i DKP from %s (New NET: %s). Reason: %s",Amount,Name,NewNet,Reason))
 	end

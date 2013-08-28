@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.70B"
+MPR.Version = "v2.70B-2"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -425,9 +425,8 @@ local function TimerHandler(name, ...)
         
 		MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
 		
-		local a = {["Vengeful Blast"] = "VB",["Choking Gas Explosion"] = "CGB",["Malleable Goo"] = "MG",["Blistering Cold"] = "BC",["Frost Bomb"] = "FB",["Shadow Trap"] = "ST"}
-		if a[SpellName] then
-			MPR_Penalties:HandleHits(targetsSpellAOEDamage,Spell)
+		if MPR_Penalties.PenaltySpells[SpellName] then
+			MPR_Penalties:HandleHits(targetsSpellAOEDamage,MPR_Penalties.PenaltySpells[SpellName][0])
 		end
     elseif name == "Aura Targets" then
         local SPELL = ...
@@ -1299,11 +1298,16 @@ function MPR:ReportValkyrGrab(UNIT) -- X Unit grabbed! X
     self:HandleReport(string.format("{rt7} %s grabbed! {rt7}",UNIT),string.format("{rt7} %s grabbed! {rt7}",unit(UNIT)))
 end
 
+function MPR:CanReportToRaid()
+	return true
+end
+
 -- REPORT HANDLER
 -- Unformatted (string) - colors and images not allowed (unsupported)
 -- Formatted (string) - string supporting colors and images
 function MPR:HandleReport(Unformatted, Formatted, IgnoreRaidSettings, WithoutChannelPrefix)
     if Unformatted and (self.Settings["RAID"] or IgnoreRaidSettings) then
+		if not self:CanReportToRaid() then return end
         if GetNumRaidMembers() > 0 then
             self:RaidReport(Unformatted, IgnoreRaidSettings, WithoutChannelPrefix)
         elseif GetNumPartyMembers() > 0 then
@@ -1414,11 +1418,16 @@ function MPR:UpdateBackdrop()
     MPR_AuraInfo:SetBackdrop(Backdrop)
     MPR_AuraInfo:SetBackdropColor(unpack(BackdropColor))
     MPR_AuraInfo:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
-    -- MPR LK Timers (Val'kyr Tracker before)
-    MPR_Timers.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - LK Timers")
+    -- MPR Timers
+    MPR_Timers.Title:SetText("|cff"..MPR.Colors["TITLE"].."MPR|r Timers:")
     MPR_Timers:SetBackdrop(Backdrop)
     MPR_Timers:SetBackdropColor(unpack(BackdropColor))
     MPR_Timers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+	-- MPR DKP Penalties
+    MPR_Penalties.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - DKP Penalties")
+    MPR_Penalties:SetBackdrop(Backdrop)
+    MPR_Penalties:SetBackdropColor(unpack(BackdropColor))
+    MPR_Penalties:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
 end
 
 function MPR:CHAT_MSG_ADDON(prefix, msg, channel, sender)
