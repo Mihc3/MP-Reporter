@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.73B"
+MPR.Version = "v2.74B"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -473,7 +473,7 @@ end
     Boss Methods
 ---------------------------------------------------------------------------]]
 
-local function BPC_ChangeTarget(Prince)
+function BPC_ChangeTarget(Prince)
     MPR:RaidWarning(string.format("Switch target to: %s", Prince))
     MPR:HandleReport(string.format("Switch target to: %s", Prince), string.format("Switch target to: %s", unit(Prince)))
 end
@@ -739,6 +739,7 @@ function MPR:StopCombat()
     MPR:CancelTimer("Wipe Check")
     if not Combat then return end
     Combat = false
+    
     local index = #self.DataDeaths
     self.DataDeaths[index].TimeEnd = GetTime() -- Not used
     local h,m,s = MPR_GameTime:Get()
@@ -909,12 +910,17 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         elseif contains(reportDamageOnTarget,destName) then
             self:ReportDamageOnTarget(sourceName,destName,spellId)
         end
+        
+        -- for fun!
+        if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+            MPR:RaidReport(string.format("%s finished off %s with melee attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
+        end
     elseif event == "SWING_MISSED" then
         local spellName = ACTION_SWING
         local missType = select(9, ...)
     elseif event == "SWING_LEECH" then
-            local amount, powerType, extraAmount = select(12, ...)
-            local valueType = 2
+        local amount, powerType, extraAmount = select(12, ...)
+        local valueType = 2
     elseif event:sub(1, 5) == "RANGE" then
         local spellId, spellName, spellSchool = select(9, ...)
         if event == "RANGE_DAMAGE" then
@@ -922,6 +928,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             
             if contains(reportDamageOnTarget,destName) then
                 self:ReportDamageOnTarget(sourceName,destName,spellId)
+            end
+            
+            -- for fun!
+            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+                MPR:RaidReport(string.format("%s finished off %s with ranged attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
             end
         elseif event == "RANGE_MISSED" then
             local missType = select(12, ...)
@@ -977,7 +988,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                     MPR_Timers:ShadowResonance()
                 end
             elseif sourceName == "Prince Valanar" then
-                if spellName == "Empowered Shock Vortex" then
+                if spellname == "Shock Vortex" then
+                    MPR_Timers:ShockVortex()
+                elseif spellName == "Empowered Shock Vortex" then
                     MPR_Timers:EmpoweredShockVortex()
                 end
             -- 9: Blood-Queen Lana'thel
@@ -1087,6 +1100,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             --    table.insert(BS_TargetsName,destName)
             --    table.insert(BS_TargetsAmount,amount)
             end
+            
+            -- for fun!
+            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+                MPR:RaidReport(string.format("%s finished off %s with %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
+            end
         elseif event == "SPELL_HEAL" then
             local amount, overheal, absorbed, critical = select(12, ...)
             local school = spellSchool
@@ -1139,8 +1157,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 end
             elseif spellName == "Mutated Infection" then
                 MPR_Timers:MutatedInfection()
-            elseif spellname == "Invocation of Blood" then
+            elseif spellName == "Invocation of Blood" then
                 MPR_Timers:InvocationOfBlood(destName)
+                BPC_ChangeTarget(destName)
             end
             
             if spellName == "Frost Beacon" then
@@ -1180,8 +1199,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 table.insert(targetsHeroism,destName)
             elseif spellName == "Enrage" and destName == "Saviana Ragefire" then
                 self:ReportAppliedOnTarget(spellId,destName)
-            elseif contains({70952,70982,70981},spellId) then -- BPC: Target Switch
-                BPC_ChangeTarget(destName)
+            --elseif contains({70952,70982,70981},spellId) then -- BPC: Target Switch
+                --BPC_ChangeTarget(destName)
             elseif spellName == "Essence of the Blood Queen" and UnitIsPlayer(destName) then
                 --self:Whisper(destName, "Bite on you! (+100% dmg)")
             elseif spellName == "Frenzied Bloodthirst" and UnitIsPlayer(destName) then
@@ -1512,7 +1531,7 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("PENALTIES_WHISPER", true)
     self:DefineSetting("PENALTIES_RAID", false)
     self:DefineSetting("PENALTIES_GUILD", false)
-    local tmp = {"VB","CGB","MG","BC","FB","ST"}
+    local tmp = {"UOE","CGB","MG","BC","FB","ST"}
     for _,SP in pairs(tmp) do
         self:DefineSetting("PENALTIES_"..SP.."_LIST", true)
         self:DefineSetting("PENALTIES_"..SP.."_AUTO", false)

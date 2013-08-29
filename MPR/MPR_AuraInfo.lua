@@ -520,21 +520,21 @@ function MPR_AuraInfo:UpdateFrameData(diff)
         -- Warning: FALL BACK!
         if round(100*H_Health/H_HealthMax,0,true) <= 10 and not Under10Pct then
             Under10Pct = true
-            MPR:RaidReport("Warning: Enemy ship has 10% HP remaining!",true)
+            MPR:RaidReport("Warning: Enemy ship has 10% HP remaining!")
         elseif round(100*H_Health/H_HealthMax,0,true) > 10 and Under10Pct then
             Under10Pct = nil
         end
         
         if round(100*H_Health/H_HealthMax,0,true) <= 5 and not Under5Pct then
             Under5Pct = true
-            MPR:RaidReport("Warning: Enemy ship has 5% HP remaining! Prepare to fall back!",true)    
+            MPR:RaidReport("Warning: Enemy ship has 5% HP remaining! Prepare to fall back!")    
         elseif round(100*H_Health/H_HealthMax,0,true) > 5 and Under5Pct then
             Under5Pct = nil
         end
         
         if round(100*H_Health/H_HealthMax,0,true) <= 3 and not Under3Pct then
             Under3Pct = true
-            MPR:RaidReport("Warning: Enemy ship has 3% HP remaining! FALL BACK!!",true)
+            MPR:RaidReport("Warning: Enemy ship has 3% HP remaining! FALL BACK!!")
         elseif round(100*H_Health/H_HealthMax,0,true) > 3 and Under3Pct then
             Under3Pct = nil
         end

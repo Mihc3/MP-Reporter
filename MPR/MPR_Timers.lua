@@ -188,7 +188,7 @@ function MPR_Timers:GetSpellID(spellName)
            spellName == "Malleable Goo"          and 70852 or
            spellName == "Choking Gas Bomb"       and 71255 or
            -- Blood Prince Council
-           spellName == "Empowered Shock Vortex" and 72039 or
+           spellName == "Empowered Shock Vortex" and (self.EmpoweredPrince ~= "Prince Valanar" and 71944 or 72039) or
            spellName == "Shadow Resonance"       and 71943 or
            -- Blood-Queen Lana'thel
            spellName == "Incite Terror"          and 73070 or
@@ -310,7 +310,7 @@ function MPR_Timers:Update()
     end
     if LKHealthPct and LKHealthPct > 40 and self.LichKingWarnings[LKHealthPct] and not self.LichKingWarnings[LKHealthPct][1] then
         self.LichKingWarnings[LKHealthPct][1] = true
-        MPR:RaidReport("Warning: The Lich King has "..LKHealthPct.."% HP remaining! "..(self.LichKingWarnings[LKHealthPct][2] or ""),true)
+        MPR:RaidReport("Warning: The Lich King has "..LKHealthPct.."% HP remaining! "..(self.LichKingWarnings[LKHealthPct][2] or ""))
     end
     
     if self.QuakeCount == 1 then -- During Phase 2 only
@@ -388,6 +388,7 @@ function MPR_Timers:EncounterStart(ID)
         self.PP_Phase = 1
         self.DataTimers[7][1] = 25
     elseif ID == 8 then
+        self.EmpoweredPrince = "Prince Valanar"
         self.DataTimers[8][1] = 46.5
     elseif ID == 9 then
         self.DataTimers[9][1] = self:Is25Man() and 127 or 124
@@ -504,9 +505,15 @@ function MPR_Timers:ChokingGasBomb()
     self.DataTimers[7][3] = 35
 end
 -- 8: Blood Prince Council
+MPR_Timers.EmpoweredPrince = "Prince Valanar"
 function MPR_Timers:InvocationOfBlood(Prince)
+    self.EmpoweredPrince = Prince
     self.DataTimers[8][1] = 46.5
     self.DataTimers[8][2] = nil
+end
+function MPR_Timers:ShockVortex()
+    
+    self.DataTimers[8][2] = 15
 end
 function MPR_Timers:EmpoweredShockVortex()
     --local cd = round(self.DataTimers[8][2],1,true)

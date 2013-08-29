@@ -3,7 +3,7 @@ MPR_Penalties.Frames = {} -- we will store numeric field frames here
 MPR_Penalties.Rows = {} -- contains arrays of object for each row
 MPR_Penalties.LastUpdate = 0
 MPR_Penalties.PenaltySpells = {
-    ["Vengeful Blast"] =   {"VB", "9370DB"},
+    ["Unstable Ooze Explosion"] = {"UOE", "00C957"},
     ["Choking Gas Bomb"] = {"CGB","00C957"},
     ["Malleable Goo"] =    {"MG", "00C957"},
     ["Blistering Cold"] =  {"BC", "1C86EE"},
@@ -52,7 +52,7 @@ function MPR_Penalties:Initialize()
     MPR_Penalties_BtnClose:SetText("x")
     MPR_Penalties_BtnClose:SetScript("OnClick", function(self) MPR_Penalties:Hide() end)
     
-    MPR_Penalties:NewSP("|cFF9370DB[Vengeful Blast]|r","VB",10,-30)
+    MPR_Penalties:NewSP("|cFF00C957[Unstable Ooze .]|r","UOE",10,-30)
     MPR_Penalties:NewSP("|cFF00C957[Choking Gas Bomb]|r","CGB",100,-30,-6)
     MPR_Penalties:NewSP("|cFF00C957[Malleable Goo]|r","MG",200,-30)
     MPR_Penalties:NewSP("|cFF1C86EE[Blistering Cold]|r","BC",290,-30)
@@ -176,7 +176,7 @@ function MPR_Penalties:RefreshList()
                 MPR_Penalties.Rows[n]["Deduct"]:SetText("- "..MPR.Settings["PENALTIES_"..Penalty.Spell.."_AMOUNT"].." DKP")
                 MPR_Penalties.Rows[n]["Deduct"]:Show()
                 if Penalty.Status <= 1 then MPR_Penalties.Rows[n]["Skip"]:Enable() else MPR_Penalties.Rows[n]["Skip"]:Disable() end
-				MPR_Penalties.Rows[n]["Skip"]:SetText(Penalty.Status == 1 and "Undo" or "Skip")
+                MPR_Penalties.Rows[n]["Skip"]:SetText(Penalty.Status == 1 and "Undo" or "Skip")
                 MPR_Penalties.Rows[n]["Skip"]:Show()
                 n = n + 1
             end
@@ -235,14 +235,14 @@ function MPR_Penalties:HandleClick_Deduct(n)
 end
 function MPR_Penalties:HandleClick_UndoDeduct(n)
     local i = MPR_Penalties.Rows[n]["Index"]
-	local Player, DKP = MPR.DataPenalties[i].Player, MPR.DataPenalties[i].DKP
-	local NewNet = MPR_Penalties:DeductDKP(Player,-MPR.DataPenalties[i].DKP) -- we deduct negative value, - - => +
+    local Player, DKP = MPR.DataPenalties[i].Player, MPR.DataPenalties[i].DKP
+    local NewNet = MPR_Penalties:DeductDKP(Player,-MPR.DataPenalties[i].DKP) -- we deduct negative value, - - => +
     if type(NewNet) == "number" then
-		MPR.DataPenalties[i].Status = 0
-		MPR_Penalties:AnnounceUndoDeduct(Player,DKP,MPR.DataPenalties[i].SpellID)
-	else
-		MPR:SelfReport(string.format("ERROR: Couldn't undo deduction of %s DKP to %s. %s",DKP or MPR:CS("nil","FF0000"),Player or MPR:CS("unknown player","FF0000"),type(NewNet) == "string" and MPR:CS(NewNet,"FF0000") or "No message given."))
-	end
+        MPR.DataPenalties[i].Status = 0
+        MPR_Penalties:AnnounceUndoDeduct(Player,DKP,MPR.DataPenalties[i].SpellID)
+    else
+        MPR:SelfReport(string.format("ERROR: Couldn't undo deduction of %s DKP to %s. %s",DKP or MPR:CS("nil","FF0000"),Player or MPR:CS("unknown player","FF0000"),type(NewNet) == "string" and MPR:CS(NewNet,"FF0000") or "No message given."))
+    end
     MPR_Penalties:RefreshList()
 end
 function MPR_Penalties:HandleClick_Skip(n)
@@ -331,7 +331,7 @@ end
 
 function MPR_Penalties:HandleHits(Targets,Spell,SpellID)
     local List, Auto, DKP = MPR.Settings["PENALTIES_"..Spell.."_LIST"], MPR.Settings["PENALTIES_"..Spell.."_AUTO"], MPR.Settings["PENALTIES_"..Spell.."_AMOUNT"]
-    if not List and not Auto or not dkp then return end
+    if not List and not Auto or not DKP then return end
     local DeductedPlayers = {}
     for Target,Data in pairs(Targets) do
         local Status = 0 -- pending
@@ -339,7 +339,7 @@ function MPR_Penalties:HandleHits(Targets,Spell,SpellID)
         if Rank == "RL" and MPR.Settings["PENALTIES_IGNORE_RL"] or Rank == "RA" and MPR.Settings["PENALTIES_IGNORE_RA"] or Rank == "MT" and MPR.Settings["PENALTIES_IGNORE_MT"] or Rank == "MA" and MPR.Settings["PENALTIES_IGNORE_MA"] then
             Status = 3 -- ignored
         elseif Auto then
-            local NewNet = MPR_Penalties:DeductDKP(Target,dkp)
+            local NewNet = MPR_Penalties:DeductDKP(Target,DKP)
             if type(NewNet) == "number" then
                 table.insert(DeductedPlayers,{Name = Target, Net = NewNet, Amount = Data.Amount, Overkill = Data.Overkill})
                 Status = 1 -- deducted
@@ -349,10 +349,10 @@ function MPR_Penalties:HandleHits(Targets,Spell,SpellID)
             end
         end
         if List then
-            MPR_Penalties:LogHit(Target,Spell,Data.Amount,Data.Overkill,Status,Auto and DKP or nil)
+            MPR_Penalties:LogHit(Target,Spell,SpellID,Data.Amount,Data.Overkill,Status,Auto and DKP or nil)
         end
     end
-    MPR_Penalties:AnnounceDeductions(DeductedPlayers,dkp,Spell,SpellID)
+    MPR_Penalties:AnnounceDeductions(DeductedPlayers,DKP,Spell,SpellID)
 end
 
 function MPR_Penalties:GetRaidMemberRank(Player)
@@ -429,9 +429,9 @@ function MPR_Penalties:AnnounceDeductions(Players,DKP,Spell,SpellID)
         end
         if MPR.Settings["PENALTIES_RAID"] then
             if UnitInRaid("player") then
-                MPR:RaidReport(string.format("Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason))
+                MPR:RaidReport(string.format("Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason),true)
             elseif UnitInParty("player") then
-                MPR:PartyReport(string.format("Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason))
+                MPR:PartyReport(string.format("Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason),true)
             end
         end
         if MPR.Settings["PENALTIES_GUILD"] then
@@ -455,9 +455,9 @@ function MPR_Penalties:AnnounceDeductions(Players,DKP,Spell,SpellID)
         end
         if MPR.Settings["PENALTIES_RAID"] then
             if UnitInRaid("player") then
-                MPR:RaidReport(string.format("Deducted %i DKP from: %s. Reason: %s",DKP,table.concat(arrRaidGuild,", "),Reason))
+                MPR:RaidReport(string.format("Deducted %i DKP from: %s. Reason: %s",DKP,table.concat(arrRaidGuild,", "),Reason),true)
             elseif UnitInParty("player") then
-                MPR:PartyReport(string.format("Deducted %i DKP from: %s. Reason: %s",DKP,table.concat(arrRaidGuild,", "),Reason))
+                MPR:PartyReport(string.format("Deducted %i DKP from: %s. Reason: %s",DKP,table.concat(arrRaidGuild,", "),Reason),true)
             end
         end
         if MPR.Settings["PENALTIES_GUILD"] then
@@ -467,23 +467,23 @@ function MPR_Penalties:AnnounceDeductions(Players,DKP,Spell,SpellID)
 end
 
 function MPR_Penalties:AnnounceUndoDeduct(Name,DKP,SpellID)
-	local Reason = SpellID and GetSpellLink(SpellID) or "[Unknown]"
-	if MPR.Settings["PENALTIES_SELF"] then
-		MPR:SelfReport(string.format("Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP))
-	end
-	if MPR.Settings["PENALTIES_WHISPER"] then
-		MPR:Whisper(Name, string.format("Deduction for %s has been undone. %i DKP restored.",Reason,DKP))
-	end
-	if MPR.Settings["PENALTIES_RAID"] then
-		if UnitInRaid("player") then
-			MPR:RaidReport(string.format("Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP))
-		elseif UnitInParty("player") then
-			MPR:PartyReport(string.format("Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP))
-		end
-	end
-	if MPR.Settings["PENALTIES_GUILD"] then
-		SendChatMessage(string.format("<MPR> Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason), "GUILD")
-	end
+    local Reason = SpellID and GetSpellLink(SpellID) or "[Unknown]"
+    if MPR.Settings["PENALTIES_SELF"] then
+        MPR:SelfReport(string.format("Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP))
+    end
+    if MPR.Settings["PENALTIES_WHISPER"] then
+        MPR:Whisper(Name, string.format("Deduction for %s has been undone. %i DKP restored.",Reason,DKP))
+    end
+    if MPR.Settings["PENALTIES_RAID"] then
+        if UnitInRaid("player") then
+            MPR:RaidReport(string.format("Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP),true)
+        elseif UnitInParty("player") then
+            MPR:PartyReport(string.format("Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP),true)
+        end
+    end
+    if MPR.Settings["PENALTIES_GUILD"] then
+        SendChatMessage(string.format("<MPR> Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason), "GUILD")
+    end
 end
 
 function MPR_Penalties:IsDKPFormat(Note)
