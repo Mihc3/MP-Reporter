@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.72B"
+MPR.Version = "v2.73B"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -408,10 +408,15 @@ function MPR:CancelTimer(name)
     lib:CancelTimer(name)
 end
 
+function MPR:CS(String,Color) -- ColorString
+    if not Color then return String end
+    return "|r|cFF"..Color..String.."|r|cFF"..self.Colors["TEXT"]
+end
+
 local function TimerHandler(name, ...)
     if name == "Spell AOE Damage" then
-        local SPELL = ...
-        --local SpellName = GetSpellInfo(SPELL)
+        local SpellID = ...
+        --local SpellName = GetSpellInfo(SpellID)
 
         local arraySelf = {}
         local arrayRaid = {}
@@ -420,10 +425,10 @@ local function TimerHandler(name, ...)
             table.insert(arraySelf,unit(Target).." ("..numformat(Data.Amount)..")")
             table.insert(arrayRaid,Target.." ("..numformat(Data.Amount)..")")
         end
-        MPR:HandleReport(string.format("%s hits: %s",spell(SPELL,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SPELL),table.concat(arraySelf,", ")))
+        MPR:HandleReport(string.format("%s hits: %s",spell(SpellID,true),table.concat(arrayRaid,", ")), string.format("%s hits: %s",spell(SpellID),table.concat(arraySelf,", ")))
         
         if MPR_Penalties.PenaltySpells[nameSpellAOEDamage] then
-            MPR_Penalties:HandleHits(targetsSpellAOEDamage,MPR_Penalties.PenaltySpells[nameSpellAOEDamage][1])
+            MPR_Penalties:HandleHits(targetsSpellAOEDamage,MPR_Penalties.PenaltySpells[nameSpellAOEDamage][1],SpellID)
         end
         nameSpellAOEDamage = nil
         table.wipe(targetsSpellAOEDamage)
