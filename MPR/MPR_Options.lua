@@ -200,8 +200,8 @@ function MPR_Options:Initialize()
         MPR.Settings["UPDATEFREQUENCY"] = round(MPR_Slider:GetValue(),1)
     end)
     
-	
-	
+    
+    
     --[[ Miscellaneous ]]--
     MPR_Options:NewFS("Miscellaneous","00CCFF",216,-30)
     MPR_Options:NewCB("Automatic combat log clear",nil,"CCL_ONLOAD",214,-44)    -- [ ] ClearEntriesOnLoad
