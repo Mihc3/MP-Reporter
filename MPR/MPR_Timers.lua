@@ -64,6 +64,14 @@ MPR_Timers.InfoTimers = {
         [5] = {['name'] = "Raging Spirit",            ['format'] = "{Name} CD: {Time}",            ['label'] = 1},
         [6] = {['name'] = "Quake",                    ['format'] = "{SpellLink}: {Time}",            ['label'] = 2},
     },
+    [13] = {
+        [1] = {['name'] = "Impale",                   ['format'] = "{SpellLink} CD: {Time}",    ['label'] = 1},
+        [2] = {['name'] = "Staggering Stomp",         ['format'] = "{SpellLink}: {Time}",       ['label'] = 2},
+        [3] = {['name'] = "Rising Anger",             ['format'] = "{SpellLink} CD: {Time}",    ['label'] = 3},
+    },
+    [14] = {
+        [1] = {['name'] = "Slime Pool",               ['format'] = "{SpellLink}: {Time}",    ['label'] = 1},
+    },
 }
 MPR_Timers.DataTimers = {[1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {}, [8] = {}, [9] = {}, [10] = {}, [11] = {}, [12] = {}} -- structure generated as timers are set
 -- you can add custom warnings
@@ -205,7 +213,11 @@ function MPR_Timers:GetSpellID(spellName)
            spellName == "Summon Val'kyr"         and 69037 or
            spellName == "Defile"                 and 72762 or
            spellName == "Raging Spirit"          and 69200 or
-           spellName == "Quake"                  and 72262
+           spellName == "Quake"                  and 72262 or
+           -- Gormok the Impaler
+           spellName == "Impale"                 and 66331 or
+           spellName == "Staggering Stomp"       and 67648 or 
+           spellName == "Rising Anger"           and 66636
 end
 
 function MPR_Timers:RaidMode(Mode10N, Mode25N, Mode10H, Mode25H)
@@ -389,7 +401,7 @@ function MPR_Timers:EncounterStart(ID)
         self.DataTimers[7][1] = 25
     elseif ID == 8 then
         self.EmpoweredPrince = "Prince Valanar"
-        self.DataTimers[8][1] = 46.5
+        self.DataTimers[8][1] = 45
     elseif ID == 9 then
         self.DataTimers[9][1] = self:Is25Man() and 127 or 124
         self.DataTimers[9][2] = 28
@@ -408,6 +420,12 @@ function MPR_Timers:EncounterStart(ID)
             self.Label2:Hide() -- Hide Defile label
             self.DataTimers[12][1] = 30
         end
+    elseif ID == 13 then
+        self.DataTimers[13][1] = 8
+        self.DataTimers[13][2] = 15
+        self.DataTimers[13][3] = 15
+    elseif ID == 14 then
+        self.DataTimers[14][1] = 15
     else
         return
     end
@@ -508,11 +526,10 @@ end
 MPR_Timers.EmpoweredPrince = "Prince Valanar"
 function MPR_Timers:InvocationOfBlood(Prince)
     self.EmpoweredPrince = Prince
-    self.DataTimers[8][1] = 46.5
-    self.DataTimers[8][2] = nil
+    self.DataTimers[8][1] = 45
+    --self.DataTimers[8][2] = nil
 end
 function MPR_Timers:ShockVortex()
-    
     self.DataTimers[8][2] = 15
 end
 function MPR_Timers:EmpoweredShockVortex()
@@ -619,6 +636,17 @@ end
 function MPR_Timers:FuryOfFrostmourne()
     self:Reset()
 end
+-- 13: Gormok the Impaler
+function MPR_Timers:Impale() self.DataTimers[13][1] = 8 end
+function MPR_Timers:StaggeringStomp() self.DataTimers[13][2] = 15 end
+function MPR_Timers:RisingAnger() self.DataTimers[13][3] = 15 end
+-- 14: Jormungar Twins
+function MPR_Timers:SlimePool() self.DataTimers[14][1] = 30 end
+-- 15:
+-- 16:
+-- 17:
+-- 18:
+-- 19:
 
 function MPR_Timers:EncounterEnd(ID)
     self:Reset()

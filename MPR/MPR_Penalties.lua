@@ -43,7 +43,7 @@ function MPR_Penalties:Initialize()
     MPR_Penalties.Title:SetPoint("TOP", 0, -12)
     if type(Color) ~= "string" then Color = "FFFFFF" end
     MPR_Penalties.Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
-    MPR_Penalties.Title:SetText("|cFF1E90FFMP Reporter|r - DKP Penalties")
+    MPR_Penalties.Title:SetText("|cFF1E90FFMP Reporter|r - DKP Penalties (for QuickDKP)")
     
     MPR_Penalties_BtnClose = CreateFrame("button","MPR_Penalties_BtnClose", MPR_Penalties, "UIPanelButtonTemplate")
     MPR_Penalties_BtnClose:SetHeight(14)
@@ -52,7 +52,7 @@ function MPR_Penalties:Initialize()
     MPR_Penalties_BtnClose:SetText("x")
     MPR_Penalties_BtnClose:SetScript("OnClick", function(self) MPR_Penalties:Hide() end)
     
-    MPR_Penalties:NewSP("|cFF00C957[Unstable Ooze .]|r","UOE",10,-30)
+    MPR_Penalties:NewSP("|cFF00C957[Ooze Explosion]|r","UOE",10,-30)
     MPR_Penalties:NewSP("|cFF00C957[Choking Gas Bomb]|r","CGB",100,-30,-6)
     MPR_Penalties:NewSP("|cFF00C957[Malleable Goo]|r","MG",200,-30)
     MPR_Penalties:NewSP("|cFF1C86EE[Blistering Cold]|r","BC",290,-30)
@@ -134,7 +134,7 @@ function MPR_Penalties:RefreshList()
             local Penalty = MPR.DataPenalties[i]
             
             -- Filter check
-            if Penalty.Status == 0 and MPR.Settings["PENALTIES_LIST_SHOWPENDING"] or Penalty.Status == 1 and MPR.Settings["PENALTIES_LIST_SHOWDEDUCTED"] or Penalty.Status == 2 and MPR.Settings["PENALTIES_LIST_SHOWSKIPPED"] then
+            if Penalty.Status == 0 and MPR.Settings["PENALTIES_LIST_SHOWPENDING"] or Penalty.Status == 1 and MPR.Settings["PENALTIES_LIST_SHOWDEDUCTED"] or Penalty.Status == 2 and MPR.Settings["PENALTIES_LIST_SHOWSKIPPED"] or Penalty.Status == 3 and MPR.Settings["PENALTIES_LIST_SHOWIGNORED"] then
                 -- Display
                 local LocY = -100-(n*20)
                 MPR_Penalties.Rows[n]["Index"] = i
@@ -189,9 +189,9 @@ function MPR_Penalties:RefreshList()
     end
 end
 
-function MPR_Penalties:NewSP(Text,VarPrefix,LocX,LocY,TextAlign)
+function MPR_Penalties:NewSP(Text,VarPrefix,LocX,LocY,TextAlign,TitleSize)
     VarPrefix = "PENALTIES_"..VarPrefix
-    MPR_Penalties:NewFS(Text,nil,LocX+(TextAlign or 0),LocY)
+    MPR_Penalties:NewFS(Text,TitleSize,LocX+(TextAlign or 0),LocY)
     MPR_Penalties:NewCB("List",nil,VarPrefix.."_LIST",LocX,LocY-10)
     MPR_Penalties:NewCB("Auto",nil,VarPrefix.."_AUTO",LocX+38,LocY-10)
     MPR_Penalties:NewNF(VarPrefix.."_AMOUNT",LocX+32,LocY-28)
@@ -359,7 +359,7 @@ function MPR_Penalties:GetRaidMemberRank(Player)
     for i=1,GetNumRaidMembers() do
         Name, Rank, _, _, _, _, _, _, _, Role = GetRaidRosterInfo(i)
         if Name == Player then
-            return (Rank == 1 and "RL" or Rank == 2 and "RA" or Role == "maintank" and "MT" or Role == "mainassist" and "MA" or nil)
+            return (Rank == 2 and "RL" or Rank == 1 and "RA" or Role == "maintank" and "MT" or Role == "mainassist" and "MA" or nil)
         end
     end
 end

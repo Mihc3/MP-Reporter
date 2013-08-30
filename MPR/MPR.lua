@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.74B"
+MPR.Version = "v2.75"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -543,14 +543,11 @@ function SlashCmdList.MPR(msg, editbox)
         MPR_AuraInfo:UpdateFrame(tonumber(msg))
     elseif msg == "t" or msg == "timers" then
         MPR_Timers:Toggle()
-    elseif msg == "vt" or msg == "lkt" or msg == "lktimers" then
-        MPR:SelfReport("Commands |r|cFFFF0000/MPR VT|r|cFFBEBEBE and |r|cFFFF0000/MPR LKT|r|cFFBEBEBE are deprecated. Please start using |r|cFF00FF00/MPR Timers|r|cFFBEBEBE or |r|cFF00FF00/MPR T|r|cFFBEBEBE.")
-        MPR_Timers:Toggle()
     elseif msg == "ai" then
         MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
                                    "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
                                    "|cFFFF9912|HMPR:AuraInfo:RS:20|h[Ruby Sanctum]|h|r|cFFbebebe")
-    elseif msg == "dkp" or msg == "penalties" then
+    elseif msg == "dkp" or msg == "p" or msg == "penalties" then
         MPR_Penalties:Toggle()
     elseif msg == "ccl" or msg == "clear" then
         MPR:ClearCombatLog()
@@ -1446,7 +1443,7 @@ function MPR:UpdateBackdrop()
     MPR_Timers:SetBackdropColor(unpack(BackdropColor))
     MPR_Timers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
     -- MPR DKP Penalties
-    MPR_Penalties.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - DKP Penalties")
+    MPR_Penalties.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - DKP Penalties (for QuickDKP)")
     MPR_Penalties:SetBackdrop(Backdrop)
     MPR_Penalties:SetBackdropColor(unpack(BackdropColor))
     MPR_Penalties:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
