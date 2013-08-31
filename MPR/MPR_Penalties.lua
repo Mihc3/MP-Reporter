@@ -237,7 +237,7 @@ function MPR_Penalties:HandleClick_UndoDeduct(n)
     local i = MPR_Penalties.Rows[n]["Index"]
     local Player, DKP = MPR.DataPenalties[i].Player, MPR.DataPenalties[i].DKP
     local NewNet = MPR_Penalties:DeductDKP(Player,-MPR.DataPenalties[i].DKP) -- we deduct negative value, - - => +
-    if type(NewNet) == "number" then
+	if type(NewNet) == "number" then
         MPR.DataPenalties[i].Status = 0
         MPR_Penalties:AnnounceUndoDeduct(Player,DKP,MPR.DataPenalties[i].SpellID)
     else
@@ -344,7 +344,7 @@ function MPR_Penalties:HandleHits(Targets,Spell,SpellID)
                 table.insert(DeductedPlayers,{Name = Target, Net = NewNet, Amount = Data.Amount, Overkill = Data.Overkill})
                 Status = 1 -- deducted
             else
-                List = false -- error, don't log this
+                --List = false -- error, don't log this
                 MPR:SelfReport(string.format("ERROR: Couldn't deduct %s DKP from %s. %s",DKP or MPR:CS("nil","FF0000"),Target or MPR:CS("unknown player","FF0000"),type(NewNet) == "string" and MPR:CS(NewNet,"FF0000") or "No message given."))
             end
         end
@@ -425,7 +425,7 @@ function MPR_Penalties:AnnounceDeductions(Players,DKP,Spell,SpellID)
             MPR:SelfReport(string.format("Deducted %i DKP from %s (New NET: %s). Reason: %s",DKP,Name,Net,Reason))
         end
         if MPR.Settings["PENALTIES_WHISPER"] then
-            MPR:Whisper(Name, string.format("Deducted %i DKP (New NET: %s). Reason: %s",DKP,NewNet,Reason))
+            MPR:Whisper(Name, string.format("Deducted %i DKP (New NET: %s). Reason: %s",DKP,Net,Reason))
         end
         if MPR.Settings["PENALTIES_RAID"] then
             if UnitInRaid("player") then
@@ -482,7 +482,7 @@ function MPR_Penalties:AnnounceUndoDeduct(Name,DKP,SpellID)
         end
     end
     if MPR.Settings["PENALTIES_GUILD"] then
-        SendChatMessage(string.format("<MPR> Deducted %i DKP from %s. Reason: %s",DKP,Name,Reason), "GUILD")
+        SendChatMessage(string.format("<MPR> Deduction to %s for %s has been undone. %i DKP restored.",Name,Reason,DKP), "GUILD")
     end
 end
 

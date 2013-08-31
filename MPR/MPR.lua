@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.75"
+MPR.Version = "v2.76"
 MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -910,7 +910,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         
         -- for fun!
         if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
-            MPR:RaidReport(string.format("%s finished off %s with melee attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
+            MPR:RaidReport(string.format("%s finished off %s with a melee attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
         end
     elseif event == "SWING_MISSED" then
         local spellName = ACTION_SWING
@@ -929,7 +929,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             
             -- for fun!
             if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
-                MPR:RaidReport(string.format("%s finished off %s with ranged attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
+                MPR:RaidReport(string.format("%s finished off %s with %s (A: %i / O: %i)!",sourceName,destName,spellId and GetSpellLink(spellId) or "a ranged attack",amount,overkill))
             end
         elseif event == "RANGE_MISSED" then
             local missType = select(12, ...)
@@ -1123,6 +1123,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 if contains(spellsPeriodicDamage,spellName) and UnitInRaid(destName) then
                     self:ReportSpellDamage(spellId,destName,amount,critical)
                 end
+				
+				-- for fun!
+				if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+					MPR:RaidReport(string.format("%s finished off %s with a periodic tick of %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
+				end
             elseif event == "SPELL_PERIODIC_HEAL" then
                 local amount, overheal, absorbed, critical = select(12, ...)
                 local school = spellSchool

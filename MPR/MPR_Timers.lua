@@ -84,8 +84,8 @@ MPR_Timers.TimerWarns = {
         [2] = {[3] = {false, 6}, [2] = {false, 6}, [1] = {false, 6}},
     },
     [9] = { -- BQL
-        [1] = {[10] = {false, 3}}, -- Incite Terror: 10s,5s
-        [2] = {[5] = {false, 7}}, -- Swarming Shadows: 3s,2s,1s
+        [1] = {[20] = {false, 3}, [10] = {false, 3}}, -- Incite Terror: 20s,10s
+        [2] = {[5] = {false, 7}}, -- Swarming Shadows: 5s
         [3] = {[30] = {false, 8}, [20] = {false, 8}, [10] = {false, 8}, [5] = {false, 7}}, -- Berserk: 30s,20s,10s,5s
     },
     [12] = { -- LK
@@ -282,19 +282,19 @@ function MPR_Timers:OnUpdate(elapsed)
     if not Label3HasText and (e ~= 12 or self.QuakeCount ~= 1) then
         self.Label3:SetText("")
         self.Label3:Hide()
-        if not Label2HasText then 
-            self.Label2:SetText("")
-            self.Label2:Hide()
-            if not Label1HasText then 
-                self.Label1:SetText("No timers active.")
-            end
-            self:SetHeight(43)
-        else
-            self:SetHeight(56)
-        end
-    else
-        self:SetHeight(69)
-    end    
+	end
+    if not Label2HasText then 
+        self.Label2:SetText("")
+        self.Label2:Hide()
+	end
+	if not Label1HasText then
+		self.Label1:SetText("")
+		self.Label1:Hide()
+	end
+	if not Label1HasText and not Label2HasText and not Label3HasText and (e ~= 12 or self.QuakeCount ~= 1) then 
+        self.Label1:SetText("No timers active.")
+    end
+	self:SetHeight(Label3HasText and 69 or Label2HasText and 56 or 43)
     
     if e == 12 then -- LK only
         self.TimeSinceLastUpdate = self.TimeSinceLastUpdate + elapsed
