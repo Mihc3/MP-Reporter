@@ -126,7 +126,7 @@ function MPR_AuraInfo:Initialize()
     MPR_AuraInfo:SetUserPlaced(true)
     MPR_AuraInfo:SetScript("OnDragStart", function(self) MPR_AuraInfo:StartMoving() end)
     MPR_AuraInfo:SetScript("OnDragStop", function(self) MPR_AuraInfo:StopMovingOrSizing() end)
-    MPR_AuraInfo:SetScript("OnUpdate", function(self, elapsed) if MPR_AuraInfo:IsVisible() then MPR_AuraInfo:OnUpdate(elapsed) end end)
+    MPR_AuraInfo:SetScript("OnUpdate", function(self, elapsed) if MPR.Settings["AURAINFO"] and MPR_AuraInfo:IsVisible() then MPR_AuraInfo:OnUpdate(elapsed) end end)
     MPR_AuraInfo:SetFrameStrata("FULLSCREEN_DIALOG")
     
     MPR_AuraInfo:SetWidth(250)
@@ -411,6 +411,9 @@ function MPR_AuraInfo:UpdateFrame(num)
     end
     
     MPR_AuraInfo:Show()
+    if not MPR.Settings["AURAINFO"] then
+        MPR:SelfReport("Aura Info is |cFFFF0000disabled|r. |cff3588ff|HMPR:Options:Show|h[Options]|h|r")
+    end
 end
 
 function MPR_AuraInfo:OnUpdate(elapsed)

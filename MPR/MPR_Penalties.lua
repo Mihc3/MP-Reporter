@@ -237,7 +237,7 @@ function MPR_Penalties:HandleClick_UndoDeduct(n)
     local i = MPR_Penalties.Rows[n]["Index"]
     local Player, DKP = MPR.DataPenalties[i].Player, MPR.DataPenalties[i].DKP
     local NewNet = MPR_Penalties:DeductDKP(Player,-MPR.DataPenalties[i].DKP) -- we deduct negative value, - - => +
-	if type(NewNet) == "number" then
+    if type(NewNet) == "number" then
         MPR.DataPenalties[i].Status = 0
         MPR_Penalties:AnnounceUndoDeduct(Player,DKP,MPR.DataPenalties[i].SpellID)
     else

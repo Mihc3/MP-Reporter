@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.76"
-MPR.VersionNotes = {"Reimplented DKP penalty system (/MPR PENALTIES or /MPR DKP)"}
+MPR.Version = "v2.77"
+MPR.VersionNotes = {"Some options added to toggle features.", "Option to print killing blow/finishing damage on boss (for fun!)"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -836,46 +836,62 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
     --if not self.Settings["SELF"] then return end 
     local timestamp, event, sourceGUID, sourceName, sourceFlags, destGUID, destName, destFlags = select(1, ...)
     
-    if UnitIsPlayer(destName) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
+    if UnitIsPlayer(destName) and (self.Settings["PD_REPORT"] or self.Settings["PD_LOG"]) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
         if event == "SWING_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
             
             local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
             if overkill > 0 then
-                self:InsertDeath(destName,(sourceName or "Unknown"),"Melee",amount,overkill)
-                local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                self:ReportDeath(Unformatted, Formatted)
+                if self.Settings["PD_REPORT"] then
+                    local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                    local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                    self:ReportDeath(Unformatted, Formatted)
+                end
+                if self.Settings["PD_LOG"] then
+                    self:InsertDeath(destName,(sourceName or "Unknown"),"Melee",amount,overkill)
+                end
             end
         elseif event == "RANGED_DAMAGE" or event == "SPELL_DAMAGE" or event == "SPELL_PERIODIC_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
             
             local spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
             if overkill > 0 then
-                self:InsertDeath(destName,(sourceName or "Unknown"),GetSpellLink(spellId),amount,overkill)
-                local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": "..GetSpellLink(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": "..spell(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                self:ReportDeath(Unformatted, Formatted)
+                if self.Settings["PD_REPORT"] then
+                    local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": "..GetSpellLink(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                    local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": "..spell(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                    self:ReportDeath(Unformatted, Formatted)
+                end
+                if self.Settings["PD_LOG"] then
+                    self:InsertDeath(destName,(sourceName or "Unknown"),GetSpellLink(spellId),amount,overkill)
+                end
             end
         elseif event == "ENVIRONMENTAL_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
             
             local environmentalType, amount, overkill = select(9, ...)
             if overkill > 0 then
-                self:InsertDeath(destName, "Environment", (environmentalType or "Unknown"), amount, overkill or 0)
-                local Unformatted = destName.." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                local Formatted = unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                self:ReportDeath(Unformatted, Formatted)
+                if self.Settings["PD_REPORT"] then
+                    local Unformatted = destName.." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                    local Formatted = unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                    self:ReportDeath(Unformatted, Formatted)
+                end
+                if self.Settings["PD_LOG"] then
+                    self:InsertDeath(destName, "Environment", (environmentalType or "Unknown"), amount, overkill or 0)
+                end
             else
                 PotencialDeaths[destName] = {timestamp,environmentalType,amount}
             end
         elseif event == "UNIT_DIED" then
             if PotencialDeaths[destName] then
                 if (timestamp - PotencialDeaths[destName][1]) < 1 then
-                    self:InsertDeath(destName, "Environment", PotencialDeaths[destName][2] or "Unknown", amount, 0)
-                    local Unformatted = destName.." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
-                    local Formatted = unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
-                    self:ReportDeath(Unformatted, Formatted)
+                    if self.Settings["PD_REPORT"] then
+                        local Unformatted = destName.." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
+                        local Formatted = unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
+                        self:ReportDeath(Unformatted, Formatted)
+                    end
+                    if self.Settings["PD_LOG"] then
+                        self:InsertDeath(destName, "Environment", PotencialDeaths[destName][2] or "Unknown", amount, 0)
+                    end
                 end
                 PotencialDeaths[destName] = nil
             end
@@ -909,7 +925,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         end
         
         -- for fun!
-        if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+        if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
             MPR:RaidReport(string.format("%s finished off %s with a melee attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
         end
     elseif event == "SWING_MISSED" then
@@ -928,7 +944,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             end
             
             -- for fun!
-            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
                 MPR:RaidReport(string.format("%s finished off %s with %s (A: %i / O: %i)!",sourceName,destName,spellId and GetSpellLink(spellId) or "a ranged attack",amount,overkill))
             end
         elseif event == "RANGE_MISSED" then
@@ -1099,7 +1115,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             end
             
             -- for fun!
-            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
+            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
                 MPR:RaidReport(string.format("%s finished off %s with %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
             end
         elseif event == "SPELL_HEAL" then
@@ -1123,11 +1139,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 if contains(spellsPeriodicDamage,spellName) and UnitInRaid(destName) then
                     self:ReportSpellDamage(spellId,destName,amount,critical)
                 end
-				
-				-- for fun!
-				if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] then
-					MPR:RaidReport(string.format("%s finished off %s with a periodic tick of %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
-				end
+                
+                -- for fun!
+                if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
+                    MPR:RaidReport(string.format("%s finished off %s with a periodic tick of %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
+                end
             elseif event == "SPELL_PERIODIC_HEAL" then
                 local amount, overheal, absorbed, critical = select(12, ...)
                 local school = spellSchool
@@ -1344,7 +1360,7 @@ end
 
 -- Just adds MPR prefix.
 function MPR:SelfReport(msg)
-    print("|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r |cFF"..self.Colors["TEXT"]..msg.."|r")
+    DEFAULT_CHAT_FRAME:AddMessage("|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r "..msg, tonumber(self.Colors["TEXT"]:sub(1,2),16)/255, tonumber(self.Colors["TEXT"]:sub(3,4),16)/255, tonumber(self.Colors["TEXT"]:sub(5,6),16)/255)
 end
 
 -- Just adds MPR channel prefix
@@ -1388,7 +1404,7 @@ function MPR:Whisper(TARGET, MESSAGE, ...)
     if not (MESSAGE and (self.Settings["WHISPER"] or wBypass)) then return end
     if UnitName("player") ~= TARGET then
         SendChatMessage("<MPR> "..MESSAGE, "WHISPER", nil, TARGET)
-    else -- Don't whisper myself, print with :Self()
+    else -- Don't whisper myself, print with :SelfReport()
         self:SelfReport(MESSAGE)
     end
 end
@@ -1504,8 +1520,8 @@ function MPR:ZONE_CHANGED_NEW_AREA()
 end
 
 function MPR:DefineSetting(name,default)
-    if MPR_Settings[name] == nil then
-        MPR_Settings[name] = default
+    if MPR.Settings[name] == nil then
+        MPR.Settings[name] = default
     end
 end
 
@@ -1513,6 +1529,9 @@ function MPR:ADDON_LOADED(addon)
     if addon ~= "MPR" then return end
     -- define settings if not set
     MPR_Settings = MPR_Settings or {}
+    self.Settings = MPR_Settings
+    self:DefineSetting("AURAINFO", true)
+    self:DefineSetting("TIMERS", true)
     self:DefineSetting("SELF", false)
     self:DefineSetting("SELF", false)
     self:DefineSetting("RAID", false)
@@ -1520,10 +1539,12 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("WHISPER", false)
     self:DefineSetting("REPORT_DISPELS", false)
     self:DefineSetting("REPORT_MASSDISPELS", false)
+    self:DefineSetting("PD_REPORT", true)
     self:DefineSetting("PD_SELF", true)
     self:DefineSetting("PD_RAID", false)
     self:DefineSetting("PD_GUILD", false)
     self:DefineSetting("PD_WHISPER", false)
+    self:DefineSetting("PD_LOG", true)
     self:DefineSetting("UPDATEFREQUENCY", 0.1)
     self:DefineSetting("CCL_ONLOAD", true)
     self:DefineSetting("ICONS", false)
@@ -1533,6 +1554,7 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("PENALTIES_WHISPER", true)
     self:DefineSetting("PENALTIES_RAID", false)
     self:DefineSetting("PENALTIES_GUILD", false)
+    self:DefineSetting("KILLINGBLOW", true)
     local tmp = {"UOE","CGB","MG","BC","FB","ST"}
     for _,SP in pairs(tmp) do
         self:DefineSetting("PENALTIES_"..SP.."_LIST", true)
@@ -1550,13 +1572,13 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("PENALTIES_LIST_SHOWSKIPPED", false)
     self:DefineSetting("PENALTIES_LIST_SHOWIGNORED", false)
     
-    MPR_Settings["BACKDROP"] = MPR_Settings["BACKDROP"] or {
+    self:DefineSetting("BACKDROP", {
         bgFile = "Interface\\TabardFrame\\TabardFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 25, insets = {left = 4, right = 4, top = 4, bottom = 4}
-    }
-    MPR_Settings["BACKDROPCOLOR"] = MPR_Settings["BACKDROPCOLOR"] or {0, 0, 0, 0.7}
-    MPR_Settings["BACKDROPBORDERCOLOR"] = MPR_Settings["BACKDROPBORDERCOLOR"] or {R = 30, G = 144, B = 255}
-    self.Settings = MPR_Settings
+    })
+    self:DefineSetting("BACKDROPCOLOR", {0, 0, 0, 0.7})
+    self:DefineSetting("BACKDROPBORDERCOLOR", {R = 30, G = 144, B = 255})
+    
     MPR_Colors = MPR_Colors or {["TITLE"] = "1e90ff", ["TEXT"] = "bebebe", ["DKPDEDUCTION_LINK"] = "ff4400", ["BOSS"] = "ffffff"}
     self.Colors = MPR_Colors
     MPR_DataDeaths = MPR_DataDeaths or {}

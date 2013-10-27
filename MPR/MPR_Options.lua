@@ -19,7 +19,7 @@ function MPR_Options:Initialize()
     
     MPR_Options:SetPoint("CENTER",UIParent)
     MPR_Options:SetWidth(410)
-    MPR_Options:SetHeight(232)
+    MPR_Options:SetHeight(270)
     MPR_Options:EnableMouse(true)
     MPR_Options:SetMovable(true)
     MPR_Options:RegisterForDrag("LeftButton")
@@ -58,10 +58,11 @@ function MPR_Options:Initialize()
     
     -- Player Deaths
     MPR_Options:NewFS("Player Deaths","22FF00",16,-93)
-    MPR_Options:NewCB("Self",    "1E90FF",    "PD_SELF",14,-104)        -- [ ] Self
-    MPR_Options:NewCB("Raid",    "EE7600",    "PD_RAID",54,-104)        -- [ ] Raid
-    MPR_Options:NewCB("Whisper","DA70D6",    "PD_WHISPER",100,-104)    -- [ ] Whisper
-    MPR_Options:NewCB("Guild",    "40FF40",    "PD_GUILD",160,-104)    -- [ ] Guild
+    MPR_Options:NewCB("Enable reporting",  "FFFFFF",    "PD_REPORT",98,-89)     -- [ ] Enable reporting
+    MPR_Options:NewCB("Self",    "1E90FF",    "PD_SELF",14,-104)       -- [ ] Self
+    MPR_Options:NewCB("Raid",    "EE7600",    "PD_RAID",54,-104)       -- [ ] Raid
+    MPR_Options:NewCB("Whisper", "DA70D6",    "PD_WHISPER",100,-104)   -- [ ] Whisper
+    MPR_Options:NewCB("Guild",   "40FF40",    "PD_GUILD",160,-104)     -- [ ] Guild
     
     -- Report deaths ...
     MPR_Options:NewFS("Report deaths","FFAA00",16,-123)
@@ -114,8 +115,10 @@ function MPR_Options:Initialize()
     MPR_Options.BTN_CLEAR_DEATHLOG:SetText("Reset")
     MPR_Options.BTN_CLEAR_DEATHLOG:SetScript("OnClick", function(self) MPR:ClearDeathLog() end)
     
+    MPR_Options:NewCB("Enable logging","FFFFFF","PD_LOG",16,-134)   -- [ ] Enable logging
+    
     MPR_Options.FS_ID_NAME = MPR_Options:CreateFontString("FS_ID_NAME", "ARTWORK", "GameFontNormal")
-    MPR_Options.FS_ID_NAME:SetPoint("TOPLEFT", 16, -137)
+    MPR_Options.FS_ID_NAME:SetPoint("TOPLEFT", 16, -151)
     local Data = MPR.DataDeaths[tonumber(MPR_Options.FS_ID:GetText())]
     MPR_Options.FS_ID_NAME:SetText(Data and "|cFF"..(Data.Color or "FFFFFF")..Data.Name.."|r|cFFBEBEBE: "..#Data.Deaths.." deaths,|r" or "")
     MPR_Options.FS_ID_NAME:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
@@ -131,7 +134,7 @@ function MPR_Options:Initialize()
     MPR_Options.CB_Self = CreateFrame("CheckButton", "CB_Self", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_Self:SetWidth(20)
     MPR_Options.CB_Self:SetHeight(20)
-    MPR_Options.CB_Self:SetPoint("TOPLEFT", 16, -159)
+    MPR_Options.CB_Self:SetPoint("TOPLEFT", 16, -173)
     _G["CB_SelfText"]:SetText("|cFF1E90FFSelf|r")
     MPR_Options.CB_Self:SetScript("OnShow",  function(self) MPR_Options.CB_Self:SetChecked(MPR.Settings["DEATHREPORT_CHANNEL"] == "Self") end)
     MPR_Options.CB_Self:SetScript("OnClick", function(self) 
@@ -142,7 +145,7 @@ function MPR_Options:Initialize()
     MPR_Options.CB_Raid = CreateFrame("CheckButton", "CB_Raid", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_Raid:SetWidth(20)
     MPR_Options.CB_Raid:SetHeight(20)
-    MPR_Options.CB_Raid:SetPoint("TOPLEFT", 54, -159)
+    MPR_Options.CB_Raid:SetPoint("TOPLEFT", 54, -173)
     _G["CB_RaidText"]:SetText("|cFFEE7600Raid|r")
     MPR_Options.CB_Raid:SetScript("OnShow",  function(self) MPR_Options.CB_Raid:SetChecked(MPR.Settings["DEATHREPORT_CHANNEL"] == "Raid") end)
     MPR_Options.CB_Raid:SetScript("OnClick", function(self) 
@@ -153,7 +156,7 @@ function MPR_Options:Initialize()
     MPR_Options.CB_Guild = CreateFrame("CheckButton", "CB_Guild", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_Guild:SetWidth(20)
     MPR_Options.CB_Guild:SetHeight(20)
-    MPR_Options.CB_Guild:SetPoint("TOPLEFT", 100, -159)
+    MPR_Options.CB_Guild:SetPoint("TOPLEFT", 100, -173)
     _G["CB_GuildText"]:SetText("|cFF40FF40Guild|r")
     MPR_Options.CB_Guild:SetScript("OnShow",  function(self) MPR_Options.CB_Guild:SetChecked(MPR.Settings["DEATHREPORT_CHANNEL"] == "Guild") end)
     MPR_Options.CB_Guild:SetScript("OnClick", function(self) 
@@ -162,11 +165,13 @@ function MPR_Options:Initialize()
     end)
     
     --[[ Aura Info ]]--
-    MPR_Options:NewFS("Aura Info","FF2200",16,-180)
+    MPR_Options:NewFS("Aura Info","FF2200",16,-194)
+    MPR_Options:NewCB("Enable","FFFFFF","AURAINFO",16,-206)
+    
     local Button = CreateFrame("button","BtnToggleAuraInfo", MPR_Options, "UIPanelButtonTemplate")
     Button:SetHeight(18)
     Button:SetWidth(60)
-    Button:SetPoint("TOPLEFT", 14, -196)
+    Button:SetPoint("TOPLEFT", 14, -224)
     Button:SetText("Show")
     Button:SetScript("OnShow", function(self) Button:SetText(MPR_AuraInfo:IsVisible() and "Hide" or "Show") end)
     Button:SetScript("OnClick", function(self)
@@ -183,7 +188,7 @@ function MPR_Options:Initialize()
     MPR_Slider = CreateFrame("Slider", "MPR_Slider", MPR_Options, "OptionsSliderTemplate")
     MPR_Slider:SetWidth(120)
     MPR_Slider:SetHeight(20)
-    MPR_Slider:SetPoint('TOPLEFT', 84, -194)
+    MPR_Slider:SetPoint('TOPLEFT', 84, -208)
     MPR_Slider:SetOrientation('HORIZONTAL')
     
     MPR_Slider:SetMinMaxValues(0.1, 3)
@@ -200,7 +205,19 @@ function MPR_Options:Initialize()
         MPR.Settings["UPDATEFREQUENCY"] = round(MPR_Slider:GetValue(),1)
     end)
     
-    
+    -- Timers
+    MPR_Options:NewFS("Timers","1E90FF",16,-244)
+    MPR_Options:NewCB("Enable","FFFFFF","TIMERS",60,-242)
+    local Button2 = CreateFrame("button","BtnToggleTimers", MPR_Options, "UIPanelButtonTemplate")
+    Button2:SetHeight(18)
+    Button2:SetWidth(60)
+    Button2:SetPoint("TOPLEFT", 112, -242)
+    Button2:SetText("Show")
+    Button2:SetScript("OnShow", function(self) Button2:SetText(MPR_Timers:IsVisible() and "Hide" or "Show") end)
+    Button2:SetScript("OnClick", function(self)
+        MPR_Timers:Toggle()
+        Button2:SetText(MPR_Timers:IsVisible() and "Hide" or "Show")
+    end)
     
     --[[ Miscellaneous ]]--
     MPR_Options:NewFS("Miscellaneous","00CCFF",216,-30)
@@ -299,6 +316,12 @@ function MPR_Options:Initialize()
         MPR.Settings["BACKDROPCOLOR"][4] = MPR_OpacitySlider:GetValue()/100
         MPR:UpdateBackdrop()
     end)
+    
+    -- Killing blow
+    MPR_Options:NewFS("Killing blow","990099",216,-224)
+    MPR_Options:NewCB("Enable","FFFFFF","KILLINGBLOW",284,-222)
+    MPR_Options:NewFS("Announces killing blow/finishing damage","FFFFFF",218,-238,9)
+    MPR_Options:NewFS("on boss in |cFFEE7600raid|r channel.","FFFFFF",218,-248,9)
     
     --[[
     --if not CanEditOfficerNote() then return end
@@ -411,11 +434,12 @@ function MPR_Options:HandleChecks()
     MPR_Options.CB_GUILD:SetChecked(MPR.Settings["DKPPENALTIES_OUTPUT"] == "GUILD")
 end
 
-function MPR_Options:NewFS(Text,Color,LocX,LocY) -- Creates a fontstring
+function MPR_Options:NewFS(Text,Color,LocX,LocY,Size) -- Creates a fontstring
     local Title = MPR_Options:CreateFontString("Title"..GetNewID(), "ARTWORK", "GameFontNormal")
     Title:SetPoint("TOPLEFT", LocX, LocY)
     if type(Color) ~= "string" then Color = "FFFFFF" end
-    Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255) 
+    Title:SetTextColor(tonumber(Color:sub(1,2),16)/255, tonumber(Color:sub(3,4),16)/255, tonumber(Color:sub(5,6),16)/255)
+    Title:SetFont("Fonts\\FRIZQT__.TTF", Size or 12, "OUTLINE")
     Title:SetText(Text)
 end
 

@@ -171,6 +171,9 @@ function MPR_Timers:Toggle()
         MPR_Timers:Hide()
     else
         MPR_Timers:Show()
+        if not MPR.Settings["TIMERS"] then
+            MPR:SelfReport("Timers are |cFFFF0000disabled|r. |cff3588ff|HMPR:Options:Show|h[Options]|h|r")
+        end
     end
 end
 
@@ -282,19 +285,18 @@ function MPR_Timers:OnUpdate(elapsed)
     if not Label3HasText and (e ~= 12 or self.QuakeCount ~= 1) then
         self.Label3:SetText("")
         self.Label3:Hide()
-	end
-    if not Label2HasText then 
-        self.Label2:SetText("")
-        self.Label2:Hide()
-	end
-	if not Label1HasText then
-		self.Label1:SetText("")
-		self.Label1:Hide()
-	end
-	if not Label1HasText and not Label2HasText and not Label3HasText and (e ~= 12 or self.QuakeCount ~= 1) then 
-        self.Label1:SetText("No timers active.")
+        if not Label2HasText then 
+            self.Label2:SetText("")
+            self.Label2:Hide()
+            if not Label1HasText then
+                --self.Label1:SetText("")
+                --self.Label1:Hide()
+                self.Label1:SetText("No timers active.")
+            end
+        end
     end
-	self:SetHeight(Label3HasText and 69 or Label2HasText and 56 or 43)
+    
+    self:SetHeight(Label3HasText and 69 or Label2HasText and 56 or 43)
     
     if e == 12 then -- LK only
         self.TimeSinceLastUpdate = self.TimeSinceLastUpdate + elapsed
@@ -668,6 +670,8 @@ MPR_Timers_Updater.Interval = 0.5
 MPR_Timers_Updater.LastUpdate = 0
 MPR_Timers_Updater:SetScript("OnUpdate", function(self, elapsed)
     if MPR.Settings["CCL_ONLOAD"] then CombatLogClearEntries() end
+    if not MPR.Settings["TIMERS"] then return end
+    
     if GetZoneText() ~= "Icecrown Citadel" then
         MPR_Timers.Label3:SetText("")
         MPR_Timers.Label3:Hide()
