@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.78"
-MPR.VersionNotes = {"Stop changing SELF option when addon is loaded."}
+MPR.Version = "v2.78-2"
+MPR.VersionNotes = {"Stop changing SELF option when addon is loaded.","Addon will report while in a dungeon or raid only."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -908,6 +908,12 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         ]]
     end
     
+	-- only working in Dungeons and Raids
+	local inInstance, instanceType = IsInInstance()
+    if not inInstance or instanceType ~= "party" and instanceType ~= "raid" then
+		return
+	end      
+	
     -- Check if Blood-Queen Lana'thel encounter started ...
     if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
         MPR:StartCombat(9)
