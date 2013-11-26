@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.77"
-MPR.VersionNotes = {"Some options added to toggle features.", "Option to print killing blow/finishing damage on boss (for fun!)"}
+MPR.Version = "v2.78"
+MPR.VersionNotes = {"Stop changing SELF option when addon is loaded."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -1592,10 +1592,7 @@ function MPR:ADDON_LOADED(addon)
     MPR_Penalties:Initialize()
     self:MPR_CopyURL_Initialize()
     SLASH_MPR1 = '/mpr';
-    
-    local inInstance, instanceType = IsInInstance()
-    local state = inInstance and (instanceType == "raid")
-    self.Settings["SELF"] = state
+
     MPR_Data = MPR_Data or {}
     self.AddonData = MPR_Data
     local FirstTimeLoaded
