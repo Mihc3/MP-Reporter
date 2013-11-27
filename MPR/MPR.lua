@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.78-2"
-MPR.VersionNotes = {"Stop changing SELF option when addon is loaded.","Addon will report while in a dungeon or raid only."}
+MPR.Version = "v2.80B"
+MPR.VersionNotes = {"Added options what type of zone addon should report in.","New border colors available.","Added few checkboxes to format killing blow output."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -908,11 +908,20 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         ]]
     end
     
-	-- only working in Dungeons and Raids
-	local inInstance, instanceType = IsInInstance()
-    if not inInstance or instanceType ~= "party" and instanceType ~= "raid" then
-		return
-	end      
+    -- only working in Dungeons and Raids
+    local inInstance, instanceType = IsInInstance()
+	if inInstance then
+		if instanceType ~= "raid" and not self.Settings["REPORTIN_RAIDINSTANCE"] or
+		   instanceType ~= "party" and not self.Settings["REPORTIN_DUNGEON"] or
+		   instanceType ~= "pvp" and not self.Settings["REPORTIN_BATTLEGROUND"] or
+		   instanceType ~= "arena" and not self.Settings["REPORTIN_ARENA"] then
+			return
+		end
+	else
+		if not self.Settings["REPORTIN_OUTSIDE"] then
+			return
+		end
+	end
 	
     -- Check if Blood-Queen Lana'thel encounter started ...
     if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
@@ -932,7 +941,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         
         -- for fun!
         if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
-            MPR:RaidReport(string.format("%s finished off %s with a melee attack (A: %i / O: %i)!",sourceName,destName,amount,overkill))
+			self:RaidReport(self:FormatKillingBlow(sourceName,destName,"a melee attack",amount,overkill,critical))
         end
     elseif event == "SWING_MISSED" then
         local spellName = ACTION_SWING
@@ -951,8 +960,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             
             -- for fun!
             if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
-                MPR:RaidReport(string.format("%s finished off %s with %s (A: %i / O: %i)!",sourceName,destName,spellId and GetSpellLink(spellId) or "a ranged attack",amount,overkill))
-            end
+				self:RaidReport(self:FormatKillingBlow(sourceName,destName,spellId and GetSpellLink(spellId) or "a ranged attack",amount,overkill,critical))
+			end
         elseif event == "RANGE_MISSED" then
             local missType = select(12, ...)
         end
@@ -1122,7 +1131,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             
             -- for fun!
             if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
-                MPR:RaidReport(string.format("%s finished off %s with %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
+				self:RaidReport(self:FormatKillingBlow(sourceName,destName,GetSpellLink(spellId),amount,overkill,critical))
             end
         elseif event == "SPELL_HEAL" then
             local amount, overheal, absorbed, critical = select(12, ...)
@@ -1148,8 +1157,8 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 
                 -- for fun!
                 if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
-                    MPR:RaidReport(string.format("%s finished off %s with a periodic tick of %s (A: %i / O: %i)!",sourceName,destName,GetSpellLink(spellId),amount,overkill))
-                end
+					self:RaidReport(self:FormatKillingBlow(sourceName,destName,"a periodic tick of "..GetSpellLink(spellId),amount,overkill,critical))
+				end
             elseif event == "SPELL_PERIODIC_HEAL" then
                 local amount, overheal, absorbed, critical = select(12, ...)
                 local school = spellSchool
@@ -1279,6 +1288,18 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
             MPR_Timers:SecondPhase()
         end
     end
+end
+
+function MPR:FormatKillingBlow(Player,Target,Ability,Amount,Overkill,Critical)
+	return string.format(Player.." finished off "..Target.."%s%s%s%s%s%s%s%s!",
+		MPR.Settings["KILLINGBLOW_ABILITY"] and " with "..(Ability or "unk") or "",
+		(MPR.Settings["KILLINGBLOW_AMOUNT"] or MPR.Settings["KILLINGBLOW_OVERKILL"] or (MPR.Settings["KILLINGBLOW_CRITICAL"] and Critical)) and " (" or "",
+		MPR.Settings["KILLINGBLOW_AMOUNT"] and "A: "..(Amount or 0) or "",
+		MPR.Settings["KILLINGBLOW_AMOUNT"] and MPR.Settings["KILLINGBLOW_OVERKILL"] and " / " or "",
+		MPR.Settings["KILLINGBLOW_OVERKILL"] and "O: "..(Overkill or 0) or "",
+		(MPR.Settings["KILLINGBLOW_AMOUNT"] or MPR.Settings["KILLINGBLOW_OVERKILL"]) and MPR.Settings["KILLINGBLOW_CRITICAL"] and Critical and ", " or "",
+		MPR.Settings["KILLINGBLOW_CRITICAL"] and Critical and "Crit." or "",
+		(MPR.Settings["KILLINGBLOW_AMOUNT"] or MPR.Settings["KILLINGBLOW_OVERKILL"] or (MPR.Settings["KILLINGBLOW_CRITICAL"] and Critical)) and ")" or "")
 end
 
 --[[ SWING_DAMAGE, SPELL_DAMAGE, SPELL_PERIODIC_DAMAGE, SPELL_HEAL, SPELL_PERIODIC_HEAL ]]--
@@ -1543,6 +1564,11 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("RAID", false)
     self:DefineSetting("SAY", false)
     self:DefineSetting("WHISPER", false)
+    self:DefineSetting("REPORTIN_DUNGEON", false)
+    self:DefineSetting("REPORTIN_RAIDINSTANCE", true)
+    self:DefineSetting("REPORTIN_BATTLEGROUND", false)
+    self:DefineSetting("REPORTIN_ARENA", false)
+	self:DefineSetting("REPORTIN_OUTSIDE", false)
     self:DefineSetting("REPORT_DISPELS", false)
     self:DefineSetting("REPORT_MASSDISPELS", false)
     self:DefineSetting("PD_REPORT", true)
@@ -1561,6 +1587,10 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("PENALTIES_RAID", false)
     self:DefineSetting("PENALTIES_GUILD", false)
     self:DefineSetting("KILLINGBLOW", true)
+	self:DefineSetting("KILLINGBLOW_ABILITY", true)
+	self:DefineSetting("KILLINGBLOW_AMOUNT", true)
+	self:DefineSetting("KILLINGBLOW_OVERKILL", true)
+	self:DefineSetting("KILLINGBLOW_CRITICAL", true)
     local tmp = {"UOE","CGB","MG","BC","FB","ST"}
     for _,SP in pairs(tmp) do
         self:DefineSetting("PENALTIES_"..SP.."_LIST", true)
