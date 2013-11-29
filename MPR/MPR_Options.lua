@@ -55,15 +55,15 @@ function MPR_Options:Initialize()
     MPR_Options:NewFS("Reporting:","20B2AA",16,-60)
     MPR_Options:NewCB("Dispels",nil,"REPORT_DISPELS",14,-71)            -- [ ] Dispels
     MPR_Options:NewCB("Mass Dispels",nil,"REPORT_MASSDISPELS",89,-71)    -- [ ] Mass Dispels
-	
-	-- Report in:
+    
+    -- Report in:
     MPR_Options:NewFS("Reporting in:","3CB371",16,-90)
     MPR_Options:NewCB("Dungeon",nil,"REPORTIN_PARTY",14,-101)
     MPR_Options:NewCB("Raid Instance",nil,"REPORTIN_RAIDINSTANCE",85,-101)
-	MPR_Options:NewCB("Battleground",nil,"REPORTIN_BATTLEGROUND",14,-115)
-	MPR_Options:NewCB("Arena",nil,"REPORTIN_ARENA",100,-115)
-	MPR_Options:NewCB("outside",nil,"REPORTIN_OUTSIDE",152,-115)
-	
+    MPR_Options:NewCB("Battleground",nil,"REPORTIN_BATTLEGROUND",14,-115)
+    MPR_Options:NewCB("Arena",nil,"REPORTIN_ARENA",100,-115)
+    MPR_Options:NewCB("outside",nil,"REPORTIN_OUTSIDE",152,-115)
+    
     -- Player Deaths
     MPR_Options:NewFS("Player Deaths","22FF00",16,-133)
     MPR_Options:NewCB("Enable",  "FFFFFF",    "PD_REPORT",104,-129)     -- [ ] Enable reporting
@@ -241,7 +241,7 @@ function MPR_Options:Initialize()
     -- Window Style
     MPR_Options:NewFS("Window Style","FF9912",216,-135)
     MPR_Options:NewFS("Border Color:","FFFFFF",219,-148)
-	-- BLACK (1E90FF / 0 0 0)
+    -- BLACK (1E90FF / 0 0 0)
     MPR_Options.CB_Black = CreateFrame("CheckButton", "CB_Black", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_Black:SetWidth(20)
     MPR_Options.CB_Black:SetHeight(20)
@@ -256,7 +256,7 @@ function MPR_Options:Initialize()
         MPR.Colors["TITLE"] = "000000"
         MPR:UpdateBackdrop()
     end)
-	-- WHITE (FFFFFF / 255 255 255)
+    -- WHITE (FFFFFF / 255 255 255)
     MPR_Options.CB_White = CreateFrame("CheckButton", "CB_White", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_White:SetWidth(20)
     MPR_Options.CB_White:SetHeight(20)
@@ -331,7 +331,7 @@ function MPR_Options:Initialize()
         MPR.Colors["TITLE"] = "FF0033"
         MPR:UpdateBackdrop()
     end)
-	-- SEAGREEN (20B2AA / 32 178 170)
+    -- SEAGREEN (20B2AA / 32 178 170)
     MPR_Options.CB_SeaGreen = CreateFrame("CheckButton", "CB_SeaGreen", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_SeaGreen:SetWidth(20)
     MPR_Options.CB_SeaGreen:SetHeight(20)
@@ -346,7 +346,7 @@ function MPR_Options:Initialize()
         MPR.Colors["TITLE"] = "20B2AA"
         MPR:UpdateBackdrop()
     end)
-	-- ORANGE (FFA500 / 255 165 0)
+    -- ORANGE (FFA500 / 255 165 0)
     MPR_Options.CB_Orange = CreateFrame("CheckButton", "CB_Orange", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_Orange:SetWidth(20)
     MPR_Options.CB_Orange:SetHeight(20)
@@ -361,7 +361,7 @@ function MPR_Options:Initialize()
         MPR.Colors["TITLE"] = "FFA500"
         MPR:UpdateBackdrop()
     end)
-	-- Purple (800080, 128 0 128)
+    -- Purple (800080, 128 0 128)
     MPR_Options.CB_Purple = CreateFrame("CheckButton", "CB_Purple", MPR_Options, "UICheckButtonTemplate")
     MPR_Options.CB_Purple:SetWidth(20)
     MPR_Options.CB_Purple:SetHeight(20)
@@ -405,18 +405,18 @@ function MPR_Options:Initialize()
     MPR_Options:NewCB("Enable","FFFFFF","KILLINGBLOW",288,-236)
     MPR_Options:NewFS("Announces killing blow/finishing damage","FFFFFF",218,-252,9)
     MPR_Options:NewFS("on boss in |cFFEE7600raid|r channel.","FFFFFF",218,-262,9)
-	MPR_Options:NewFS("Display:","FFFFFF",218,-274,11)
-	MPR_Options:NewCB("Ability",nil,"KILLINGBLOW_ABILITY",268,-270)
-	MPR_Options:NewCB("Ammount",nil,"KILLINGBLOW_AMOUNT",216,-284)
-	MPR_Options:NewCB("Overkill",nil,"KILLINGBLOW_OVERKILL",289,-284)
-	MPR_Options:NewCB("Critical",nil,"KILLINGBLOW_CRITICAL",349,-284)
-	local Button = CreateFrame("button","BtnTestKillingBlow", MPR_Options, "UIPanelButtonTemplate")
+    MPR_Options:NewFS("Display:","FFFFFF",218,-274,11)
+    MPR_Options:NewCB("Ability",nil,"KILLINGBLOW_ABILITY",268,-270)
+    MPR_Options:NewCB("Ammount",nil,"KILLINGBLOW_AMOUNT",216,-284)
+    MPR_Options:NewCB("Overkill",nil,"KILLINGBLOW_OVERKILL",289,-284)
+    MPR_Options:NewCB("Critical",nil,"KILLINGBLOW_CRITICAL",349,-284)
+    local Button = CreateFrame("button","BtnTestKillingBlow", MPR_Options, "UIPanelButtonTemplate")
     Button:SetHeight(18)
     Button:SetWidth(60)
     Button:SetPoint("TOPLEFT", 332, -266)
     Button:SetText("Test")
     Button:SetScript("OnClick", function(self)
-		MPR:SelfReport(MPR:FormatKillingBlow("Herbaliist","Squirrel",GetSpellLink(49238),8,21350,true))
+        MPR:SelfReport(MPR:FormatKillingBlow("Herbaliist","Squirrel",GetSpellLink(49238),8,21350,true))
     end)
     
     --[[
@@ -485,15 +485,15 @@ function MPR_Options:ID_HandleOnClick(num)
 end
 
 function MPR_Options:UncheckColors()
-	MPR_Options.CB_Black:SetChecked(false)
-	MPR_Options.CB_White:SetChecked(false)
+    MPR_Options.CB_Black:SetChecked(false)
+    MPR_Options.CB_White:SetChecked(false)
     MPR_Options.CB_Blue:SetChecked(false)
     MPR_Options.CB_Green:SetChecked(false)
     MPR_Options.CB_Yellow:SetChecked(false)
     MPR_Options.CB_Red:SetChecked(false)
-	MPR_Options.CB_SeaGreen:SetChecked(false)
-	MPR_Options.CB_Orange:SetChecked(false)
-	MPR_Options.CB_Purple:SetChecked(false)
+    MPR_Options.CB_SeaGreen:SetChecked(false)
+    MPR_Options.CB_Orange:SetChecked(false)
+    MPR_Options.CB_Purple:SetChecked(false)
 end
 
 Pack_PosY = -133
