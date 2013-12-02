@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.80C"
+MPR.Version = "v2.81"
 MPR.VersionNotes = {"Added options what type of zone addon should report in.","New border colors available.","Added few checkboxes to format killing blow output."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -1057,7 +1057,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                     MPR_Timers:SummonShadowTrap()
                 elseif spellId == 68980 or spellId == 74325 then --  Harvest Soul (normal only)
                     MPR_Timers:HarvestSoul()
-                elseif spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only)
+                elseif spellId == 73654 or spellId == 74295 or spellId == 74296 or spellId == 74297 then -- Harvest Souls (heroic only)
                     MPR_Timers:HarvestSouls()
                 elseif spellId == 72350 then -- Fury of Frostmourne
                     MPR_Timers:FuryOfFrostmourne()
