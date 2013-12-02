@@ -161,7 +161,7 @@ function MPR_Timers:Initialize()
     MPR_Timers.Label3 = MPR_Timers:CreateFontString("Label3", "OVERLAY", "GameTooltipText")
     MPR_Timers.Label3:SetPoint("TOPLEFT", 8, -50)
     MPR_Timers.Label3:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
-    MPR_Timers.Label3:SetText("Grabbed players: ")
+    MPR_Timers.Label3:SetText("Grabbed: ")
     
     MPR_Timers_Options:Initialize()
 end
@@ -369,7 +369,7 @@ function MPR_Timers:Update()
     end
     
     self.Label3:SetTextColor(Color.R, Color.G, Color.B)
-    self.Label3:SetText("Grabbed players: "..table.concat(arrayGrabbed,", "))
+    self.Label3:SetText("Grabbed: "..table.concat(arrayGrabbed,", "))
 end
 
 function MPR_Timers:NewTimer(ability,cd_left,special)
@@ -672,7 +672,7 @@ MPR_Timers_Updater:SetScript("OnUpdate", function(self, elapsed)
     if MPR.Settings["CCL_ONLOAD"] then CombatLogClearEntries() end
     if not MPR.Settings["TIMERS"] then return end
     
-    if GetZoneText() ~= "Icecrown Citadel" then
+    if GetZoneText() ~= "Icecrown Citadel" and GetMinimapZoneText() ~= "Frostmourne" then
         MPR_Timers.Label3:SetText("")
         MPR_Timers.Label3:Hide()
         MPR_Timers.Label2:SetText("")

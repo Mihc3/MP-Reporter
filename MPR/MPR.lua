@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
 MPR.Version = "v2.81"
-MPR.VersionNotes = {"Added options what type of zone addon should report in.","New border colors available.","Added few checkboxes to format killing blow output."}
+MPR.VersionNotes = {"Added options what type of zone addon should report in.","New border colors available.","Added few checkboxes to format killing blow output.","Fixed LK timers during Frostmourne."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
