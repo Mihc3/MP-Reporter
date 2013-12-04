@@ -72,6 +72,12 @@ MPR_Timers.InfoTimers = {
     [14] = {
         [1] = {['name'] = "Slime Pool",               ['format'] = "{SpellLink}: {Time}",    ['label'] = 1},
     },
+    [23] = {
+        [1] = {['name'] = "Meteor Strike",            ['format'] = "{SpellLink}: {Time}",    ['label'] = 1},
+        [2] = {['name'] = "Fiery Combustion",         ['format'] = "{SpellLink}: {Time}",    ['label'] = 2},
+        [3] = {['name'] = "Twilight Cutter",          ['format'] = "{SpellLink}: {Time}",    ['label'] = 1},
+        [4] = {['name'] = "Soul Consumption",         ['format'] = "{SpellLink}: {Time}",    ['label'] = 2},
+    },
 }
 MPR_Timers.DataTimers = {[1] = {}, [2] = {}, [3] = {}, [4] = {}, [5] = {}, [6] = {}, [7] = {}, [8] = {}, [9] = {}, [10] = {}, [11] = {}, [12] = {}} -- structure generated as timers are set
 -- you can add custom warnings
@@ -81,18 +87,35 @@ MPR_Timers.TimerWarns = {
 --      [AbilityID] = {[Second] = {false, IconID}, [Second2] = {false, IconID}},
 --  },
     [7] = { -- PP
-        [2] = {[3] = {false, 6}, [2] = {false, 6}, [1] = {false, 6}},
+        [1] = {[5] = {false, 7}},
+        [2] = {[5] = {false, 8}, [3] = {false, 8}},
+        [3] = {[5] = {false, 2}},
+        [4] = {[5] = {false, 4}},
+    },
+    [8] = { -- BPC
+        [1] = {[10] = {false, 3}, [5] = {false, 3}},
     },
     [9] = { -- BQL
         [1] = {[20] = {false, 3}, [10] = {false, 3}}, -- Incite Terror: 20s,10s
         [2] = {[5] = {false, 7}}, -- Swarming Shadows: 5s
         [3] = {[30] = {false, 8}, [20] = {false, 8}, [10] = {false, 8}, [5] = {false, 7}}, -- Berserk: 30s,20s,10s,5s
     },
+    [11] = { -- Sindragosa
+        [1] = {[10] = {false, 8}, [5] = {false, 8}},
+        [2] = {[10] = {false, 6}, [5] = {false, 6}},
+        [3] = {[5] = {false, 7}, [3] = {false, 7}},
+    },
     [12] = { -- LK
         [1] = {[3] = {false, 8}, [2] = {false, 8}, [1] = {false, 8}},
         [2] = {[10] = {false, 4}, [5] = {false, 4}},
         [3] = {[10] = {false, 7}, [5] = {false, 7}},
         [4] = {[10] = {false, 6}, [5] = {false, 6}},
+    },
+    [23] = { -- Halion
+        [1] = {[10] = {false, 2}, [5] = {false, 2}},
+        [2] = {[5] = {false, 2}},
+        [3] = {[10] = {false, 3}, [5] = {false, 3}},
+        [4] = {[5] = {false, 3}},
     },
 }
 MPR_Timers.ValkyrCount = 0
@@ -220,7 +243,12 @@ function MPR_Timers:GetSpellID(spellName)
            -- Gormok the Impaler
            spellName == "Impale"                 and 66331 or
            spellName == "Staggering Stomp"       and 67648 or 
-           spellName == "Rising Anger"           and 66636
+           spellName == "Rising Anger"           and 66636 or
+           -- Halion
+           spellName == "Meteor Strike"          and self:RaidMode(74648,75877,75878,75879) or
+           spellName == "Fiery Combustion"       and 74562 or
+           spellName == "Twilight Cutter"        and 74769 or 
+           spellName == "Soul Consumption"       and 74792
 end
 
 function MPR_Timers:RaidMode(Mode10N, Mode25N, Mode10H, Mode25H)
@@ -404,6 +432,8 @@ function MPR_Timers:EncounterStart(ID)
     elseif ID == 8 then
         self.EmpoweredPrince = "Prince Valanar"
         self.DataTimers[8][1] = 45
+        self.DataTimers[8][2] = 15
+        self.DataTimers[8][3] = 10
     elseif ID == 9 then
         self.DataTimers[9][1] = self:Is25Man() and 127 or 124
         self.DataTimers[9][2] = 28
@@ -428,6 +458,9 @@ function MPR_Timers:EncounterStart(ID)
         self.DataTimers[13][3] = 15
     elseif ID == 14 then
         self.DataTimers[14][1] = 15
+    elseif ID == 23 then
+        self.DataTimers[23][1] = 25
+        self.DataTimers[23][2] = 15
     else
         return
     end
@@ -435,6 +468,7 @@ function MPR_Timers:EncounterStart(ID)
     self.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
 end
 
+-- ICECROWN CITADEL
 -- 1: Lord Marrowgar
 function MPR_Timers:BoneSpikeGraveyard()
     --local cd = round(self.DataTimers[1][1],1,true)
@@ -638,6 +672,7 @@ end
 function MPR_Timers:FuryOfFrostmourne()
     self:Reset()
 end
+-- TRIAL OF THE CRUSADER
 -- 13: Gormok the Impaler
 function MPR_Timers:Impale() self.DataTimers[13][1] = 8 end
 function MPR_Timers:StaggeringStomp() self.DataTimers[13][2] = 15 end
@@ -649,6 +684,30 @@ function MPR_Timers:SlimePool() self.DataTimers[14][1] = 30 end
 -- 17:
 -- 18:
 -- 19:
+-- RUBY SANCTUM
+-- 20:
+-- 21:
+-- 22:
+-- 23: Halion
+function MPR_Timers:MeteorStrike()
+    self.DataTimers[23][1] = 40
+end
+function MPR_Timers:FieryCombustion()
+    self.DataTimers[23][2] = 25
+end
+function MPR_Timers:PhaseTwo()
+    self.DataTimers[23][1] = nil
+    self.DataTimers[23][2] = nil
+end
+function MPR_Timers:TwilightCutter()
+    self.DataTimers[23][3] = 25
+end
+function MPR_Timers:SoulConsumption()
+    self.DataTimers[23][4] = 20
+end
+function MPR_Timers:HalionSyncReceived(ability)
+    print("test")
+end
 
 function MPR_Timers:EncounterEnd(ID)
     self:Reset()

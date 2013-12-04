@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.81"
-MPR.VersionNotes = {"Added options what type of zone addon should report in.","New border colors available.","Added few checkboxes to format killing blow output.","Fixed LK timers during Frostmourne."}
+MPR.Version = "v2.83B"
+MPR.VersionNotes = {"Fixed LK timers during the last phase.","PP,BPC,Sindragosa,Halion timer warnings added."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -466,6 +466,8 @@ local function TimerHandler(name, ...)
         table.wipe(BS_TargetsName)
         table.wipe(BS_TargetsAmount)
         --MPR:HandleReport(string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL,true),table.concat(raid,", ")), string.format("Range fail (6 yd) - %s hits: %s",spell(SPELL),table.concat(self,", ")))
+    elseif name == "Halion:TwilightCutter" then
+        MPR_Timers:TwilightCutter()
     end
 end
 
@@ -1062,6 +1064,12 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 elseif spellId == 72350 then -- Fury of Frostmourne
                     MPR_Timers:FuryOfFrostmourne()
                 end
+            elseif sourceName == "Halion" then
+                if spellName == "Fiery Combustion" then
+                    MPR_Timers:FieryCombustion()
+                elseif spellName == "Soul Consumption" then
+                    MPR_Timers:SoulConsumption()
+                end
             end
         
             if spellName == "Heroism" and UnitInRaid(sourceName) then
@@ -1279,6 +1287,7 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
         self:Say(BossYells[Message])
     end
     
+    -- for MPR_Timers
     if Sender == "Valithria Dreamwalker" and Message == "I have opened a portal into the Emerald Dream. Your salvation lies within, heroes." then
         MPR_Timers:SummonPortal()
     elseif Sender == "Sindragosa" then
@@ -1286,6 +1295,14 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
             MPR_Timers:AirPhase()
         elseif Message == "Now feel my master's limitless power and despair!" then
             MPR_Timers:SecondPhase()
+        end
+    elseif Sender == "Halion" then
+        if Message == "The heavens burn!" then
+            MPR_Timers:MeteorStrike()
+        elseif Message == "You will find only suffering within the realm of twilight! Enter if you dare!" then
+            MPR_Timers:PhaseTwo()
+        elseif Message == "Beware the shadow!" then
+            self:ScheduleTimer("Halion:TwilightCutter", TimerHandler, 5)
         end
     end
 end
