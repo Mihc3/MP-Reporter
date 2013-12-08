@@ -57,12 +57,13 @@ MPR_Timers.InfoTimers = {
         [3] = {['name'] = "Frost Beacon",            ['format'] = "{SpellLink} CD: {Time}",    ['label'] = 2},
     },
     [12] = {
-        [1] = {['name'] = "Summon Shadow Trap",        ['format'] = "{SpellLink} CD: {Time}",        ['label'] = 1},
-        [2] = {['name'] = "Summon Val'kyr",            ['format'] = "{SpellLink}: {Time}",            ['label'] = 1},
-        [3] = {['name'] = "Defile",                    ['format'] = "{SpellLink} CD: {Time}",        ['label'] = 2},
-        [4] = {['name'] = "Harvest Soul/s",            ['format'] = "{SpellLink}: {Time}",            ['label'] = 1},
-        [5] = {['name'] = "Raging Spirit",            ['format'] = "{Name} CD: {Time}",            ['label'] = 1},
-        [6] = {['name'] = "Quake",                    ['format'] = "{SpellLink}: {Time}",            ['label'] = 2},
+        [1] = {['name'] = "Summon Shadow Trap",       ['format'] = "{SpellLink} CD: {Time}",    ['label'] = 2},
+        [2] = {['name'] = "Summon Val'kyr",           ['format'] = "{SpellLink}: {Time}",       ['label'] = 1},
+        [3] = {['name'] = "Defile",                   ['format'] = "{SpellLink} CD: {Time}",    ['label'] = 2},
+        [4] = {['name'] = "Harvest Soul/s",           ['format'] = "{SpellLink}: {Time}",       ['label'] = 1},
+        [5] = {['name'] = "Raging Spirit",            ['format'] = "{Name} CD: {Time}",         ['label'] = 1},
+        [6] = {['name'] = "Quake",                    ['format'] = "{SpellLink}: {Time}",       ['label'] = 2},
+        [7] = {['name'] = "Necrotic Plague",          ['format'] = "{SpellLink}: {Time}",       ['label'] = 1},
     },
     [13] = {
         [1] = {['name'] = "Impale",                   ['format'] = "{SpellLink} CD: {Time}",    ['label'] = 1},
@@ -103,13 +104,16 @@ MPR_Timers.TimerWarns = {
     [11] = { -- Sindragosa
         [1] = {[10] = {false, 8}, [5] = {false, 8}},
         [2] = {[10] = {false, 6}, [5] = {false, 6}},
-        [3] = {[5] = {false, 7}, [3] = {false, 7}},
+        [3] = {[3] = {false, 7}},
     },
     [12] = { -- LK
         [1] = {[3] = {false, 8}, [2] = {false, 8}, [1] = {false, 8}},
         [2] = {[10] = {false, 4}, [5] = {false, 4}},
         [3] = {[10] = {false, 7}, [5] = {false, 7}},
         [4] = {[10] = {false, 6}, [5] = {false, 6}},
+        [5] = {[3] = {false, 4}},
+        [6] = {[5] = {false, 3}},
+        [7] = {[5] = {false, 4}},
     },
     [23] = { -- Halion
         [1] = {[10] = {false, 2}, [5] = {false, 2}},
@@ -151,7 +155,7 @@ function MPR_Timers:Initialize()
     MPR_Timers.Title2 = MPR_Timers:CreateFontString(nil, "OVERLAY", "GameTooltipText")
     MPR_Timers.Title2:SetPoint("LEFT", MPR_Timers.Title, "RIGHT", 0, 0)
     MPR_Timers.Title2:SetTextColor(190/255, 190/255, 190/255)
-    MPR_Timers.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
+    MPR_Timers.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0]["ENCOUNTER"])
     MPR_Timers.Title2:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
     MPR_Timers.Title2:SetShadowOffset(1, -1)
     
@@ -240,6 +244,7 @@ function MPR_Timers:GetSpellID(spellName)
            spellName == "Defile"                 and 72762 or
            spellName == "Raging Spirit"          and 69200 or
            spellName == "Quake"                  and 72262 or
+           spellName == "Necrotic Plague"        and self:RaidMode(70337,73912,73913,73914) or
            -- Gormok the Impaler
            spellName == "Impale"                 and 66331 or
            spellName == "Staggering Stomp"       and 67648 or 
@@ -448,6 +453,7 @@ function MPR_Timers:EncounterStart(ID)
         self.QuakeCount = 0
         self.ValkyrCount = 0
         self.RagingSpiritCount = 0
+        self.DataTimers[12][7] = 27
         if self:IsHeroic() then
             self.Label2:Hide() -- Hide Defile label
             self.DataTimers[12][1] = 30
@@ -465,7 +471,7 @@ function MPR_Timers:EncounterStart(ID)
         return
     end
     self.BossNum = ID
-    self.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
+    self.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0]["ENCOUNTER"])
 end
 
 -- ICECROWN CITADEL
@@ -604,7 +610,7 @@ end
 function MPR_Timers:AirPhase()
     --local cd = round(self.DataTimers[11][2],1,true)
     --if cd > 0 then self:NewTimer("Air Phase",cd,nil) end
-    self.DataTimers[11][1] = 57
+    self.DataTimers[11][1] = 60 --57
     self.DataTimers[11][2] = 108
 end
 function MPR_Timers:SecondPhase()
@@ -658,14 +664,17 @@ function MPR_Timers:RagingSpiritSummoned()
     self.DataTimers[12][5] = self.RagingSpiritCount < 3 and 22 or nil
 end
 function MPR_Timers:Quake()
-    local cd = round(self.DataTimers[12][5],1,true)
-    if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Quake")),cd,"Quake #"..(self.QuakeCount+1)) end
+    --local cd = round(self.DataTimers[12][5],1,true)
+    --if cd > 0 then self:NewTimer(GetSpellLink(self:GetSpellID("Quake")),cd,"Quake #"..(self.QuakeCount+1)) end
     self.DataTimers[12][5] = nil
     
     self.QuakeCount = self.QuakeCount + 1
     self.DataTimers[12][2] = self.QuakeCount == 1 and 26 or nil
     self.DataTimers[12][3] = self.QuakeCount == 1 and 44 or 32
     self.DataTimers[12][4] = self.QuakeCount == 2 and 20 or nil
+    
+    self.DataTimers[12][5] = nil
+    self.DataTimers[12][6] = nil
     
     self.Label2:Show() -- Show Defile label
 end
@@ -705,9 +714,6 @@ end
 function MPR_Timers:SoulConsumption()
     self.DataTimers[23][4] = 20
 end
-function MPR_Timers:HalionSyncReceived(ability)
-    print("test")
-end
 
 function MPR_Timers:EncounterEnd(ID)
     self:Reset()
@@ -715,7 +721,7 @@ end
 
 function MPR_Timers:Reset()
     self.BossNum = nil
-    MPR_Timers.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0][1])
+    MPR_Timers.Title2:SetText("|cFF00CCFF"..MPR.BossData[MPR_Timers.BossNum or 0]["ENCOUNTER"])
     
     for e,_ in pairs(MPR_Timers.DataTimers) do
         for i,_ in pairs(MPR_Timers.DataTimers[e]) do
@@ -750,7 +756,7 @@ MPR_Timers_Updater:SetScript("OnUpdate", function(self, elapsed)
     if e then
         MPR_Timers.DataTimers[e] = MPR_Timers.DataTimers[e] or {}
         if MPR_Timers.DataTimers[e] then
-            for i=1,6 do
+            for i=1,7 do
                 if MPR_Timers.DataTimers[e][i] then
                     if MPR_Timers.DataTimers[e][i] and MPR_Timers.DataTimers[e][i] > 0 then
                         MPR_Timers.DataTimers[e][i] = MPR_Timers.DataTimers[e][i] - diff

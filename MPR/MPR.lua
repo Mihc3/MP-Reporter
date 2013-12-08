@@ -1,38 +1,144 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.83B"
-MPR.VersionNotes = {"Fixed LK timers during the last phase.","PP,BPC,Sindragosa,Halion timer warnings added."}
+MPR.Version = "v2.84B"
+MPR.VersionNotes = {"LK and Sindragosa timer corrections."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
 MPR.BossData = {
---  [AuraInfoNum] = {"Encounter", "Start Message", "Finish Message" [, StartDelay]},
     -- Icecrown Citadel
-    [0] = {"N/a"},
-    [1] = {"Lord Marrowgar",         "The Scourge will wash over this world as a swarm of death and destruction!", "I see... only darkness..."},
-    [2] = {"Lady Deathwhisper",      "What is this disturbance?! You dare trespass upon this hallowed ground? This shall be your final resting place.", "All part of the masters plan! Your end is... inevitable!"},
-    [3] = {"Gunship Battle",         "Fire up the engines! We got a meetin' with destiny, lads!", "Damage control! Put those fires out! You haven't seen the last of the Horde!"},
-    [4] = {"Deathbringer Saurfang",  "BY THE MIGHT OF THE LICH KING!", "I... Am... Released."},
-    [5] = {"Festergut",              "Fun time!", "Da ... Ddy..."},
-    [6] = {"Rotface",                "Great news, everyone! The slime is flowing again!", "Bad news daddy...", -3},
-    [7] = {"Professor Putricide",    "Good news, everyone! I think I perfected a plague that will destroy all life on Azeroth!", "Bad news, everyone! I don't think I'm going to make it."},
-    [8] = {"Blood Prince Council",   "Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!", "...why...?"},
-    [9] = {"Blood Queen Lana'thel",  "Can you handle this?", "But... we were getting along... so well...", -15}, -- "You have made an... unwise... decision." not used on Molten?
-    [10] = {"Valithria Dreamwalker", "Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!", nil},
-    [11] = {"Sindragosa",            "You are fools to have come to this place! The icy winds of Northrend will consume your souls!", "Free...at last..."},
-    [12] = {"The Lich King",         "I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image.", nil},
+    [0] = {["ENCOUNTER"] = "N/a", ["MSG_START"] = nil, ["MSG_FINISH"] = nil},
+    [1] = {
+        ["ENCOUNTER"] = "Lord Marrowgar",
+        ["MSG_START"] = "The Scourge will wash over this world as a swarm of death and destruction!",
+        ["MSG_FINISH"] = "I see... only darkness...",
+        ["BERSERK"] = 600,
+    },
+    [2] = {
+        ["ENCOUNTER"] = "Lady Deathwhisper",
+        ["MSG_START"] = "What is this disturbance?! You dare trespass upon this hallowed ground? This shall be your final resting place.",
+        ["MSG_FINISH"] = "All part of the masters plan! Your end is... inevitable!",
+        ["BERSERK"] = 600,
+    },
+    [3] = {
+        ["ENCOUNTER"] = "Gunship Battle",
+        ["MSG_START"] = "Fire up the engines! We got a meetin' with destiny, lads!",
+        ["MSG_START_2"] = "Rise up, sons and daughters of the Horde! Today we battle a hated enemy of the Horde! LOK'TAR OGAR! Kor'kron, take us out!",
+        ["MSG_FINISH"] = "Damage control! Put those fires out! You haven't seen the last of the Horde!",
+        ["MSG_FINISH_2"] = "The Alliance falter. Onward to the Lich King!",
+    },
+    [4] = {
+        ["ENCOUNTER"] = "Deathbringer Saurfang",
+        ["MSG_START"] = "BY THE MIGHT OF THE LICH KING!",
+        ["MSG_FINISH"] = "I... Am... Released.",
+        ["BERSERK"] = 480,
+        ["BERSERK_HC"] = 360,
+    },
+    [5] = {
+        ["ENCOUNTER"] = "Festergut",
+        ["MSG_START"] = "Fun time!",
+        ["MSG_FINISH"] = "Da ... Ddy...",
+        ["BERSERK"] = 300,
+    },
+    [6] = {
+        ["ENCOUNTER"] = "Rotface",
+        ["MSG_START"] = "Great news, everyone! The slime is flowing again!",
+        ["MSG_FINISH"] = "Bad news daddy...",
+        ["START_DELAY"] = -3,
+    },
+    [7] = {
+        ["ENCOUNTER"] = "Professor Putricide",
+        ["MSG_START"] = "Good news, everyone! I think I perfected a plague that will destroy all life on Azeroth!",
+        ["MSG_FINISH"] = "Bad news, everyone! I don't think I'm going to make it.",
+        ["BERSERK"] = 600,
+    },
+    [8] = {
+        ["ENCOUNTER"] = "Blood Prince Council",
+        ["MSG_START"] = "Naxxanar was merely a setback! With the power of the orb, Valanar will have his vengeance!",
+        ["MSG_FINISH"] = "...why...?",
+        ["BERSERK"] = 600,
+    },
+    [9] = {
+        ["ENCOUNTER"] = "Blood Queen Lana'thel",
+        ["MSG_START"] = "Can you handle this?", -- "You have made an... unwise... decision." not used on Molten?
+        ["MSG_FINISH"] = "But... we were getting along... so well...",
+        ["START_DELAY"] = -15,
+        ["BERSERK"] = 330,
+    },
+    [10] = {
+        ["ENCOUNTER"] = "Valithria Dreamwalker",
+        ["MSG_START"] = "Heroes, lend me your aid! I... I cannot hold them off much longer! You must heal my wounds!",
+        ["BERSERK_HC"] = 420,
+    },
+    [11] = {
+        ["ENCOUNTER"] = "Sindragosa",
+        ["MSG_START"] = "You are fools to have come to this place! The icy winds of Northrend will consume your souls!",
+        ["MSG_FINISH"] = "Free...at last...",
+        ["BERSERK"] = 600,
+    },
+    [12] = {
+        ["ENCOUNTER"] = "The Lich King",
+        ["MSG_START"] = "I'll keep you alive to witness the end, Fordring. I would not want the Light's greatest champion to miss seeing this wretched world remade in my image.",
+        ["MSG_FINISH"] = nil,
+        ["BERSERK"] = 900,
+    },
     -- Trial of the Crusader
-    [13] = {"Gormok the Impaler",    "Hailing from the deepest, darkest carverns of the storm peaks, Gormok the Impaler! Battle on, heroes!", "Steel yourselves, heroes, for the twin terrors Acidmaw and Dreadscale. Enter the arena!"},
-    [14] = {"Jormungar Twins",       "Steel yourselves, heroes, for the twin terrors Acidmaw and Dreadscale. Enter the arena!", "The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!"},
-    [15] = {"Icehowl",               "The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!", nil},
-    [16] = {"Lord Jaraxxus",         "You face Jaraxxus, eredar lord of the Burning Legion!", "Another will take my place. Your world is doomed."},
-    [17] = {"Faction Champions",     "GLORY OF THE ALLIANCE!", "A shallow and tragic victory. We are weaker as a whole from the losses suffered today. Who but the Lich King could benefit from such foolishness? Great warriors have lost their lives. And for what? The true threat looms ahead - the Lich King awaits us all in death."},
-    [18] = {"Val'kyr Twins",         "In the name of our dark master. For the Lich King. You. Will. Die.", "The Scourge cannot be stopped..."},
-    [19] = {"Anub'arak",             "Ahhh, our guests have arrived, just as the master promised.", nil},
+    [13] = {
+        ["ENCOUNTER"] = "Gormok the Impaler",
+        ["MSG_START"] = "Hailing from the deepest, darkest carverns of the storm peaks, Gormok the Impaler! Battle on, heroes!",
+        ["MSG_FINISH"] = "Steel yourselves, heroes, for the twin terrors Acidmaw and Dreadscale. Enter the arena!",
+    },
+    [14] = {
+        ["ENCOUNTER"] = "Jormungar Twins",
+        ["MSG_START"] = "Steel yourselves, heroes, for the twin terrors Acidmaw and Dreadscale. Enter the arena!",
+        ["MSG_FINISH"] = "The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!",
+    },
+    [15] = {
+        ["ENCOUNTER"] = "Icehowl",
+        ["MSG_START"] = "The air freezes with the introduction of our next combatant, Icehowl! Kill or be killed, champions!",
+        ["MSG_FINISH"] = nil,
+    },
+    [16] = {
+        ["ENCOUNTER"] = "Lord Jaraxxus",
+        ["MSG_START"] = "You face Jaraxxus, eredar lord of the Burning Legion!", "Another will take my place. Your world is doomed.",
+        ["MSG_FINISH"] = nil,
+    },
+    [17] = {
+        ["ENCOUNTER"] = "Faction Champions",
+        ["MSG_START"] = "GLORY OF THE ALLIANCE!",
+        ["MSG_FINISH"] = "A shallow and tragic victory. We are weaker as a whole from the losses suffered today. Who but the Lich King could benefit from such foolishness? Great warriors have lost their lives. And for what? The true threat looms ahead - the Lich King awaits us all in death.",
+    },
+    [18] = {
+        ["ENCOUNTER"] = "Val'kyr Twins",
+        ["MSG_START"] = "In the name of our dark master. For the Lich King. You. Will. Die.",
+        ["MSG_FINISH"] = "The Scourge cannot be stopped...",
+    },
+    [19] = {
+        ["ENCOUNTER"] = "Anub'arak",
+        ["MSG_START"] = "Ahhh, our guests have arrived, just as the master promised.",
+        ["MSG_FINISH"] = nil,
+    },
     -- Ruby Sanctum
-    [20] = {"Saviana Ragefire",      "You will sssuffer for this intrusion!", nil},
-    [21] = {"Baltharus the Warborn", "Ah, the entertainment has arrived.", "I... Didn't see that coming..."},
-    [22] = {"General Zarithrian",    "Alexstrasza has chosen capable allies... A pity that I must END YOU!", "HALION! I..."},
-    [23] = {"Halion",                "Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!", "Relish this victory, mortals, for it will be your last. This world will burn with the master's return!"},
+    [20] = {
+        ["ENCOUNTER"] = "Saviana Ragefire",
+        ["MSG_START"] = "You will sssuffer for this intrusion!",
+        ["MSG_FINISH"] = nil,
+    },
+    [21] = {
+        ["ENCOUNTER"] = "Baltharus the Warborn",
+        ["MSG_START"] = "Ah, the entertainment has arrived.",
+        ["MSG_FINISH"] = "I... Didn't see that coming...",
+    },
+    [22] = {
+        ["ENCOUNTER"] = "General Zarithrian",
+        ["MSG_START"] = "Alexstrasza has chosen capable allies... A pity that I must END YOU!",
+        ["MSG_FINISH"] = "HALION! I...",
+    },
+    [23] = {
+        ["ENCOUNTER"] = "Halion",
+        ["MSG_START"] = "Your world teeters on the brink of annihilation. You will ALL bear witness to the coming of a new age of DESTRUCTION!",
+        ["MSG_FINISH"] = "Relish this victory, mortals, for it will be your last. This world will burn with the master's return!",
+        ["BERSERK"] = 480,
+    },
 }
 local BossNames = {}
 local ChestLoot = {
@@ -717,13 +823,13 @@ function MPR:StartCombat(ID)
     local index = #self.DataDeaths+1
     self.DataDeaths[index] = {}
     self.DataDeaths[index].ID = ID
-    self.DataDeaths[index].Name = self.BossData[ID][1]
+    self.DataDeaths[index].Name = self.BossData[ID]["ENCOUNTER"]
     local _, month, day, year = CalendarGetDate();
     local month_names = {[1] = "Jan", [2] = "Feb", [3] = "Mar", [4] = "Apr", [5] = "May", [6] = "Jun", [7] = "Jul", [8] = "Aug", [9] = "Sep", [10] = "Oct", [11] = "Nov", [12] = "Dec"}
     self.DataDeaths[index].Date = string.format("%s %i, %i",month_names[month],day,year)
-    self.DataDeaths[index].TimeStart = GetTime() + (self.BossData[ID][4] or 0)
+    self.DataDeaths[index].TimeStart = GetTime() + (self.BossData[ID]["START_DELAY"] or 0)
     local hour, minute, second = MPR_GameTime:Get()
-    self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(self.BossData[ID][4] or 0))
+    self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(self.BossData[ID]["START_DELAY"] or 0))
     self.DataDeaths[index].GameTimeEnd = "unknown"
     self.DataDeaths[index].Deaths = {}
     local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
@@ -942,7 +1048,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         end
         
         -- for fun!
-        if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
+        if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
             self:RaidReport(self:FormatKillingBlow(sourceName,destName,"a melee attack",amount,overkill,critical))
         end
     elseif event == "SWING_MISSED" then
@@ -961,7 +1067,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             end
             
             -- for fun!
-            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
+            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
                 self:RaidReport(self:FormatKillingBlow(sourceName,destName,spellId and GetSpellLink(spellId) or "a ranged attack",amount,overkill,critical))
             end
         elseif event == "RANGE_MISSED" then
@@ -1138,7 +1244,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             end
             
             -- for fun!
-            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
+            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
                 self:RaidReport(self:FormatKillingBlow(sourceName,destName,GetSpellLink(spellId),amount,overkill,critical))
             end
         elseif event == "SPELL_HEAL" then
@@ -1164,7 +1270,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 end
                 
                 -- for fun!
-                if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID][1] and self.Settings["KILLINGBLOW"] then
+                if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
                     self:RaidReport(self:FormatKillingBlow(sourceName,destName,"a periodic tick of "..GetSpellLink(spellId),amount,overkill,critical))
                 end
             elseif event == "SPELL_PERIODIC_HEAL" then
@@ -1267,12 +1373,12 @@ end
 
 function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
     for ID,Data in pairs(self.BossData) do
-        if Data[3] and Data[3] == Message then
+        if Data["MSG_FINISH"] and Data["MSG_FINISH"] == Message then
             self:StopCombat()
             -- No break, some Trial of the Crusader quotes end and start encounters at same time (Northrend Beasts)
         end
-        if Data[2] and Data[2] == Message then
-            local EncounterName = Data[1]
+        if Data["MSG_START"] and Data["MSG_START"] == Message then
+            local EncounterName = Data["ENCOUNTER"]
             StartChecks = 60
             StartCheck("nil", ID)
             break
@@ -1492,6 +1598,11 @@ end
 
 function MPR:UpdateBackdrop()
     local Backdrop, BackdropColor, BackdropBorderColor = MPR.Settings["BACKDROP"], MPR.Settings["BACKDROPCOLOR"], MPR.Settings["BACKDROPBORDERCOLOR"]
+    -- MPR Frame
+    MPR.Title:SetText("|cFF"..self.Colors["TITLE"].."MP Reporter|r - Frame")
+    MPR:SetBackdrop(MPR.Settings["BACKDROP"])
+    MPR:SetBackdropColor(unpack(MPR.Settings["BACKDROPCOLOR"]))
+    MPR:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
     -- MPR Options
     MPR_Options.Title:SetText("|cFF"..self.Colors["TITLE"].."MP Reporter|r ("..MPR.Version..") - Options")
     MPR_Options:SetBackdrop(Backdrop)
@@ -1639,6 +1750,7 @@ function MPR:ADDON_LOADED(addon)
     MPR_DataPenalties = MPR_DataPenalties or {}
     self.DataPenalties = MPR_DataPenalties
     
+    self:Initialize()
     MPR_Options:Initialize()
     MPR_AuraInfo:Initialize()
     MPR_Timers:Initialize()
@@ -1706,4 +1818,53 @@ function MPR:MPR_CopyURL_Initialize()
     MPR_CopyURL:SetScript("OnShow", function(self) self.EditBox:SetText(self.Address); self.EditBox:HighlightText() end)
     MPR_CopyURL.EditBox:SetScript("OnEscapePressed", function(self) self:GetParent():Hide() end)
     tinsert(UISpecialFrames, "MPR_CopyURL")
+end
+
+function MPR:Initialize()
+    MPR:Hide()
+    
+    MPR:SetBackdrop(MPR.Settings["BACKDROP"])
+    MPR:SetBackdropColor(unpack(MPR.Settings["BACKDROPCOLOR"]))
+    MPR:SetBackdropBorderColor(MPR.Settings["BACKDROPBORDERCOLOR"].R/255, MPR.Settings["BACKDROPBORDERCOLOR"].G/255, MPR.Settings["BACKDROPBORDERCOLOR"].B/255)
+    
+    MPR:SetPoint("CENTER",UIParent)
+    MPR:SetWidth(350)
+    MPR:SetHeight(100)
+    MPR:EnableMouse(true)
+    MPR:SetMovable(true)
+    MPR:SetResizable(true)
+    MPR:SetMinResize(240, 80)
+    MPR:SetMaxResize(480, 160)
+    MPR:RegisterForDrag("LeftButton","RightButton")
+    MPR:SetUserPlaced(true)
+    MPR:SetScript("OnDragStart", function(self, button) 
+        if button == "LeftButton" then
+            MPR:StartMoving()
+        elseif button == "RightButton" then
+            MPR:StartSizing()
+        end
+    end)
+    MPR:SetScript("OnDragStop", function(self) MPR:StopMovingOrSizing() end)
+    MPR:SetFrameStrata("DIALOG")
+    
+    MPR.Title = MPR:CreateFontString("Title", "ARTWORK", "GameFontNormal")
+    MPR.Title:SetPoint("TOPLEFT", 96, -8)
+    MPR.Title:SetTextColor(1,1,1) 
+    MPR.Title:SetText("|cFF"..self.Colors["TITLE"].."MP Reporter|r - Frame")
+    MPR.Title:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+    MPR.Title:SetShadowOffset(1, -1)
+    
+    MPR.CombatTime = MPR:CreateFontString("CombatTime", "ARTWORK", "GameFontNormal")
+    MPR.CombatTime:SetPoint("TOPRIGHT", MPR, "TOPLEFT", 40, -8)
+    MPR.CombatTime:SetTextColor(1,1,1) 
+    MPR.CombatTime:SetText("0:51")
+    --MPR.CombatTime:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
+    
+    MPR.BerserkTime = MPR:CreateFontString("BerserkTime", "ARTWORK", "GameFontNormal")
+    MPR.BerserkTime:SetPoint("TOPLEFT", 48, -8)
+    MPR.BerserkTime:SetTextColor(1,0,0) 
+    MPR.BerserkTime:SetText("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:8:8|t17:00")
+    --MPR.BerserkTime:SetFont("Fonts\\FRIZQT__.TTF", 10, nil)
+    
+    --MPR:Show()
 end
