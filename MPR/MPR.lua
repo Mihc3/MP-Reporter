@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.84B"
+MPR.Version = "v2.84B-2"
 MPR.VersionNotes = {"LK and Sindragosa timer corrections."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
@@ -1048,7 +1048,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         end
         
         -- for fun!
-        if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
+        if overkill > 0 and #self.DataDeaths > 0 and destName == self.DataDeaths[#self.DataDeaths].Name and self.Settings["KILLINGBLOW"] then
             self:RaidReport(self:FormatKillingBlow(sourceName,destName,"a melee attack",amount,overkill,critical))
         end
     elseif event == "SWING_MISSED" then
@@ -1067,7 +1067,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             end
             
             -- for fun!
-            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
+            if overkill > 0 and #self.DataDeaths > 0 and destName == self.DataDeaths[#self.DataDeaths].Name and self.Settings["KILLINGBLOW"] then
                 self:RaidReport(self:FormatKillingBlow(sourceName,destName,spellId and GetSpellLink(spellId) or "a ranged attack",amount,overkill,critical))
             end
         elseif event == "RANGE_MISSED" then
@@ -1244,7 +1244,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             end
             
             -- for fun!
-            if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
+            if overkill > 0 and #self.DataDeaths > 0 and destName == self.DataDeaths[#self.DataDeaths].Name and self.Settings["KILLINGBLOW"] then
                 self:RaidReport(self:FormatKillingBlow(sourceName,destName,GetSpellLink(spellId),amount,overkill,critical))
             end
         elseif event == "SPELL_HEAL" then
@@ -1270,7 +1270,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 end
                 
                 -- for fun!
-                if overkill > 0 and destName == self.BossData[self.DataDeaths[#self.DataDeaths].ID]["ENCOUNTER"] and self.Settings["KILLINGBLOW"] then
+                if overkill > 0 and #self.DataDeaths > 0 and destName == self.DataDeaths[#self.DataDeaths].Name and self.Settings["KILLINGBLOW"] then
                     self:RaidReport(self:FormatKillingBlow(sourceName,destName,"a periodic tick of "..GetSpellLink(spellId),amount,overkill,critical))
                 end
             elseif event == "SPELL_PERIODIC_HEAL" then
