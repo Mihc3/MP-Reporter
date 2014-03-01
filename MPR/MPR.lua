@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.84B-2"
-MPR.VersionNotes = {"LK and Sindragosa timer corrections."}
+MPR.Version = "v2.85"
+MPR.VersionNotes = {"Death reporting rewritten."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -935,7 +935,7 @@ end
 function MPR:InsertDeath(Player,Source,Ability,Amount,Overkill)
     if not Combat then return end
     local Time = math.floor(GetTime()-self.DataDeaths[#self.DataDeaths].TimeStart)
-    local tbl = {Player = Player, Class = select(2, UnitClass(Player)), Time = Time, Source = Source,Ability = Ability, Amount = Amount, Overkill = Overkill}
+    local tbl = {Player = Player, Class = select(2, UnitClass(Player)), Time = Time, Source = Source, Ability = Ability, Amount = Amount, Overkill = Overkill}
     table.insert(self.DataDeaths[#self.DataDeaths].Deaths,tbl)
 end
 
@@ -947,76 +947,34 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
     if UnitIsPlayer(destName) and (self.Settings["PD_REPORT"] or self.Settings["PD_LOG"]) then --(UnitInParty(destName) or UnitInRaid(destName)) and 
         if event == "SWING_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
-            
             local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
-            if overkill > 0 then
-                if self.Settings["PD_REPORT"] then
-                    local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                    local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": Melee - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                    self:ReportDeath(Unformatted, Formatted)
-                end
-                if self.Settings["PD_LOG"] then
-                    self:InsertDeath(destName,(sourceName or "Unknown"),"Melee",amount,overkill)
-                end
-            end
+            PotencialDeaths[destName] = {timestamp, sourceName or "Unknown", "Melee", amount, overkill or 0}
         elseif event == "RANGED_DAMAGE" or event == "SPELL_DAMAGE" or event == "SPELL_PERIODIC_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
-            
             local spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
-            if overkill > 0 then
-                if self.Settings["PD_REPORT"] then
-                    local Unformatted = destName.." died. ("..(sourceName or "Unknown")..": "..GetSpellLink(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                    local Formatted = unit(destName).." died. ("..(sourceName or "Unknown")..": "..spell(spellId).." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                    self:ReportDeath(Unformatted, Formatted)
-                end
-                if self.Settings["PD_LOG"] then
-                    self:InsertDeath(destName,(sourceName or "Unknown"),GetSpellLink(spellId),amount,overkill)
-                end
-            end
+            PotencialDeaths[destName] = {timestamp, sourceName or "Unknown", GetSpellLink(spellId), amount, overkill or 0}
         elseif event == "ENVIRONMENTAL_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
-            
             local environmentalType, amount, overkill = select(9, ...)
-            if overkill > 0 then
-                if self.Settings["PD_REPORT"] then
-                    local Unformatted = destName.." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                    local Formatted = unit(destName).." died. (Environment: "..(environmentalType or "Unknown").." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                    self:ReportDeath(Unformatted, Formatted)
-                end
-                if self.Settings["PD_LOG"] then
-                    self:InsertDeath(destName, "Environment", (environmentalType or "Unknown"), amount, overkill or 0)
-                end
-            else
-                PotencialDeaths[destName] = {timestamp,environmentalType,amount}
-            end
+            PotencialDeaths[destName] = {timestamp, "Environment", environmentalType, amount, overkill or 0}
         elseif event == "UNIT_DIED" then
             if PotencialDeaths[destName] then
+                local timestamp, source, type, amount, overkill = unpack(PotencialDeaths[destName])
                 if (timestamp - PotencialDeaths[destName][1]) < 1 then
                     if self.Settings["PD_REPORT"] then
-                        local Unformatted = destName.." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
-                        local Formatted = unit(destName).." died. (Environment: "..(PotencialDeaths[destName][2] or "Unknown").." - A: "..numformat(PotencialDeaths[destName][3])..")"
+                        local Unformatted = destName.." died. ("..source..": "..type.." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                        local Formatted = unit(destName).." died. ("..source..": "..type.." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
                         self:ReportDeath(Unformatted, Formatted)
                     end
                     if self.Settings["PD_LOG"] then
-                        self:InsertDeath(destName, "Environment", PotencialDeaths[destName][2] or "Unknown", amount, 0)
+                        self:InsertDeath(destName, source, type, amount, overkill)
                     end
                 end
                 PotencialDeaths[destName] = nil
             end
         end
-        
-        --[[
-        if sourceName == UnitName("player") and event == "SPELL_ENERGIZE" then
-            local spellId, spellName, _, amount, powerType = select(9, ...)
-            if spellId == 48542 or spellId == 48541 or spellId == 48540 or spellId == 48543 then
-                powerType = (powerType == 0 and "Mana" or powerType == 1 and "Rage" or powerType == 4 and "Energy" or powerType == 6 and "Runic Power" or "Unknown")
-                self:SelfReport("Revitalized "..unit(destName).." ("..amount.." "..powerType..")")
-            end
-        end
-        ]]
     end
     
-    -- only working in Dungeons and Raids
     local inInstance, instanceType = IsInInstance()
     if inInstance then
         if instanceType == "raid" and not self.Settings["REPORTIN_RAIDINSTANCE"] or
@@ -1087,6 +1045,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             if sourceName == "Lord Marrowgar" then
                 if spellName == "Bone Spike Graveyard" then
                     MPR_Timers:BoneSpikeGraveyard()
+                    --self:RaidWarning(string.format("{rt8} Kill spikes!! {rt8}"))
                 elseif spellName == "Bone Storm" then
                     MPR_Timers:BoneStorm()
                 end
@@ -1486,6 +1445,7 @@ end
 
 function MPR:ReportValkyrGrab(UNIT) -- X Unit grabbed! X
     self:HandleReport(string.format("{rt7} %s grabbed! {rt7}",UNIT),string.format("{rt7} %s grabbed! {rt7}",unit(UNIT)))
+    --self:RaidWarning(string.format("{rt7} %s grabbed! {rt7}",UNIT))
 end
 
 function MPR:CanReportToRaid()
@@ -1663,20 +1623,11 @@ function MPR:ZONE_CHANGED_NEW_AREA()
     if self.Settings["CCL_ONLOAD"] then
         self:ClearCombatLog(true)
     end
-    --[[
-    local inInstance, instanceType = IsInInstance()
-    local state = inInstance and (instanceType == "party" or instanceType == "raid")
-    if self.Settings["SELF"] ~= state then        
-        self.Settings["SELF"] = state
-        self:SelfReport((state and "Instance detected." or "Player not in instance.").." Reporting has been "..getStateColor(self.Settings["SELF"])..".")
-    end
-    ]]
-    --if MPR_AuraInfo.Loaded then    Title:SetText("|cff1e90ffMP Reporter|r - Aura Info") end
 end
 
 function MPR:DefineSetting(name,default)
-    if MPR.Settings[name] == nil then
-        MPR.Settings[name] = default
+    if self.Settings[name] == nil then
+        self.Settings[name] = default
     end
 end
 
