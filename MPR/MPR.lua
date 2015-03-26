@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.85"
-MPR.VersionNotes = {"Death reporting rewritten."}
+MPR.Version = "v2.86"
+MPR.VersionNotes = {"Hunter's feign deaths will not be reported anymore."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -957,7 +957,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
             local environmentalType, amount, overkill = select(9, ...)
             PotencialDeaths[destName] = {timestamp, "Environment", environmentalType, amount, overkill or 0}
-        elseif event == "UNIT_DIED" then
+        elseif event == "UNIT_DIED" and not UnitIsFeignDeath(destName) then
             if PotencialDeaths[destName] then
                 local timestamp, source, type, amount, overkill = unpack(PotencialDeaths[destName])
                 if (timestamp - PotencialDeaths[destName][1]) < 1 then
