@@ -118,7 +118,7 @@ MPR_Timers.TimerWarns = {
     [23] = { -- Halion
         [1] = {[10] = {false, 2}, [5] = {false, 2}},
         [2] = {[5] = {false, 2}},
-        [3] = {[10] = {false, 3}, [5] = {false, 3}},
+        [3] = {[5] = {false, 3}, [3] = {false, 3}},
         [4] = {[5] = {false, 3}},
     },
 }

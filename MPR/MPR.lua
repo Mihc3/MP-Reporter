@@ -1,6 +1,6 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.86"
-MPR.VersionNotes = {"Hunter's feign deaths will not be reported anymore."}
+MPR.Version = "v2.87"
+MPR.VersionNotes = {"Halion engage detection fixed. Timers will be announced now.", "Fiery Combustion and Soul Consumption targets will receive a whisper."}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
 local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
@@ -989,9 +989,11 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         end
     end
     
-    -- Check if Blood-Queen Lana'thel encounter started ...
+    -- Check if Blood-Queen Lana'thel or Halion encounter started ...
     if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
         MPR:StartCombat(9)
+	if destName == "Halion" and not Combat and event:find("DAMAGE") then
+        MPR:StartCombat(23)
     end
     
     -- taken from Blizzard_CombatLog.lua
@@ -1132,8 +1134,10 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
             elseif sourceName == "Halion" then
                 if spellName == "Fiery Combustion" then
                     MPR_Timers:FieryCombustion()
+					self:Whisper(destName, GetSpellLink(spellId).." on you! Run to the wall!!")
                 elseif spellName == "Soul Consumption" then
                     MPR_Timers:SoulConsumption()
+					self:Whisper(destName, GetSpellLink(spellId).." on you! Run to the wall!!")
                 end
             end
         
