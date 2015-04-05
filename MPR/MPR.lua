@@ -992,7 +992,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
     -- Check if Blood-Queen Lana'thel or Halion encounter started ...
     if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
         MPR:StartCombat(9)
-	if destName == "Halion" and not Combat and event:find("DAMAGE") then
+	elseif destName == "Halion" and not Combat and event:find("DAMAGE") then
         MPR:StartCombat(23)
     end
     
