@@ -234,7 +234,7 @@ function MPR_Options:Initialize()
     
     -- Masterloot
     MPR_Options:NewFS("Masterloot","3CB371",216,-77)
-    MPR_Options:NewCB("Report items in loot",nil,"REPORT_LOOT", 214, -88)    -- [ ] ReportLoot
+    MPR_Options:NewCB("Report |cFFB048F8epic|r items in loot",nil,"REPORT_LOOT", 214, -88)    -- [ ] ReportLoot
     MPR_Options:NewCB("Only when BoP in loot",nil,"nil", 234, -102) -- [ ] ReportOnlyWhenBOP    REPORT_LOOT_BOP_ONLY
     MPR_Options:NewCB("Add BiS information",nil,"REPORT_LOOT_BIS_INFO", 234, -116) -- [ ] AddClassBISinfo
     
@@ -557,7 +557,7 @@ function MPR_Options:NewCB(Text,Color,Var,LocX,LocY) -- Creates a checkbox
         CheckBox:SetScript("OnShow",  function(self) CheckBox:SetChecked(MPR.Settings[Var]) end)
         CheckBox:SetScript("OnClick", function(self)
             MPR.Settings[Var] = not MPR.Settings[Var]
-            if MPR.Settings[Var] and (Var == "RAID" or Var == "SAY" or Var == "WHISPER" or Var == "PD_RAID" or Var == "PD_WHISPER" or Var == "PD_GUILD") then
+            if MPR.Settings[Var] and (Var == "RAID" or Var == "SAY" or Var == "WHISPER" or Var == "PD_RAID" or Var == "PD_WHISPER" or Var == "PD_GUILD" or Var == "KILLINGBLOW") then
                 CheckRaidOptions(Var)
             end
         end)

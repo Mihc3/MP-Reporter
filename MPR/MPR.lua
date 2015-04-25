@@ -1,9 +1,10 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.87"
-MPR.VersionNotes = {"Halion engage detection fixed. Timers will be announced now.", "Fiery Combustion and Soul Consumption targets will receive a whisper."}
+MPR.Version = "v2.90B"
+--MPR.Special = {"Deathwing:Herbaliist:A"}
+MPR.VersionNotes = {"Death reporting fixed, no more false information", "Timer options", "Ruby Sanctum timers"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",
                      ["PRIEST"] = "FFFFFF", ["ROGUE"] = "FFF569", ["SHAMAN"] = "0070DE", ["WARLOCK"] = "9482C9", ["WARRIOR"] = "C79C6E"}
-local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["Ruby Sanctum"] = "RS"}
+local InstanceShortNames = {["Icecrown Citadel"] = "ICC", ["Vault of Archavon"] = "VOA", ["Trial of the Crusader"] = "TOC", ["Naxxramas"] = "NAXX", ["The Ruby Sanctum"] = "RS"}
 MPR.BossData = {
     -- Icecrown Citadel
     [0] = {["ENCOUNTER"] = "N/a", ["MSG_START"] = nil, ["MSG_FINISH"] = nil},
@@ -351,6 +352,7 @@ do
             MPR:DeathReport(arg2, arg3)
         elseif arg1 == "VersionNotes" then
             if arg2 == "get" then
+                if AskedWhatsNew then return end
                 AskedWhatsNew = true
                 SendAddonMessage("MPR", "VersionNotes:get", "WHISPER", arg3)
             else
@@ -471,11 +473,11 @@ function WarnLink(Target,String)
 end
 
 function spell(id, ...)
-    local bRaid = ...
+    local bRaid, ignoreSetting = ...
     if bRaid then return GetSpellLink(id) end
     if type(id) ~= "number" then return id end
-    if MPR.Settings["ICONS"] and select(3, GetSpellInfo(id)) then
-        return string.format("\124T%s:12:12:0:0:64:64:5:59:5:59\124t |r%s|cFF%s",select(3, GetSpellInfo(id)),GetSpellLink(id),MPR.Colors["TEXT"])
+    if (MPR.Settings["ICONS"] or ignoreSetting) and select(3, GetSpellInfo(id)) then
+        return string.format("\124T%s:12:12:0:0:64:64:5:59:5:59\124t|r%s|cFF%s",select(3, GetSpellInfo(id)),GetSpellLink(id),MPR.Colors["TEXT"])
     else
         return string.format("|r%s|cFF%s",GetSpellLink(id),MPR.Colors["TEXT"])
     end
@@ -609,7 +611,7 @@ function CheckRaidOptions(Var)
 end
 
 function PrintRaidOptions(Var) 
-    local OptionName = Var:sub(1,3) == "PD_" and "Reporting deaths to "..Var:sub(4) or "Reporting to "..Var 
+    local OptionName = Var:sub(1,3) == "PD_" and "Reporting deaths to "..Var:sub(4) or Var:sub(1,2) == "T_" and "Reporting timers to "..Var:sub(3) or Var == "KILLINGBLOW" and "Reporting killing blow to RAID" or "Reporting to "..Var 
     local Players = {}
     for _,Player in pairs(RaidOptions) do
         table.insert(Players,unit(Player))
@@ -651,6 +653,8 @@ function SlashCmdList.MPR(msg, editbox)
         MPR_AuraInfo:UpdateFrame(tonumber(msg))
     elseif msg == "t" or msg == "timers" then
         MPR_Timers:Toggle()
+    elseif msg == "to" then
+        MPR_Timers_Options:Toggle()
     elseif msg == "ai" then
         MPR:SelfReport("Instance: |r|cFF00CCFF|HMPR:AuraInfo:ICC:1|h[Icecrown Citadel]|h|r "..
                                    "|cFF3CAA50|HMPR:AuraInfo:TOC:13|h[Trial of the Crusader]|h|r "..
@@ -723,7 +727,7 @@ function MPR:LOOT_OPENED()
             local _, Name, _, Rarity, _ = GetLootSlotInfo(i)
             local ItemLink = GetLootSlotLink(i)
             --local ItemBoP = select(5,GetLootRollItemInfo(i-1))
-            if Name and ItemLink and Rarity >= 0 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
+            if Name and ItemLink and Rarity >= 4 then -- Uncommon/green (2), Rare/blue (3), Epic/purple (4), ...
                 -- make BiS list
                 local bisClasses = {}
                 if self.Settings["REPORT_LOOT_BIS_INFO"] then
@@ -832,7 +836,7 @@ function MPR:StartCombat(ID)
     self.DataDeaths[index].GameTimeStart = string.format("%i:%02d:%02d",hour,minute,second+(self.BossData[ID]["START_DELAY"] or 0))
     self.DataDeaths[index].GameTimeEnd = "unknown"
     self.DataDeaths[index].Deaths = {}
-    local Color = ID <= 12 and "00CCFF" or ID <= 19 and  "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
+    local Color = ID <= 12 and "00CCFF" or ID <= 19 and "3CAA50" or ID <= 23 and "FF9912" or "FFFFFF"
     self.DataDeaths[index].Color = Color
     self:SelfReport("Encounter |r|cFF"..Color.."|HMPR:AuraInfo:Update:"..ID.."|h["..self.DataDeaths[index].Name.."]|h|r|cFFbebebe started. |cFF00CCFF|HMPR:Timers:nil:nil|h[Timers]|h|r")
     MPR:ScheduleTimer("Wipe Check", WipeCheck, 5)
@@ -952,18 +956,18 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
         elseif event == "RANGED_DAMAGE" or event == "SPELL_DAMAGE" or event == "SPELL_PERIODIC_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
             local spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = select(9, ...)
-            PotencialDeaths[destName] = {timestamp, sourceName or "Unknown", GetSpellLink(spellId), amount, overkill or 0}
+            PotencialDeaths[destName] = {timestamp, sourceName, GetSpellLink(spellId), amount, overkill or 0}
         elseif event == "ENVIRONMENTAL_DAMAGE" then
             if PotencialDeaths[destName] then PotencialDeaths[destName] = nil end
             local environmentalType, amount, overkill = select(9, ...)
             PotencialDeaths[destName] = {timestamp, "Environment", environmentalType, amount, overkill or 0}
         elseif event == "UNIT_DIED" and not UnitIsFeignDeath(destName) then
             if PotencialDeaths[destName] then
-                local timestamp, source, type, amount, overkill = unpack(PotencialDeaths[destName])
-                if (timestamp - PotencialDeaths[destName][1]) < 1 then
+                local pdTimestamp, source, type, amount, overkill = unpack(PotencialDeaths[destName])
+                if (timestamp - pdTimestamp) < 2 then
                     if self.Settings["PD_REPORT"] then
-                        local Unformatted = destName.." died. ("..source..": "..type.." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
-                        local Formatted = unit(destName).." died. ("..source..": "..type.." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                        local Unformatted = destName.." died. ("..(source and source..":" or "").." "..type.." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
+                        local Formatted = unit(destName).." died. ("..(source and source..":" or "").." "..type.." - A: "..numformat(amount-overkill).." / O: "..numformat(overkill)..")"
                         self:ReportDeath(Unformatted, Formatted)
                     end
                     if self.Settings["PD_LOG"] then
@@ -992,7 +996,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
     -- Check if Blood-Queen Lana'thel or Halion encounter started ...
     if destName == "Blood-Queen Lana'thel" and not Combat and event:find("DAMAGE") then
         MPR:StartCombat(9)
-	elseif destName == "Halion" and not Combat and event:find("DAMAGE") then
+    elseif destName == "Halion" and not Combat and event:find("DAMAGE") then
         MPR:StartCombat(23)
     end
     
@@ -1131,13 +1135,26 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 elseif spellId == 72350 then -- Fury of Frostmourne
                     MPR_Timers:FuryOfFrostmourne()
                 end
+            -- 21: Baltharus the Warborn timers
+            elseif sourceName == "Baltharus the Warborn" then
+                if spellName == "Blade Tempest" then
+                    MPR_Timers:BladeTempest(sourceGUID)
+                end
+            -- 22: General Zarithrian timers
+            elseif sourceName == "General Zarithrian" then
+                if spellName == "Cleave" then
+                    MPR_Timers:ZarithrianCleave()
+                elseif spellName == "Intimidating Roar" then
+                    MPR_Timers:ZarithrianIntimidatingRoar()
+                end
+            -- 23: Halion timers
             elseif sourceName == "Halion" then
                 if spellName == "Fiery Combustion" then
                     MPR_Timers:FieryCombustion()
-					self:Whisper(destName, GetSpellLink(spellId).." on you! Run to the wall!!")
+                    self:Whisper(destName, GetSpellLink(spellId).." on you! Run to the wall!!")
                 elseif spellName == "Soul Consumption" then
                     MPR_Timers:SoulConsumption()
-					self:Whisper(destName, GetSpellLink(spellId).." on you! Run to the wall!!")
+                    self:Whisper(destName, GetSpellLink(spellId).." on you! Run to the wall!!")
                 end
             end
         
@@ -1169,7 +1186,7 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 self:ScheduleTimer(destName, TimerHandler, spellsCreate[destName]-30, spellId)
             end
         elseif event == "SPELL_SUMMON" then
-            if spellId == 69037 then -- Summon Val'kyr
+            if spellId == 69037 or spellId == 71844 then -- Summon Val'kyr
                 MPR_Timers:SummonValkyr(tonumber(string.sub(destGUID,9,12),16).."-"..tonumber(string.sub(destGUID,13),16))
             elseif sourceName == "Lady Deathwhisper" and spellName == "Summon Spirit" then
                 MPR_Timers:SummonVengefulShade()
@@ -1307,7 +1324,9 @@ function MPR:COMBAT_LOG_EVENT_UNFILTERED(...)
                 self:ScheduleTimer("Aura Targets", TimerHandler, 0.5, spellId)
             elseif spellName == "Heroism" and sourceName == casterHeroism and UnitIsPlayer(destName) then
                 table.insert(targetsHeroism,destName)
+            -- 20: Saviana Ragefire timers
             elseif spellName == "Enrage" and destName == "Saviana Ragefire" then
+                MPR_Timers:SavianaEnrage()
                 self:ReportAppliedOnTarget(spellId,destName)
             --elseif contains({70952,70982,70981},spellId) then -- BPC: Target Switch
                 --BPC_ChangeTarget(destName)
@@ -1365,6 +1384,8 @@ function MPR:CHAT_MSG_MONSTER_YELL(Message, Sender)
         elseif Message == "Now feel my master's limitless power and despair!" then
             MPR_Timers:SecondPhase()
         end
+    elseif Sender == "General Zarithrian" and Message == "Turn them to ash, minions!" then
+        MPR_Timers:ZarithrianSummonAdds()
     elseif Sender == "Halion" then
         if Message == "The heavens burn!" then
             MPR_Timers:MeteorStrike()
@@ -1473,8 +1494,8 @@ function MPR:HandleReport(Unformatted, Formatted, IgnoreRaidSettings, WithoutCha
 end
 
 -- Just adds MPR prefix.
-function MPR:SelfReport(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h[MP Reporter]|h:|r "..msg, tonumber(self.Colors["TEXT"]:sub(1,2),16)/255, tonumber(self.Colors["TEXT"]:sub(3,4),16)/255, tonumber(self.Colors["TEXT"]:sub(5,6),16)/255)
+function MPR:SelfReport(msg, short)
+    DEFAULT_CHAT_FRAME:AddMessage("|cFF"..self.Colors["TITLE"].."|HMPR:Options:Show:nil|h["..(short and "MPR" or "MP Reporter").."]|h:|r "..msg, tonumber(self.Colors["TEXT"]:sub(1,2),16)/255, tonumber(self.Colors["TEXT"]:sub(3,4),16)/255, tonumber(self.Colors["TEXT"]:sub(5,6),16)/255)
 end
 
 -- Just adds MPR channel prefix
@@ -1582,6 +1603,11 @@ function MPR:UpdateBackdrop()
     MPR_Timers:SetBackdrop(Backdrop)
     MPR_Timers:SetBackdropColor(unpack(BackdropColor))
     MPR_Timers:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
+    -- MPR Timer options
+    MPR_Timers_Options.Title:SetText("|cff"..MPR.Colors["TITLE"].."MP Reporter|r - Timer options")
+    MPR_Timers_Options:SetBackdrop(Backdrop)
+    MPR_Timers_Options:SetBackdropColor(unpack(BackdropColor))
+    MPR_Timers_Options:SetBackdropBorderColor(BackdropBorderColor.R/255, BackdropBorderColor.G/255, BackdropBorderColor.B/255)
     -- MPR DKP Penalties
     MPR_Penalties.Title:SetText("|cff"..self.Colors["TITLE"].."MP Reporter|r - DKP Penalties (for QuickDKP)")
     MPR_Penalties:SetBackdrop(Backdrop)
@@ -1660,6 +1686,9 @@ function MPR:ADDON_LOADED(addon)
     self:DefineSetting("PD_GUILD", false)
     self:DefineSetting("PD_WHISPER", false)
     self:DefineSetting("PD_LOG", true)
+    self:DefineSetting("T_SELF", true)
+    self:DefineSetting("T_RAID", true)
+    self:DefineSetting("TIMER_ANNOUNCES", MPR_Timers.DefaultTimerAnnounces)
     self:DefineSetting("UPDATEFREQUENCY", 0.1)
     self:DefineSetting("CCL_ONLOAD", true)
     self:DefineSetting("ICONS", false)
