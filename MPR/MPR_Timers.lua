@@ -83,9 +83,9 @@ MPR_Timers.InfoTimers = {
         [3] = {['name'] = "Blade Tempest",            ['format'] = "{SpellLink} 3: {Time}",  ['label'] = 3},
     },
     [22] = {
-        [1] = {['name'] = "Cleave Armor",             ['format'] = "{SpellLink} 1: {Time}",  ['label'] = 1},
-        [2] = {['name'] = "Summon Adds",              ['format'] = "{Name} 2: {Time}",       ['label'] = 2},
-        [3] = {['name'] = "Intimidating Roar",        ['format'] = "{SpellLink} 3: {Time}",  ['label'] = 3},
+        [1] = {['name'] = "Cleave Armor",             ['format'] = "{SpellLink}: {Time}",  ['label'] = 1},
+        [2] = {['name'] = "Summon Adds",              ['format'] = "{Name}: {Time}",       ['label'] = 2},
+        [3] = {['name'] = "Intimidating Roar",        ['format'] = "{SpellLink}: {Time}",  ['label'] = 3},
     },
     [23] = {
         [1] = {['name'] = "Meteor Strike",            ['format'] = "{SpellLink}: {Time}",    ['label'] = 1},
@@ -452,7 +452,7 @@ function MPR_Timers:EncounterStart(ID)
         self.DataTimers[2][1] = 5
         self.DataTimers[2][2] = nil
     elseif ID == 3 then
-        self.DataTimers[3][1] = 45
+        self.DataTimers[3][1] = 40 --45
     elseif ID == 4 then
         self.DataTimers[4][1] = 20
     elseif ID == 5 then
@@ -750,7 +750,7 @@ function MPR_Timers:SavianaEnrage()
     self.DataTimers[20][1] = 45
 end
 function MPR_Timers:SavianaAirPhase()
-    self.DataTimers[20][2] = 50
+    self.DataTimers[20][2] = 48
 end
 -- 21: Baltharus the Warborn
 function MPR_Timers:BladeTempest(source)

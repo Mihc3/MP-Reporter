@@ -1,5 +1,5 @@
 MPR = CreateFrame("frame","MPRFrame")
-MPR.Version = "v2.90B"
+MPR.Version = "v2.90R"
 --MPR.Special = {"Deathwing:Herbaliist:A"}
 MPR.VersionNotes = {"Death reporting fixed, no more false information", "Timer options", "Ruby Sanctum timers"}
 local ClassColors = {["DEATHKNIGHT"] = "C41F3B", ["DEATH KNIGHT"] = "C41F3B", ["DRUID"] = "FF7D0A", ["HUNTER"] = "ABD473", ["MAGE"] = "69CCF0", ["PALADIN"] = "F58CBA",

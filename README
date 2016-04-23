@@ -5,6 +5,7 @@ Complete list of commands:
  • MPR Options - /MPR
  • MPR Aura Info - /MPR AI, /MPR AI <bossnum>
  • MPR Timers - /MPR T, /MPR TIMERS
+ • MPR TImer options - /MPR TO
  • MPR DKP Penalties - /MPR PENALTIES, /MPR DKP
  • Clear combat log entries - /MPR CCL, /MPR CLEAR
  • Clear death log entries - /MPR CDL
